@@ -1,0 +1,159 @@
+"""
+Compute a layout for Row, Grid, graphics, and equations.
+Graphics layouts are delegated to graphics.layout_funs.
+Main entry point here is expression_to_layout.
+
+A layout is a data structure that a front-end can display.
+The layout is constructed here and in graphics.py by calling
+ui.grid, ui.row, ui.plot, ui.manipulate, etc.
+These will be functions from either mode_dash or mode_ipy,
+depending on which widget set is needed for the current front end.
+So the net result will be either a dash or ipywidgets data structure
+that can be displayed by the front-end.
+"""
+
+import mathics.core.formatter as fmt
+
+import core
+import graphics
+import ui
+import sym
+import util
+from frozendict import frozendict
+
+
+def wrap_math(s):
+    return ui.latex(s) if isinstance(s, str) else s
+
+# Concatenate latex strings as much as possible, allowing latex to handle the layout.
+# Where not possible use a object (dash or ipywidgets) representing an html layout.
+#
+# The return value of this function is either
+#   * a single string containing latex if everything can be handled in latex, or
+#   * a layout object representing html elements that will form a baseline-aligned row,
+#     some of which might be contain latex to be rendered by mathjax
+# 
+def row_box(fe, expr, layout_options):
+    
+    layout_options = frozendict(layout_options | dict(inside_row = True))
+
+    parts = []
+    s = ""
+
+    # surprise! unlike a RowBox Expression, a RowBox object has elements that are not in a list!
+    #for e in expr.elements[0]:
+    for e in expr.elements:
+        l = _boxes_to_latex_or_layout(fe, e, layout_options)
+        if isinstance(l,str):
+            s += l
+        else:
+            if s:
+                parts.append(s)
+                s = ""
+            parts.append(l)
+    if s:
+        parts.append(s)
+
+    if len(parts) == 1:
+        return parts[0]
+    else:
+        return ui.row(list(wrap_math(p) for p in parts))
+
+def grid_box(fe, expr, layout_options):
+
+    layout_options = frozendict(layout_options | dict(inside_row = True))
+
+    def do(e):
+        layout = _boxes_to_latex_or_layout(fe, e, layout_options)
+        layout = wrap_math(layout)
+        return layout
+
+    # arrange in a ragged array
+    grid_content = [[do(cell) for cell in row] for row in expr.elements[0]]
+    layout = ui.grid(grid_content)
+    return layout
+
+layout_funs = {
+    sym.SymbolRowBox: row_box,
+    sym.SymbolGridBox: grid_box,
+}
+
+special = {
+    "Sin": "\\sin",
+    "Cos": "\\cos",
+}
+
+#
+# Takes boxed input, and uses the tables and functions above to compute a layout from the boxes.
+# The general strategy is to allow latex (mathjax) do as much of the layout as possible,
+# but where that isn't possible to use html primitives via mode_ipy or mode_dash.
+#
+# This function returns a string if it is latex output that can be concatenated with other latex output
+# otherwise it returns an object of some kind (via mode_ipy or mode_dash) representing an html layout.
+#
+
+def _boxes_to_latex_or_layout(fe, expr, layout_options):
+
+    #util.print_stack_reversed()
+    #print("xxx _boxes_to_latex_or_layout", type(expr))
+
+    def try_latex():
+        try:
+            return fmt.boxes_to_format(expr, "latex")
+        except:
+            return None
+
+    if getattr(expr, "head", None) in layout_funs:
+        return layout_funs[expr.head](fe, expr, layout_options)
+    elif getattr(expr, "head", None) in graphics.layout_funs:
+        return graphics.layout_funs[expr.head](fe, expr, layout_options)
+    elif isinstance(expr,core.String):
+        if expr.value in special:
+            value = special[expr.value]
+        elif len(expr.value) >= 2 and expr.value[0] == '"' and expr.value[-1] == '"':
+            # strip quotes - surprising they're still present?
+            value = f"\\mathsf{{\\mbox{{{expr.value[1:-1]}}}}}"
+        elif len(expr.value) > 1:
+            value = f"\\mathop{{\\mbox{{{expr.value}}}}}"
+        else:
+            value = expr.value
+        return value
+    elif not hasattr(expr, "head"):
+        return str(expr)
+    elif value := try_latex():
+        return value
+    else:
+        raise Exception(f"Don't know how to lay out {expr.head}")
+
+
+#
+# TODO: missing from ToBoxes - not needed for now...
+#     GraphicsComplex -> ??? GraphicsComplexBox (check W)
+#
+
+def expression_to_layout(fe, expr, layout_options={}):
+
+    """
+    Our main entry point.
+    Given an expression, box it if necessary, and compute a layout
+    """
+
+    #print("xxx before boxing:"); util.prt_expr_tree(expr)
+
+    # TODO: is this a hack? is it needed?
+    if str(getattr(expr, "head", None)).endswith("Box"):
+        boxed = expr
+    else:
+        form = sym.SymbolTraditionalForm
+        boxed = core.Expression(sym.Symbol("System`ToBoxes"), expr, form).evaluate(fe.session.evaluation)
+
+    #print("after boxing:"); util.prt_expr_tree(boxed)
+
+    # compute a layout, which will either be a string containing latex,
+    # or an object representing an html layout
+    layout = _boxes_to_latex_or_layout(fe, boxed, layout_options)
+
+    # if it's a latex string, wrap it in an object that represents an html element that invokes mathjax
+    layout = wrap_math(layout)
+
+    return layout
