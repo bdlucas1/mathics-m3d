@@ -179,7 +179,7 @@ def create_app(load):
     )
 
     if load:
-        md_fn = sys.argv[1] if len(sys.argv) > 1 else "gallery.m3d"
+        md_fn = sys.argv[1] if len(sys.argv) > 1 else "data/gallery.m3d"
         print("loading", md_fn)
         md_str = open(md_fn).read()
         # TODO: allow for tags or instructions after ``` until end of line
