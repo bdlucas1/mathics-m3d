@@ -74,7 +74,7 @@ def prt_sympy_tree(expr, indent=""):
 # load a url into a browser, using either:
 # webview - pop up new standalone window using pywebview
 # webbrowser - instruct system browser to open a new window
-class Browser():
+class Browser:
 
     def __init__(self):
         self.n = 0
@@ -82,13 +82,13 @@ class Browser():
         if not webview:
             self.browser = "webbrowser"
 
-    def show(self, url):
+    def show(self, url, width=700, height=1000):
         # display a browser window that fetches the current plot
         #print("showing", url)
         if self.browser == "webview":
             offset = 50 * self.n
             self.n += 1
-            webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=800)
+            webview.create_window(url, url, x=100+offset, y=100+offset, width=width, height=height)
         elif self.browser == "webbrowser":
             webbrowser.open_new(url)
         return self

@@ -117,6 +117,11 @@ for fn in args.files:
     expr = expr.evaluate(fe.session.evaluation)
     layout = lt.expression_to_layout(fe, expr)
 
+    # TODO: WIP
+    # ff formats too wide, so fix that first
+    #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
+    #
+
     if update := differ(fn_ref, fn_test):
         failures += 1
         if update:

@@ -151,6 +151,56 @@ shortcuts.on_msg(shortcut_msg)
 # the app when it's good and ready (see comment below)
 #
 
+def load_m3d(md_fn):    
+    print("loading", md_fn)
+    md_str = open(md_fn).read()
+    # TODO: allow for tags or instructions after ``` until end of line
+    md_parts = re.split("(```)", md_str)
+    is_m3 = False
+    for part in md_parts:
+        if part == "```":
+            is_m3 = not is_m3
+        elif is_m3:
+            pair = Pair(part.strip())
+            the_app.append(pair)
+            # TODO: autorun optional?
+            pair.update_if_changed(force=True)
+        else:
+            #help(pn.pane.Markdown)
+            md = pn.pane.Markdown(
+                part,
+                disable_math = False,
+                css_classes=["m-markdown"],
+                # TODO: extract from .css file
+                stylesheets=["""
+                    * {
+                        font-family: sans-serif;
+                        font-size: 12pt;
+                        line-height: 1.4;
+                    }
+                    h1 {font-size: 20pt; margin-top: 1.0em; &:first-child {margin-top: 0em;}}
+                    h2 {font-size: 18pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
+                    h3 {font-size: 16pt; margin-top: 0.6em; &:first-child {margin-top: 0em;}}
+                    h4 {font-size: 24pt; margin-top: 0.4em; &:first-child {margin-top: 0em;}}
+                """]
+            )
+            the_app.append(md)
+
+def load_m(m_fn):
+    m_str = open(m_fn).read()    
+    pair = Pair(m_str.strip())
+    the_app.append(pair)
+
+def load_files(fns):
+    for fn in fns:
+        if fn.endswith(".m3d"):
+            load_m3d(fn)
+        elif fn.endswith(".m"):
+            load_m(fn)
+        else:
+            print(f"Don't understand file {fn}")
+    
+
 # TODO: any benefit to this being a class?
 def create_app(load):
 
@@ -178,45 +228,15 @@ def create_app(load):
         css_classes=["m-app"]
     )
 
-    if load:
-        md_fn = sys.argv[1] if len(sys.argv) > 1 else "data/gallery.m3d"
-        print("loading", md_fn)
-        md_str = open(md_fn).read()
-        # TODO: allow for tags or instructions after ``` until end of line
-        md_parts = re.split("(```)", md_str)
-        is_m3 = False
-        for part in md_parts:
-            if part == "```":
-                is_m3 = not is_m3
-            elif is_m3:
-                pair = Pair(part.strip())
-                app.append(pair)
-                # TODO: autorun optional?
-                pair.update_if_changed(force=True)
-            else:
-                #help(pn.pane.Markdown)
-                md = pn.pane.Markdown(
-                    part,
-                    disable_math = False,
-                    css_classes=["m-markdown"],
-                    # TODO: extract from .css file
-                    stylesheets=["""
-                        * {
-                            font-family: sans-serif;
-                            font-size: 12pt;
-                            line-height: 1.4;
-                        }
-                        h1 {font-size: 20pt; margin-top: 1.0em; &:first-child {margin-top: 0em;}}
-                        h2 {font-size: 18pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
-                        h3 {font-size: 16pt; margin-top: 0.6em; &:first-child {margin-top: 0em;}}
-                        h4 {font-size: 24pt; margin-top: 0.4em; &:first-child {margin-top: 0em;}}
-                    """]
-                )
-                app.append(md)
-
     global the_app
     the_app = app
+
+    if load:
+        fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
+        load_files(fns)
+
     return app
+
 
 #
 # startup action depends on mode -
@@ -243,5 +263,4 @@ else:
         threaded=True,
         show=False
     )
-    #time.sleep(1)
     util.Browser().show("http://localhost:9999").start()

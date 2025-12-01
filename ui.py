@@ -48,7 +48,7 @@ def grid(grid_content):
     gb = pn.GridBox(
         *children,
         ncols=n_cols,
-        sizing_mode="fixed",  # helps avoid over-expanding horizontally
+        #sizing_mode="fixed",  # helps avoid over-expanding horizontally
     )
     gb.css_classes = ["m-grid"]
 
@@ -118,8 +118,14 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
                 values = [s.value for s in pn_sliders]
                 target_layout = eval_and_layout(values)
                 update(target, target_layout)
-    timer = pn.state.add_periodic_callback(update_if_requested, period=100)
-
+    try:
+        timer = pn.state.add_periodic_callback(update_if_requested, period=100)
+    except RuntimeError:
+        # in test mode we can't do this because we're headless, and it wants a
+        # running event loop, but in that case we can't move sliders either,
+        # so just ignore
+        pass
+        
     # build sliders
     pn_sliders = []
     cells = []    
