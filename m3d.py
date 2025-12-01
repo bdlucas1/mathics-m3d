@@ -25,6 +25,7 @@ import sys
 import time
 import ui
 
+pn.extension()
 pn.extension('plotly')
 pn.extension('mathjax')
 pn.extension(raw_css=[open('m3d.css').read()])
@@ -125,26 +126,6 @@ class Pair(pn.Column):
 # cmd+enter executes all changed
 #
 
-def update_changed(force=False):
-    for item in the_app:
-        if isinstance(item, Pair):
-            item.update_if_changed(force=force)
-
-shortcuts = ui.KeyboardShortcuts(shortcuts=[
-    ui.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
-    ui.KeyboardShortcut(name="run", key="Enter", altKey=True),
-    ui.KeyboardShortcut(name="run", key="Enter", metaKey=True),
-    ui.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
-    ui.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
-    ui.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
-])
-
-def shortcut_msg(event):
-    if event.data == "run":
-        update_changed()
-    if event.data == "run_force":
-        update_changed(force=True)
-shortcuts.on_msg(shortcut_msg)
 
 #
 # function to construct the app
@@ -157,12 +138,97 @@ class App(pn.Column):
 
     def __init__(self, load):
 
+        shortcuts = self.init_shortcuts()
+        buttons = self.init_buttons()
+        self.rendered = pn.Column(css_classes=["m-rendered"])
+        self.editor = pn.widgets.TextAreaInput(
+            value="foobar",
+            visible=False,
+            css_classes=["m-editor"],
+            # TODO: can be done with css?
+            styles=dict(height="100vh")
+        )
+
+        # now we're a column
+        super().__init__(
+            shortcuts,
+            buttons,
+            self.rendered,
+            self.editor,
+            css_classes=["m-app"]
+        )
+
+        if load:
+            fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
+            #with panel.io.hold():
+            self.load_files(fns)
+
+
+    def init_shortcuts(self):
+
+        shortcuts = ui.KeyboardShortcuts(shortcuts=[
+            ui.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
+            ui.KeyboardShortcut(name="run", key="Enter", altKey=True),
+            ui.KeyboardShortcut(name="run", key="Enter", metaKey=True),
+            ui.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
+            ui.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
+            ui.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
+        ])
+
+        def shortcut_msg(event):
+            force = event.data == "run_force"
+            for item in self.rendered:
+                if isinstance(item, Pair):
+                    item.update_if_changed(force=force)
+
+        shortcuts.on_msg(shortcut_msg)
+
+        return shortcuts
+
+
+    def toggle_edit(self):
+        if self.editor.visible:
+            self.exit_edit()
+        else:
+            self.enter_edit()
+
+
+    def enter_edit(self):
+        self.rendered.visible = False
+        self.editor.visible = True
+        def collect():
+            for item in self.rendered:
+                if isinstance(item, Pair):
+                    yield f"```\n{item.input.value_input}\n```"
+                elif isinstance(item, pn.pane.Markdown):
+                    yield item.object
+        text = "".join(collect())
+        self.editor.value = text
+
+
+    def exit_edit(self):
+        self.rendered.visible = True
+        self.editor.visible = False
+        self.rendered.clear()
+        # value_input may be None if we haven't edited :(
+        text = self.editor.value_input or self.editor.value
+        self.load_m3d_string(text)
+
+
+    def init_buttons(self): 
+
+        edit_button = ui.icon_button(
+            "edit",
+            "Toggle editing\nentire file",
+            self.toggle_edit
+        )
+
         buttons = pn.Row(
             pn.widgets.ButtonIcon(icon="help"),
             pn.widgets.ButtonIcon(icon="file-plus"),
             pn.widgets.ButtonIcon(icon="file-download"),
             pn.widgets.ButtonIcon(icon="file-upload"),
-            pn.widgets.ButtonIcon(icon="edit"),
+            edit_button,
             pn.widgets.ButtonIcon(icon="player-play"),
             pn.widgets.ButtonIcon(icon="clipboard-text"),
             #pn.widgets.ButtonIcon(icon="mood-smile"),
@@ -175,22 +241,16 @@ class App(pn.Column):
             css_classes=["m-button-row"]
         )
 
-        # now we're a column
-        super().__init__(
-            shortcuts,
-            buttons,
-            css_classes=["m-app"]
-        )
-
-        if load:
-            fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
-            #with panel.io.hold():
-            self.load_files(fns)
+        return buttons
 
 
-    def load_m3d(self, md_fn):
+    def load_m3d_file(self, md_fn):
         print("loading", md_fn)
         md_str = open(md_fn).read()
+        self.load_m3d_string(md_str)
+
+
+    def load_m3d_string(self, md_str):
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```)", md_str)
         is_m3 = False
@@ -199,7 +259,7 @@ class App(pn.Column):
                 is_m3 = not is_m3
             elif is_m3:
                 pair = Pair(part.strip())
-                self.append(pair)
+                self.rendered.append(pair)
                 # TODO: autorun optional?
                 def schedule(pair):
                     update = lambda: pair.update_if_changed(force=True)
@@ -208,7 +268,6 @@ class App(pn.Column):
                 #schedule(pair)
                 pair.update_if_changed(force=True)
             else:
-                #help(pn.pane.Markdown)
                 md = pn.pane.Markdown(
                     part,
                     disable_math = False,
@@ -226,25 +285,27 @@ class App(pn.Column):
                         h4 {font-size: 24pt; margin-top: 0.4em; &:first-child {margin-top: 0em;}}
                     """]
                 )
-                self.append(md)
+                self.rendered.append(md)
+
 
     def load_m(self, m_fn):
         m_str = open(m_fn).read()    
         pair = Pair(m_str.strip())
-        self.append(pair)
+        self.rendered.append(pair)
         pair.update_if_changed(force=True)
+
 
     def load_files(self, fns):
         if len(fns):
             for fn in fns:
                 if fn.endswith(".m3d"):                   
-                    self.load_m3d(fn)
+                    self.load_m3d_file(fn)
                 elif fn.endswith(".m"):
                     self.load_m(fn)
                 else:
                     print(f"Don't understand file {fn}")
         else:
-            self.append(Pair(None, input_visible=True))
+            self.rendered.append(Pair(None, input_visible=True))
 
 
 
@@ -263,11 +324,15 @@ elif "pyodide" in sys.modules:
     app.servable()
 else:
     print("running as local server")
+
+    app = App(load=True) # sliders don't work in this mode
+    #app = lambda: App(load=True),
+
     # we need to pass a function to create the app instead of
     # passing an already created app because the timer used in manipulate
     # requires that the server already be running
     pn.serve(
-        lambda: App(load=True),
+        app,
         port=9999,
         address="localhost",
         threaded=True,
