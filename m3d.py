@@ -151,94 +151,95 @@ shortcuts.on_msg(shortcut_msg)
 # the app when it's good and ready (see comment below)
 #
 
-def load_m3d(md_fn):    
-    print("loading", md_fn)
-    md_str = open(md_fn).read()
-    # TODO: allow for tags or instructions after ``` until end of line
-    md_parts = re.split("(```)", md_str)
-    is_m3 = False
-    for part in md_parts:
-        if part == "```":
-            is_m3 = not is_m3
-        elif is_m3:
-            pair = Pair(part.strip())
-            the_app.append(pair)
-            # TODO: autorun optional?
-            pair.update_if_changed(force=True)
-        else:
-            #help(pn.pane.Markdown)
-            md = pn.pane.Markdown(
-                part,
-                disable_math = False,
-                css_classes=["m-markdown"],
-                # TODO: extract from .css file
-                stylesheets=["""
-                    * {
-                        font-family: sans-serif;
-                        font-size: 12pt;
-                        line-height: 1.4;
-                    }
-                    h1 {font-size: 20pt; margin-top: 1.0em; &:first-child {margin-top: 0em;}}
-                    h2 {font-size: 18pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
-                    h3 {font-size: 16pt; margin-top: 0.6em; &:first-child {margin-top: 0em;}}
-                    h4 {font-size: 24pt; margin-top: 0.4em; &:first-child {margin-top: 0em;}}
-                """]
-            )
-            the_app.append(md)
+#class App(pn.Feed):
+class App(pn.Column):
 
-def load_m(m_fn):
-    m_str = open(m_fn).read()    
-    pair = Pair(m_str.strip())
-    the_app.append(pair)
+    def __init__(self, load):
 
-def load_files(fns):
-    if len(fns):
-        for fn in fns:
-            if fn.endswith(".m3d"):
-                load_m3d(fn)
-            elif fn.endswith(".m"):
-                load_m(fn)
+        buttons = pn.Row(
+            pn.widgets.ButtonIcon(icon="help"),
+            pn.widgets.ButtonIcon(icon="file-plus"),
+            pn.widgets.ButtonIcon(icon="file-download"),
+            pn.widgets.ButtonIcon(icon="file-upload"),
+            pn.widgets.ButtonIcon(icon="edit"),
+            pn.widgets.ButtonIcon(icon="player-play"),
+            pn.widgets.ButtonIcon(icon="clipboard-text"),
+            #pn.widgets.ButtonIcon(icon="mood-smile"),
+            #pn.widgets.ButtonIcon(icon="mood-confuzed"),
+            #pn.widgets.ButtonIcon(icon="alert-triangle"),
+            #pn.widgets.ButtonIcon(icon="square-x"),
+            #pn.widgets.ButtonIcon(icon="heart"),
+            #pn.widgets.ButtonIcon(icon="file-pencil"),    
+            #pn.widgets.ButtonIcon(icon="player-track-next"),
+            css_classes=["m-button-row"]
+        )
+
+        # now we're a column
+        super().__init__(
+            shortcuts,
+            buttons,
+            css_classes=["m-app"]
+        )
+
+        if load:
+            fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
+            #from panel.io import hold
+            #with hold():
+            self.load_files(fns)
+
+
+    def load_m3d(self, md_fn):
+        print("loading", md_fn)
+        md_str = open(md_fn).read()
+        # TODO: allow for tags or instructions after ``` until end of line
+        md_parts = re.split("(```)", md_str)
+        is_m3 = False
+        for part in md_parts:
+            if part == "```":
+                is_m3 = not is_m3
+            elif is_m3:
+                pair = Pair(part.strip())
+                self.append(pair)
+                # TODO: autorun optional?
+                pair.update_if_changed(force=True)
             else:
-                print(f"Don't understand file {fn}")
-    else:
-        the_app.append(Pair(None, input_visible=True))
-    
+                #help(pn.pane.Markdown)
+                md = pn.pane.Markdown(
+                    part,
+                    disable_math = False,
+                    css_classes=["m-markdown"],
+                    # TODO: extract from .css file
+                    stylesheets=["""
+                        * {
+                            font-family: sans-serif;
+                            font-size: 12pt;
+                            line-height: 1.4;
+                        }
+                        h1 {font-size: 20pt; margin-top: 1.0em; &:first-child {margin-top: 0em;}}
+                        h2 {font-size: 18pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
+                        h3 {font-size: 16pt; margin-top: 0.6em; &:first-child {margin-top: 0em;}}
+                        h4 {font-size: 24pt; margin-top: 0.4em; &:first-child {margin-top: 0em;}}
+                    """]
+                )
+                self.append(md)
 
-# TODO: any benefit to this being a class?
-def create_app(load):
+    def load_m(self, m_fn):
+        m_str = open(m_fn).read()    
+        pair = Pair(m_str.strip())
+        self.append(pair)
 
-    buttons = pn.Row(
-        pn.widgets.ButtonIcon(icon="help"),
-        pn.widgets.ButtonIcon(icon="file-plus"),
-        pn.widgets.ButtonIcon(icon="file-download"),
-        pn.widgets.ButtonIcon(icon="file-upload"),
-        pn.widgets.ButtonIcon(icon="edit"),
-        pn.widgets.ButtonIcon(icon="player-play"),
-        pn.widgets.ButtonIcon(icon="clipboard-text"),
-        #pn.widgets.ButtonIcon(icon="mood-smile"),
-        #pn.widgets.ButtonIcon(icon="mood-confuzed"),
-        #pn.widgets.ButtonIcon(icon="alert-triangle"),
-        #pn.widgets.ButtonIcon(icon="square-x"),
-        #pn.widgets.ButtonIcon(icon="heart"),
-        #pn.widgets.ButtonIcon(icon="file-pencil"),    
-        #pn.widgets.ButtonIcon(icon="player-track-next"),
-        css_classes=["m-button-row"]
-    )
+    def load_files(self, fns):
+        if len(fns):
+            for fn in fns:
+                if fn.endswith(".m3d"):
+                    self.load_m3d(fn)
+                elif fn.endswith(".m"):
+                    self.load_m(fn)
+                else:
+                    print(f"Don't understand file {fn}")
+        else:
+            self.append(Pair(None, input_visible=True))
 
-    app = pn.Column(
-        shortcuts,
-        buttons,
-        css_classes=["m-app"]
-    )
-
-    global the_app
-    the_app = app
-
-    if load:
-        fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
-        load_files(fns)
-
-    return app
 
 
 #
@@ -248,11 +249,11 @@ def create_app(load):
 
 if "DEMO_BUILD_PYODIDE" in os.environ:
     print("building for pyodide")
-    app = create_app(load=False)
+    app = App(load=False)
     app.servable()
 elif "pyodide" in sys.modules:
     print("running under pyodide")
-    app = create_app(load=True)
+    app = App(load=True)
     app.servable()
 else:
     print("running as local server")
@@ -260,7 +261,7 @@ else:
     # passing an already created app because the timer used in manipulate
     # requires that the server already be running
     pn.serve(
-        lambda: create_app(load=True),
+        lambda: App(load=True),
         port=9999,
         address="localhost",
         threaded=True,
