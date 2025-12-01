@@ -88,7 +88,6 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
     # update the layout depending on how we wrapped it
     # and how we're updating it
     def update(x, v):
-        print("updating", type(x), "with", type(v))
         if isinstance(x, pn.pane.Plotly):
             if isinstance(x, pn.pane.Plotly):
                 x.object = v.object

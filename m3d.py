@@ -42,7 +42,7 @@ fe = FE()
 
 class Pair(pn.Column):
 
-    def __init__(self, text=None):
+    def __init__(self, text=None, input_visible=False):
         
         self.old_expr = ""
 
@@ -57,7 +57,7 @@ class Pair(pn.Column):
             sizing_mode = "stretch_width",
             css_classes = ["m-input"],
             # TODO: alwyas initially not visible?
-            visible = False,
+            visible = input_visible,
         )
 
         # track as user types
@@ -192,13 +192,16 @@ def load_m(m_fn):
     the_app.append(pair)
 
 def load_files(fns):
-    for fn in fns:
-        if fn.endswith(".m3d"):
-            load_m3d(fn)
-        elif fn.endswith(".m"):
-            load_m(fn)
-        else:
-            print(f"Don't understand file {fn}")
+    if len(fns):
+        for fn in fns:
+            if fn.endswith(".m3d"):
+                load_m3d(fn)
+            elif fn.endswith(".m"):
+                load_m(fn)
+            else:
+                print(f"Don't understand file {fn}")
+    else:
+        the_app.append(Pair(None, input_visible=True))
     
 
 # TODO: any benefit to this being a class?
