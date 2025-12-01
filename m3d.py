@@ -47,6 +47,7 @@ class Pair(pn.Column):
     def __init__(self, text=None, input_visible=False):
         
         self.old_expr = ""
+        self.is_stale = True
 
         # input
         instructions = "Type expression followed by shift-enter"
@@ -58,7 +59,6 @@ class Pair(pn.Column):
             max_rows = 9999,
             sizing_mode = "stretch_width",
             css_classes = ["m-input"],
-            # TODO: alwyas initially not visible?
             visible = input_visible,
         )
 
@@ -83,7 +83,7 @@ class Pair(pn.Column):
             "Output is stale; click or\ntype cmd+enter\nto execute code", 
             self.update_if_changed
         )
-        self.exec_button.visible = False
+        self.exec_button.visible = True
 
         # put the buttons together
         buttons = pn.Column(
@@ -123,11 +123,6 @@ class Pair(pn.Column):
             
                 
 #
-# cmd+enter executes all changed
-#
-
-
-#
 # function to construct the app
 # we pass this to pn.serve so it can construct
 # the app when it's good and ready (see comment below)
@@ -137,6 +132,9 @@ class Pair(pn.Column):
 class App(pn.Column):
 
     def __init__(self, load):
+
+        # used to make exiting edit mode faster
+        self.pair_cache = {}
 
         shortcuts = self.init_shortcuts()
         buttons = self.init_buttons()
@@ -199,7 +197,9 @@ class App(pn.Column):
         def collect():
             for item in self.rendered:
                 if isinstance(item, Pair):
-                    yield f"```\n{item.input.value_input}\n```"
+                    text = item.input.value_input
+                    self.pair_cache[text] = item
+                    yield f"```\n{text}\n```"
                 elif isinstance(item, pn.pane.Markdown):
                     yield item.object
         text = "".join(collect())
@@ -212,7 +212,8 @@ class App(pn.Column):
         self.rendered.clear()
         # value_input may be None if we haven't edited :(
         text = self.editor.value_input or self.editor.value
-        self.load_m3d_string(text)
+        self.load_m3d_string(text, run=True)
+        self.pair_cache.clear()
 
 
     def init_buttons(self): 
@@ -247,10 +248,11 @@ class App(pn.Column):
     def load_m3d_file(self, md_fn):
         print("loading", md_fn)
         md_str = open(md_fn).read()
-        self.load_m3d_string(md_str)
+        # TODO: autorun optional?
+        self.load_m3d_string(md_str, run=True)
 
 
-    def load_m3d_string(self, md_str):
+    def load_m3d_string(self, md_str, run=False):
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```)", md_str)
         is_m3 = False
@@ -258,15 +260,15 @@ class App(pn.Column):
             if part == "```":
                 is_m3 = not is_m3
             elif is_m3:
-                pair = Pair(part.strip())
+                text = part.strip()
+                try:
+                    pair = self.pair_cache[text]
+                    del self.pair_cache[text]
+                except KeyError:
+                    pair = Pair(text, input_visible = not run)
                 self.rendered.append(pair)
-                # TODO: autorun optional?
-                def schedule(pair):
-                    update = lambda: pair.update_if_changed(force=True)
-                    pn.state.add_periodic_callback(update, 1, count=1)
-                #threading.Thread(target=lambda: schedule(pair)).start()
-                #schedule(pair)
-                pair.update_if_changed(force=True)
+                if run:
+                    pair.update_if_changed()
             else:
                 md = pn.pane.Markdown(
                     part,
@@ -325,12 +327,12 @@ elif "pyodide" in sys.modules:
 else:
     print("running as local server")
 
-    app = App(load=True) # sliders don't work in this mode
-    #app = lambda: App(load=True),
-
     # we need to pass a function to create the app instead of
     # passing an already created app because the timer used in manipulate
     # requires that the server already be running
+    #app = App(load=True) # sliders don't work in this mode
+    app = lambda: App(load=True)
+
     pn.serve(
         app,
         port=9999,
