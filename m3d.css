@@ -1,7 +1,3 @@
-body {
-    max-width: 600px;
-}
-
 .m-app {
     gap: 1.5em;
 }
@@ -18,8 +14,11 @@ body {
 }
 
 body {
-    margin: 1.5em;
-    /*width: 35em;*/
+    width: fit-content;
+    overflow-x: hidden;
+    /*margin: 1.5em;*/
+    margin-left: 2.5em;
+    margin-top: 0;
 }
 
 .m-top {
@@ -30,7 +29,6 @@ body {
 .m-button-row, .m-button-column {
     gap: 0.5em;
 }
-
 
 .m-pair {
 
@@ -65,7 +63,7 @@ textarea.bk-input {
     resize: vertical;
     overflow: visible;
     font: inherit;
-    width: 100vw;
+    width: calc(100vw - 4.5em);
     background: #f8f8f8;
 }
 
@@ -75,6 +73,10 @@ textarea.bk-input {
     padding: 4px;
     line-height: 10pt;
     box-shadow: 5px 5px 10px lightgrey;
+}
+
+.m-markdown {
+    max-width: 50em;
 }
 
 .m-number {
