@@ -10,6 +10,7 @@ import re
 
 import panel as pn
 import panel.widgets as pnw
+import panel.io
 import plotly.express as px
 import plotly.graph_objects as go
 import param
@@ -104,7 +105,7 @@ class Pair(pn.Column):
         super().__init__(self.input, self.output, css_classes=["m-pair"])
 
         # initial content
-        self.update_if_changed(force=True)
+        #self.update_if_changed(force=True)
 
     # check whether input has changed, and eval if so
     def update_if_changed(self, force=False):
@@ -183,8 +184,7 @@ class App(pn.Column):
 
         if load:
             fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
-            #from panel.io import hold
-            #with hold():
+            #with panel.io.hold():
             self.load_files(fns)
 
 
@@ -201,6 +201,11 @@ class App(pn.Column):
                 pair = Pair(part.strip())
                 self.append(pair)
                 # TODO: autorun optional?
+                def schedule(pair):
+                    update = lambda: pair.update_if_changed(force=True)
+                    pn.state.add_periodic_callback(update, 1, count=1)
+                #threading.Thread(target=lambda: schedule(pair)).start()
+                #schedule(pair)
                 pair.update_if_changed(force=True)
             else:
                 #help(pn.pane.Markdown)
@@ -227,11 +232,12 @@ class App(pn.Column):
         m_str = open(m_fn).read()    
         pair = Pair(m_str.strip())
         self.append(pair)
+        pair.update_if_changed(force=True)
 
     def load_files(self, fns):
         if len(fns):
             for fn in fns:
-                if fn.endswith(".m3d"):
+                if fn.endswith(".m3d"):                   
                     self.load_m3d(fn)
                 elif fn.endswith(".m"):
                     self.load_m(fn)
