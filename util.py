@@ -5,6 +5,7 @@ import traceback
 import urllib.parse
 import webbrowser
 import importlib
+import subprocess
 
 os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
 from mathics.core.util import *
@@ -91,6 +92,8 @@ class Browser:
             webview.create_window(url, url, x=100+offset, y=100+offset, width=width, height=height)
         elif self.browser == "webbrowser":
             webbrowser.open_new(url)
+        else:
+            subprocess.run(["open", "-a", self.browser, url])
         return self
 
     def start(self):
