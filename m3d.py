@@ -5,6 +5,7 @@ import os
 os.environ["DEMO_USE"] = "panel"
 os.environ["MATHICS3_TIMING"] = "-1"
 
+import inspect
 import threading
 import re
 
@@ -136,26 +137,43 @@ class App(pn.Column):
         # used to make exiting edit mode faster
         self.pair_cache = {}
 
+        # our current or future children
         shortcuts = self.init_shortcuts()
         buttons = self.init_buttons()
-        self.rendered = pn.Column(css_classes=["m-rendered"])
-        self.editor = pn.widgets.TextAreaInput(
-            value="foobar",
-            visible=False,
-            css_classes=["m-editor"],
+        self.view = pn.Column(css_classes=["m-view"])
+        self.edit = pn.widgets.TextAreaInput(
+            css_classes=["m-edit"],
             # TODO: can be done with css?
             styles=dict(height="100vh")
         )
+        def load_help():
+            help = pn.Column(css_classes=["m-view"])
+            self.load_m3d_file("help.m3d", help)
+            return help
 
-        # now we're a column
+        # set up mode-independent stuff
         super().__init__(
             shortcuts,
             buttons,
-            self.rendered,
-            self.editor,
             css_classes=["m-app"]
         )
 
+        # where the mode-dependent items in self start
+        # when we switch modes we'll update these
+        self.mode_start = len(self)
+
+        # each mode has one or more children as specified here
+        self.mode_items = {
+            "view": [self.view],
+            "edit": [self.edit],
+            "help": [load_help],
+        }
+        self.mode = "none"
+
+        # start in view mode
+        self.set_mode("view")
+
+        # then load stuff
         if load:
             fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
             #with panel.io.hold():
@@ -175,27 +193,45 @@ class App(pn.Column):
 
         def shortcut_msg(event):
             force = event.data == "run_force"
-            for item in self.rendered:
-                if isinstance(item, Pair):
-                    item.update_if_changed(force=force)
+            if self.mode == "view":
+                for item in self.view:
+                    if isinstance(item, Pair):
+                        item.update_if_changed(force=force)
+            elif self.mode == "edit":
+                self.toggle_mode("edit", "view")
 
         shortcuts.on_msg(shortcut_msg)
 
         return shortcuts
 
+    # TODO: push/pop modes??
+    def set_mode(self, new_mode):
 
-    def toggle_edit(self):
-        if self.editor.visible:
-            self.exit_edit()
-        else:
+        if self.mode == new_mode:
+            return
+        if new_mode == "edit":
             self.enter_edit()
+        if self.mode == "edit":
+            self.exit_edit()
 
+        # lazily instantiated items
+        mode_items = [
+            item() if inspect.isfunction(item) else item
+            for item in self.mode_items[new_mode]
+        ]
+        self.mode_items[new_mode] = mode_items
+        
+        # set the new mode by replacing mode-dependent children
+        self[self.mode_start:] = mode_items
+        self.mode = new_mode
+
+    def toggle_mode(self, new_mode, old_mode):
+        new_mode = new_mode if self.mode != new_mode else old_mode
+        self.set_mode(new_mode)
 
     def enter_edit(self):
-        self.rendered.visible = False
-        self.editor.visible = True
         def collect():
-            for item in self.rendered:
+            for item in self.view:
                 if isinstance(item, Pair):
                     text = item.input.value_input
                     self.pair_cache[text] = item
@@ -203,16 +239,14 @@ class App(pn.Column):
                 elif isinstance(item, pn.pane.Markdown):
                     yield item.object
         text = "".join(collect())
-        self.editor.value = text
+        self.edit.value = text
 
 
     def exit_edit(self):
-        self.rendered.visible = True
-        self.editor.visible = False
-        self.rendered.clear()
+        self.view.clear()
         # value_input may be None if we haven't edited :(
-        text = self.editor.value_input or self.editor.value
-        self.load_m3d_string(text, run=True)
+        text = self.edit.value_input or self.edit.value
+        self.load_m3d_string(text, self.view, run=True)
         self.pair_cache.clear()
 
 
@@ -221,17 +255,23 @@ class App(pn.Column):
         edit_button = ui.icon_button(
             "edit",
             "Toggle editing\nentire file",
-            self.toggle_edit
+            lambda: self.toggle_mode("edit", "view")
+        )
+
+        help_button = ui.icon_button(
+            "help",
+            "Help is on the way!",
+            lambda: self.toggle_mode("help", "view")
         )
 
         buttons = pn.Row(
-            pn.widgets.ButtonIcon(icon="help"),
             pn.widgets.ButtonIcon(icon="file-plus"),
             pn.widgets.ButtonIcon(icon="file-download"),
             pn.widgets.ButtonIcon(icon="file-upload"),
             edit_button,
             pn.widgets.ButtonIcon(icon="player-play"),
             pn.widgets.ButtonIcon(icon="clipboard-text"),
+            help_button,
             #pn.widgets.ButtonIcon(icon="mood-smile"),
             #pn.widgets.ButtonIcon(icon="mood-confuzed"),
             #pn.widgets.ButtonIcon(icon="alert-triangle"),
@@ -245,14 +285,14 @@ class App(pn.Column):
         return buttons
 
 
-    def load_m3d_file(self, md_fn):
+    def load_m3d_file(self, md_fn, into, run=True):
         print("loading", md_fn)
         md_str = open(md_fn).read()
         # TODO: autorun optional?
-        self.load_m3d_string(md_str, run=True)
+        self.load_m3d_string(md_str, into, run=run)
 
 
-    def load_m3d_string(self, md_str, run=False):
+    def load_m3d_string(self, md_str, into, run=False):
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```)", md_str)
         is_m3 = False
@@ -266,7 +306,7 @@ class App(pn.Column):
                     del self.pair_cache[text]
                 except KeyError:
                     pair = Pair(text, input_visible = not run)
-                self.rendered.append(pair)
+                into.append(pair)
                 if run:
                     pair.update_if_changed()
             else:
@@ -281,19 +321,19 @@ class App(pn.Column):
                             font-size: 12pt;
                             line-height: 1.4;
                         }
-                        h1 {font-size: 20pt; margin-top: 1.0em; &:first-child {margin-top: 0em;}}
-                        h2 {font-size: 18pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
-                        h3 {font-size: 16pt; margin-top: 0.6em; &:first-child {margin-top: 0em;}}
-                        h4 {font-size: 24pt; margin-top: 0.4em; &:first-child {margin-top: 0em;}}
+                        h1 {font-size: 20pt; margin-top: 2.0em; &:first-child {margin-top: 0em;}}
+                        h2 {font-size: 18pt; margin-top: 1.6em; &:first-child {margin-top: 0em;}}
+                        h3 {font-size: 16pt; margin-top: 1.2em; &:first-child {margin-top: 0em;}}
+                        h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
                     """]
                 )
-                self.rendered.append(md)
+                into.append(md)
 
 
     def load_m(self, m_fn):
         m_str = open(m_fn).read()    
         pair = Pair(m_str.strip())
-        self.rendered.append(pair)
+        self.view.append(pair)
         pair.update_if_changed(force=True)
 
 
@@ -301,13 +341,13 @@ class App(pn.Column):
         if len(fns):
             for fn in fns:
                 if fn.endswith(".m3d"):                   
-                    self.load_m3d_file(fn)
+                    self.load_m3d_file(fn, self.view)
                 elif fn.endswith(".m"):
                     self.load_m(fn)
                 else:
                     print(f"Don't understand file {fn}")
         else:
-            self.rendered.append(Pair(None, input_visible=True))
+            self.view.append(Pair(None, input_visible=True))
 
 
 

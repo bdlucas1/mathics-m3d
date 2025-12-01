@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+In the button bar at the top:
+* <i class="ti ti-edit"></i> open the whole file for editing
+* <i class="ti ti-alert-triangle"></i> one or more outputs are stale; click or type cmd-enter to execute all stale
+* <i class="ti ti-help"></i> this help
+
+Next to a code block:
+* <i class="ti ti-edit"></i> open this code block for editing in-place
+* <i class="ti ti-alert-triangle"></i> this output is stale; click or type cmd+enter to execute code
+
+```
+Manipulate[
+    Plot3D[a Sin[f x] Cos[f y], {x, 0, 2 Pi}, {y, 0, 2 Pi},
+    PlotRange -> {Automatic, Automatic, {-2,2}}],
+    {{f,1}, 0, 2},
+    {{a,1}, -2, 2}
+]
+```
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+* Click the <i class="ti ti-edit"></i> icon to reveal the editable WL
+  code block that produced the plot.
+
+* Change $$x$$ to $$x^2$$ (`x^2`). You should see an icon <i class="ti
+  ti-alert-triangle"></i> indicating that the code has changed and the
+  displayed output is stale.
+
+* Click the <i class="ti ti-alert-triangle"></i> icon, or type
+  cmd+enter, to execute the code and update the displayed output.
+  The <i class="ti ti-alert-triangle"></i> icon disappears.
+
+* Click the <i class="ti ti-edit"></i> icon again to hide the code
+  block.
+
+
+

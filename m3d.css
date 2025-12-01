@@ -22,7 +22,7 @@ body {
     font-size: 21px;
 }
 
-.m-rendered {
+.m-view {
     gap: 1.5em;
 }
 
@@ -40,7 +40,7 @@ body {
     width: 100%;
 }
 
-.m-input, .m-editor {
+.m-input, .m-edit {
     width: calc(100vw - 4.5em);
 }
 
