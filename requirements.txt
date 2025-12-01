@@ -2,4 +2,6 @@ dash
 frozendict
 dash_extensions
 anywidget
+opencv-python
+panel
 pywebview
