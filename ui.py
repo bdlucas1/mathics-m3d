@@ -1,5 +1,6 @@
 import time
 import itertools
+import threading
 
 import panel as pn
 import panel.io
@@ -96,35 +97,55 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
         elif isinstance(x, pn.Column):
             x[0] = v
 
-    # timer mechanism used to "debounce" slider
-    # by setting this flag when an update is needed
+    # state for "debouncing" slider updates so that if they come in
+    # faster than we can process them we coalesce consecutive slider events
+    update_lock = threading.Lock()
+    update_running = False
     update_requested = False
-    def request_update(event):
-        nonlocal update_requested
-        update_requested = True
+    update_last = None
+    update_interval_min = float("inf")
 
-    # and periodically doing this to update if requested
-    # period can be tweaked for optimal responsiveness:
-    # too long and updates will be sluggish, but also
-    # too short and cpu is wasted so updates are sluggish
-    # TODO: can we turn timer off when not needed so we don't
-    # have constant stream of events?
-    def update_if_requested(event=None):
+    # called on each slider event (on the main thread)
+    # if an update is already running, we just set the update_requested flag,
+    # and the running update will see it and schedule another update
+    # otherwise we schdule the update ourselves
+    def request_update(self):
+        nonlocal update_running
         nonlocal update_requested
-        if update_requested:
-            update_requested = False
+        with update_lock:
+            if update_running:
+                request_update = True
+                return
+            update_running = True
+        pn.state.execute(run_update)
+
+    def stats():
+        nonlocal update_last
+        nonlocal update_interval_min
+        if update_last:
+            update_interval = (time.time() - update_last) * 1000
+            update_interval_min = min(update_interval_min, update_interval)
+            print(f"update interval: {update_interval:.1f} ms, min {update_interval_min:.1f} ms")
+        update_last = time.time()
+
+    # runs in a worker thread managed by panel to perform an update
+    # sets the running flag so that new update reequests don't run until we're done
+    # when we're done if we see that a new update has been requested we schedule it
+    def run_update():
+        nonlocal update_running
+        #stats()
+        try:
             with util.Timer("slider update"):
-                values = [s.value for s in pn_sliders]
+                values = [s.value for s in pn_sliders]                
                 target_layout = eval_and_layout(values)
                 update(target, target_layout)
-    try:
-        timer = pn.state.add_periodic_callback(update_if_requested, period=100)
-    except RuntimeError:
-        # in test mode we can't do this because we're headless, and it wants a
-        # running event loop, but in that case we can't move sliders either,
-        # so just ignore
-        pass
-        
+        finally:
+            with update_lock:
+                if not update_requested:
+                    update_running = False
+                    return
+        pn.state.execute(run_update) # if requested
+
     # build sliders
     pn_sliders = []
     cells = []    

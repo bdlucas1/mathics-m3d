@@ -79,7 +79,7 @@ def layout_ManipulateBox(fe, manipulate_expr, layout_options):
     S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
     def slider(spec):
         v, lo, hi = spec[0:3]
-        step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
+        step = spec[3] if len(spec) > 3 else (hi-lo) / 100 # TODO: better default step?
         v, init = v if isinstance(v, (list,tuple)) else (v, lo)
         v = str(v).split("`")[-1] # strip off namespace pfx
         spec = S(v, lo, init, hi, step)
