@@ -5,8 +5,9 @@ import subprocess
 import sys
 import time
 import webbrowser
-
 import webview
+
+import util
 
 parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("url", type=str)
@@ -18,10 +19,14 @@ args = parser.parse_args()
 process = subprocess.Popen(args.cmd, stdout=sys.stdout, stderr=sys.stderr)
 time.sleep(args.delay)
 
+"""
 if args.browser == "webview":
     webview.create_window(args.url, args.url, x=50, y=50, width=900, height=1200)
     webview.start()
 elif args.browser == "webbrowser":
     webbrowser.open_new(args.url)
     process.wait()
-    
+"""    
+
+util.Browser().show(args.url).start()
+time.sleep(1e6)
