@@ -138,6 +138,8 @@ class App(ui.Stack):
 
     def __init__(self, load, initial_mode = "view"):
 
+        self.current_fn = None
+
         # used to make exiting edit mode faster
         self.pair_cache = {}
 
@@ -170,6 +172,8 @@ class App(ui.Stack):
             return help
         self.append("help", load_help)
 
+        load_save_root = "data"
+
         def load_open():
             def open_file(fn):
                 # TODO: new files always go into active item "view"
@@ -179,9 +183,15 @@ class App(ui.Stack):
                 # TODO: if I reverse the order of the following two switch doesn't work - ???
                 self.load_files([fn])
                 self.activate("view")
-            selector = ui.open_file("data", open_file)
-            return selector
+            return ui.open_file(load_save_root, open_file)
         self.append("open", load_open)
+
+        def load_save():
+            def save_file(fn):
+                print("xxx save")
+            return ui.save_file(self.current_fn, load_save_root, save_file)
+        self.append("save", load_save)
+
 
         # start in requested
         # if "view" this will isntantiate the view by calling load_view via self.mode_items
@@ -211,40 +221,6 @@ class App(ui.Stack):
         shortcuts.on_msg(shortcut_msg)
 
         return shortcuts
-
-    # TODO: push/pop modes??
-    """
-    def set_mode(self, new_mode):
-
-        if self.mode == new_mode:
-            return
-
-        # make current mode-dependent items invisible
-        for item in self[self.mode_start:]:
-            item.visible = False
-
-        # lazily instantiated items
-        mode_items = self.mode_items[new_mode]
-        for i in range(len(mode_items)):
-            mode_item = mode_items[i]
-            if inspect.isfunction(mode_item):
-                mode_item = mode_item()
-                mode_items[i] = mode_item
-                self.append(mode_item)
-        
-        # make new mode dependent items visible
-        for item in mode_items:
-            item.visible = True
-
-        # special processing for entering or exiting edit mode
-        if new_mode == "edit":
-            self.enter_edit()
-        if self.mode == "edit":
-            self.exit_edit()
-
-        # all ready
-        self.mode = new_mode
-        """
 
     def activate(self, mode):
         if mode == self.active_mode:
@@ -299,16 +275,21 @@ class App(ui.Stack):
         )
 
         file_open_button = ui.icon_button(
-            "file-download",
+            "download",
             "Open a file",
             lambda: self.toggle_mode("open", "view")
         )
 
+        file_save_button = ui.icon_button(
+            "upload",
+            "Save file",
+            lambda: self.toggle_mode("save", "view")
+        )
+
         buttons = pn.Row(
-            pn.widgets.ButtonIcon(icon="file-plus"),
+            pn.widgets.ButtonIcon(icon="square-plus"),
             file_open_button,
-            pn.widgets.ButtonIcon(icon="file-download"),
-            pn.widgets.ButtonIcon(icon="file-upload"),
+            file_save_button,
             edit_button,
             pn.widgets.ButtonIcon(icon="player-play"),
             pn.widgets.ButtonIcon(icon="clipboard-text"),
@@ -397,6 +378,8 @@ class App(ui.Stack):
                     self.load_m(fn)
                 else:
                     print(f"Don't understand file {fn}")
+            if len(fns) == 1:
+                self.current_fn = fns[0]
         else:
             self.view.append(Pair(None, input_visible=True))
 
@@ -433,11 +416,7 @@ else:
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
 
-    # we need to pass a function to create the app instead of
-    # passing an already created app because the timer used in manipulate
-    # requires that the server already be running
-    app = App(load=args.files, initial_mode=args.initial_mode) # sliders don't work in this mode
-    #app = lambda: App(load=args.files, initial_mode=args.initial_mode)
+    app = App(load=args.files, initial_mode=args.initial_mode)
 
     pn.serve(
         app,

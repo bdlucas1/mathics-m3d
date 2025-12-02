@@ -221,49 +221,47 @@ def icon_button(icon, description, on_click):
     return button
 
 
+def _load_dir(selector, root_dir, dn):
+    folder = "\U0001F4C1 "
+    options = {}
+    if dn != root_dir:
+        options[folder + ".."] = False, os.path.dirname(dn)
+    for fn in os.listdir(dn):
+        path = os.path.join(dn, fn)
+        if os.path.isdir(path):
+            name = folder + fn
+            value = False, path
+        else:
+            name = fn
+            value = True, path
+        options[name] = value
+    sorted_items = sorted(options.items(), key=lambda item: item[1])
+    options = dict(sorted_items)
+    selector.options = options
+
+
 def open_file(root_dir: str, callback):
 
-    ti = '<i class="ti ti-heart">'
     top = pn.Row(
         selector := pn.widgets.MultiSelect(
             size = 10,
-            options = ["1", "xxx", "333", ti],
             value = [None]
         ),
         open_button := pn.widgets.Button(name="Open"),
-        #styles = dict(gap = "1em"),
         stylesheets = ["""
-            .bk-Row {
+            :host {
                 gap: 1em;
             }
         """],
-        css_classes = ["m-open-file"]
+        #css_classes = ["m-open-file"] # ugh, can't make it work
     )
-
-    def load_dir(dn):
-        folder = "\U0001F4C1 "
-        options = {}
-        if dn != root_dir:
-            options[folder + ".."] = False, os.path.dirname(dn)
-        for fn in os.listdir(dn):
-            path = os.path.join(dn, fn)
-            if os.path.isdir(path):
-                name = folder + fn
-                value = False, path
-            else:
-                name = fn
-                value = True, path
-            options[name] = value
-        sorted_items = sorted(options.items(), key=lambda item: item[1])
-        options = dict(sorted_items)
-        selector.options = options
 
     def do_open(_):
         is_file, path = selector.value[0]
         if is_file:
             callback(path)
         else:
-            load_dir(path)
+            _load_dir(selector, root_dir, path)
 
     def watch_value(event):
         open_button.disabled = len(selector.value) == 0
@@ -272,9 +270,45 @@ def open_file(root_dir: str, callback):
     open_button.on_click(do_open)
     selector.param.watch(watch_value, "value")
 
-    load_dir(root_dir)
+    _load_dir(selector, root_dir, root_dir)
 
     return top
+
+
+def save_file(current_fn, root_dir: str, callback):
+
+    top = pn.Row(
+        selector := pn.widgets.MultiSelect(
+            size = 10,
+            value = [None]
+        ),
+        pn.Column (
+            text_input := pn.widgets.TextInput(value=current_fn),
+            save_button := pn.widgets.Button(name="Save"),
+        ),
+        stylesheets = ["""
+            :host, * {
+                gap: 1em;
+            }
+        """],
+        #css_classes = ["m-open-file"] # ugh, can't make it work
+    )
+
+    def do_save(_):
+        is_file, path = selector.value[0]
+        print("xxx do save", is_file, path)
+
+    def watch_value(event):
+        save_button.disabled = len(selector.value) == 0
+
+    selector.on_double_click(do_save)
+    save_button.on_click(do_save)
+    selector.param.watch(watch_value, "value")
+
+    _load_dir(selector, root_dir, root_dir)
+
+    return top
+
 
 #
 #
