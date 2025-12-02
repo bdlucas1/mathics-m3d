@@ -129,14 +129,7 @@ class Pair(pn.Column):
             self.exec_button.visible = False
             
 
-#
-# We use this as a function to construct the app
-# we pass this to pn.serve so it can construct
-# the app when it's good and ready (see comment below)
-#
-
-#class App(pn.Feed):
-class App(pn.Column):
+class App(ui.Stack):
 
     def __init__(self, load, initial_mode = "view"):
 
@@ -150,14 +143,11 @@ class App(pn.Column):
             css_classes=["m-app"]
         )
 
-        # where the mode-dependent items in self start
-        # when we switch modes we'll update these
-        self.mode_start = len(self)
-
         def load_view():
             self.view = pn.Column(css_classes=["m-view"])
             self.load_files(load)
             return self.view
+        self.append("view", load_view)
 
         def load_edit():
             self.edit = pn.widgets.TextAreaInput(
@@ -167,29 +157,30 @@ class App(pn.Column):
                 styles=dict(height="100vh"),
             )
             return self.edit
+        self.append("edit", load_edit)
 
         def load_help():
             help = pn.Column(css_classes=["m-view"])
             self.load_m3d_file("data/help.m3d", help)
             return help
+        self.append("help", load_help)
 
         def load_open():
-            selector = ui.open_file("data", lambda file: print(f"file {file}"))
-            #file.param.watch(lambda event: print("value_input", event), "value_input")
+            def open_file(fn):
+                # TODO: new files always go into active item "view"
+                # do we want to give them each their own item, with some way to switch,
+                # like tabs, maybe a dropdown beside the buttons??
+                self.view[:] = []
+                # TODO: if I reverse the order of the following two switch doesn't work - ???
+                self.load_files([fn])
+                self.activate("view")
+            selector = ui.open_file("data", open_file)
             return selector
-
-        # each mode has one or more children as specified here
-        self.mode_items = {
-            "view": [load_view],
-            "edit": [load_edit],
-            "help": [load_help],
-            "open": [load_open],
-        }
-        self.mode = "none"
+        self.append("open", load_open)
 
         # start in requested
         # if "view" this will isntantiate the view by calling load_view via self.mode_items
-        self.set_mode(initial_mode)
+        self.activate(initial_mode)
 
 
     def init_shortcuts(self):
@@ -217,6 +208,7 @@ class App(pn.Column):
         return shortcuts
 
     # TODO: push/pop modes??
+    """
     def set_mode(self, new_mode):
 
         if self.mode == new_mode:
@@ -247,11 +239,21 @@ class App(pn.Column):
 
         # all ready
         self.mode = new_mode
+        """
+
+    def activate(self, mode):
+        if mode == self.active_mode:
+            return
+        if self.active_mode == "edit":
+            self.exit_edit()
+        super().activate(mode)
+        if mode == "edit":
+            self.enter_edit()
 
 
     def toggle_mode(self, new_mode, old_mode):
-        new_mode = new_mode if self.mode != new_mode else old_mode
-        self.set_mode(new_mode)
+        new_mode = new_mode if self.active_mode != new_mode else old_mode
+        self.activate(new_mode)
 
 
     def enter_edit(self):
@@ -344,6 +346,7 @@ class App(pn.Column):
                 text = part.strip()
                 try:
                     pair = self.pair_cache[text]
+                    print("USING CACHED PAIR")
                     del self.pair_cache[text]
                 except KeyError:
                     pair = Pair(text, input_visible = not run, run = run)

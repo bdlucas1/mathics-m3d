@@ -276,6 +276,50 @@ def open_file(root_dir: str, callback):
 
     return top
 
+#
+#
+#
+
+class Stack(pn.Column):
+    """
+    Manages a fixed set of items at the top of the column,
+    and a dynamically instantiated set of items,
+    only one of which is visible at a time.
+    """
+
+    def __init__(self, *fixed, **kwargs):
+        """
+        Initialize with a fixed set of items, and kwargs passed to super()
+        Fixed items are always visible.
+        """
+        super().__init__(*fixed, **kwargs)
+        self.funs = {}
+        self.items = {}
+        self.active_mode = None
+        self.active_item = None
+
+    def append(self, mode, fun):
+        """
+        Add a dymanic item. Will be instantiated by calling fun()
+        when it is activated.
+        """
+        self.funs[mode] = fun
+        self.items[mode] = None
+
+    def activate(self, mode):
+        """
+        Activate a dynamic item by name by making it visible
+        """
+        item = self.items[mode]
+        if not item:
+            item = self.funs[mode]()
+            self.items[mode] = item
+            super().append(item)
+        if self.active_item:
+            self.active_item.visible = False
+        item.visible = True
+        self.active_item = item
+        self.active_mode = mode
 
 #
 # Following code is from https://github.com/holoviz/panel/issues/3193
