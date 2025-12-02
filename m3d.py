@@ -148,8 +148,15 @@ class App(pn.Column):
         )
         def load_help():
             help = pn.Column(css_classes=["m-view"])
-            self.load_m3d_file("help.m3d", help)
+            self.load_m3d_file("data/help.m3d", help)
             return help
+        def load_file():
+            #file = pn.widgets.FileSelector(directory="data")
+            file = pn.widgets.FileInput()
+            file.param.watch(lambda event: print("value", event), "value")
+            #file.param.watch(lambda event: print("value_input", event), "value_input")
+            return file
+
 
         # set up mode-independent stuff
         super().__init__(
@@ -167,6 +174,7 @@ class App(pn.Column):
             "view": [self.view],
             "edit": [self.edit],
             "help": [load_help],
+            "file": [load_file],
         }
         self.mode = "none"
 
@@ -264,8 +272,15 @@ class App(pn.Column):
             lambda: self.toggle_mode("help", "view")
         )
 
+        file_open_button = ui.icon_button(
+            "file-download",
+            "Open a file",
+            lambda: self.toggle_mode("file", "view")
+        )
+
         buttons = pn.Row(
             pn.widgets.ButtonIcon(icon="file-plus"),
+            file_open_button,
             pn.widgets.ButtonIcon(icon="file-download"),
             pn.widgets.ButtonIcon(icon="file-upload"),
             edit_button,
@@ -293,23 +308,41 @@ class App(pn.Column):
 
 
     def load_m3d_string(self, md_str, into, run=False):
+
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```)", md_str)
         is_m3 = False
+
         for part in md_parts:
+
             if part == "```":
                 is_m3 = not is_m3
+
             elif is_m3:
+
+                # construct the pair, consulting the cache that may have been
+                # left when we entered edit mode
                 text = part.strip()
                 try:
                     pair = self.pair_cache[text]
                     del self.pair_cache[text]
                 except KeyError:
                     pair = Pair(text, input_visible = not run)
-                into.append(pair)
-                if run:
-                    pair.update_if_changed()
+
+                # this makes initial load seem snappier because it defers
+                # computing the output, and more importantly sending it to
+                # the browser, allowing an initial view on the page while stll loading
+                def defer_pair(pair):
+                    def make_pair():
+                        if run:
+                            pair.update_if_changed()
+                        return pair
+                    return pn.panel(make_pair, defer_load=True)
+                into.append(defer_pair(pair))
+
             else:
+
+                # render the text using Markdown
                 md = pn.pane.Markdown(
                     part,
                     disable_math = False,
@@ -328,6 +361,7 @@ class App(pn.Column):
                     """]
                 )
                 into.append(md)
+
 
 
     def load_m(self, m_fn):
