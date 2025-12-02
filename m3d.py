@@ -119,14 +119,19 @@ class Pair(pn.Column):
     def update_if_changed(self, force=False):
         expr = self.input.value_input
         if expr and (force or self.is_stale):
-            with util.Timer("execute code block"):
-                expr = fe.session.parse(expr)
-                expr = expr.evaluate(fe.session.evaluation)
-                layout = lt.expression_to_layout(fe, expr)
-                self.output[0] = layout
-            self.old_expr = expr
-            self.is_stale = False
-            self.exec_button.visible = False
+            try:
+                with util.Timer("execute code block"):
+                    expr = fe.session.parse(expr)
+                    expr = expr.evaluate(fe.session.evaluation)
+                    layout = lt.expression_to_layout(fe, expr)
+                    self.output[0] = layout
+                    self.old_expr = expr
+                    self.is_stale = False
+                    self.exec_button.visible = False
+            except Exception as oops:
+                print(oops)
+                self.output[0] = pn.widgets.StaticText("oops")
+                #self.output[0] = pn.widgets.StaticText(str(oops))
             
 
 class App(ui.Stack):
@@ -412,7 +417,7 @@ if "DEMO_BUILD_PYODIDE" in os.environ:
 elif "pyodide" in sys.modules:
 
     print("running under pyodide")
-    app = App(load=["data/gallery.m3d"])
+    app = App(load=["data/help.m3d"])
     app.servable()
 
 else:
