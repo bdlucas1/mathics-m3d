@@ -123,8 +123,36 @@ class Pair(pn.Column):
             self.exec_button.visible = False
             
                 
+# TODO Page?
+class View(pn.Column):
+    """
+    A column consisting of Markdown and Pairs
+    """
+
+    def __init__(self):
+        super().__init__(css_classes=["m-view"])
+        self.items = []
+
+    def append(self, item, deferred=None):
+        """
+        Append an item. If requested will append a deferred item to self, which defers
+        computation of output, but more importantly defers sending it to the browser,
+        which makes initial page load faster. We track the underlying items as well
+        because editing will need them to get the current text.
+        """
+        self.items.append(item)
+        if deferred:
+            deferred_item = pn.panel(lambda: deferred(item), defer_load=True)
+            super().append(deferred_item)
+        else:
+            super().append(item)
+
+    def clear(self):
+        self.items.clear()
+        super().clear()
+
 #
-# function to construct the app
+# We use this as a function to construct the app
 # we pass this to pn.serve so it can construct
 # the app when it's good and ready (see comment below)
 #
@@ -137,31 +165,10 @@ class App(pn.Column):
         # used to make exiting edit mode faster
         self.pair_cache = {}
 
-        # our current or future children
-        shortcuts = self.init_shortcuts()
-        buttons = self.init_buttons()
-        self.view = pn.Column(css_classes=["m-view"])
-        self.edit = pn.widgets.TextAreaInput(
-            css_classes=["m-edit"],
-            # TODO: can be done with css?
-            styles=dict(height="100vh")
-        )
-        def load_help():
-            help = pn.Column(css_classes=["m-view"])
-            self.load_m3d_file("data/help.m3d", help)
-            return help
-        def load_file():
-            #file = pn.widgets.FileSelector(directory="data")
-            file = pn.widgets.FileInput()
-            file.param.watch(lambda event: print("value", event), "value")
-            #file.param.watch(lambda event: print("value_input", event), "value_input")
-            return file
-
-
         # set up mode-independent stuff
         super().__init__(
-            shortcuts,
-            buttons,
+            self.init_shortcuts(),
+            self.init_buttons(),
             css_classes=["m-app"]
         )
 
@@ -169,19 +176,46 @@ class App(pn.Column):
         # when we switch modes we'll update these
         self.mode_start = len(self)
 
+        def load_view():
+            self.view = View()
+            return self.view
+
+        def load_edit():
+            self.edit = pn.widgets.TextAreaInput(
+                value="foo",
+                visible=False,
+                css_classes=["m-edit"],
+                styles=dict(height="100vh"),
+            )
+            return self.edit
+
+        def load_help():
+            help = View()
+            self.load_m3d_file("data/help.m3d", help)
+            return help
+
+        def load_file():
+            #file = pn.widgets.FileSelector(directory="data")
+            file = pn.widgets.FileInput()
+            file.param.watch(lambda event: print("value", event), "value")
+            #file.param.watch(lambda event: print("value_input", event), "value_input")
+            return file
+
         # each mode has one or more children as specified here
         self.mode_items = {
-            "view": [self.view],
-            "edit": [self.edit],
+            "view": [load_view],
+            "edit": [load_edit],
             "help": [load_help],
             "file": [load_file],
         }
         self.mode = "none"
 
         # start in view mode
+        # this will isntantiate the view by calling load_view via self.mode_items
         self.set_mode("view")
 
         # then load stuff
+        # TODO: maybe could be in load_view?
         if load:
             fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
             #with panel.io.hold():
@@ -202,7 +236,7 @@ class App(pn.Column):
         def shortcut_msg(event):
             force = event.data == "run_force"
             if self.mode == "view":
-                for item in self.view:
+                for item in self.view.items:
                     if isinstance(item, Pair):
                         item.update_if_changed(force=force)
             elif self.mode == "edit":
@@ -217,35 +251,50 @@ class App(pn.Column):
 
         if self.mode == new_mode:
             return
+
+        # make current mode-dependent items invisible
+        for item in self[self.mode_start:]:
+            item.visible = False
+
+        # lazily instantiated items
+        mode_items = self.mode_items[new_mode]
+        for i in range(len(mode_items)):
+            mode_item = mode_items[i]
+            if inspect.isfunction(mode_item):
+                mode_item = mode_item()
+                mode_items[i] = mode_item
+                self.append(mode_item)
+        
+        # make new mode dependent items visible
+        for item in mode_items:
+            item.visible = True
+
+        # special processing for entering or exiting edit mode
         if new_mode == "edit":
             self.enter_edit()
         if self.mode == "edit":
             self.exit_edit()
 
-        # lazily instantiated items
-        mode_items = [
-            item() if inspect.isfunction(item) else item
-            for item in self.mode_items[new_mode]
-        ]
-        self.mode_items[new_mode] = mode_items
-        
-        # set the new mode by replacing mode-dependent children
-        self[self.mode_start:] = mode_items
+        # all ready
         self.mode = new_mode
+
 
     def toggle_mode(self, new_mode, old_mode):
         new_mode = new_mode if self.mode != new_mode else old_mode
         self.set_mode(new_mode)
 
+
     def enter_edit(self):
         def collect():
-            for item in self.view:
+            for item in self.view.items:
                 if isinstance(item, Pair):
                     text = item.input.value_input
                     self.pair_cache[text] = item
                     yield f"```\n{text}\n```"
                 elif isinstance(item, pn.pane.Markdown):
                     yield item.object
+                else:
+                    assert False, "expect Pair or Markdown"
         text = "".join(collect())
         self.edit.value = text
 
@@ -329,16 +378,14 @@ class App(pn.Column):
                 except KeyError:
                     pair = Pair(text, input_visible = not run)
 
-                # this makes initial load seem snappier because it defers
-                # computing the output, and more importantly sending it to
-                # the browser, allowing an initial view on the page while stll loading
-                def defer_pair(pair):
-                    def make_pair():
-                        if run:
-                            pair.update_if_changed()
-                        return pair
-                    return pn.panel(make_pair, defer_load=True)
-                into.append(defer_pair(pair))
+                # make initial load snappier by deferring  computing the output,
+                # and more importantly sending it to the browser,
+                # allowing an initial view on the page while stll loading
+                def deferred(pair):
+                    if run:
+                        pair.update_if_changed()
+                    return pair
+                into.append(pair, deferred)
 
             else:
 
