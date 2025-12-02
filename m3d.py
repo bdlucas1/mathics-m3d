@@ -45,7 +45,7 @@ fe = FE()
 
 class Pair(pn.Column):
 
-    def __init__(self, text=None, input_visible=False):
+    def __init__(self, text=None, input_visible=False, run=False):
         
         self.old_expr = ""
         self.is_stale = True
@@ -94,6 +94,9 @@ class Pair(pn.Column):
         )
 
         # output
+        # make initial load snappier by deferring computing the output,
+        # and more importantly sending it to the browser,
+        # allowing an initial view on the page while stll loading
         self.output = pn.Row(
             None, # actual output goes here
             buttons,
@@ -101,13 +104,16 @@ class Pair(pn.Column):
             # TODO: extract from .css file?
             styles=dict(width="fit-content", gap="1em")
         )
+        def make_output():
+            if run:
+                self.update_if_changed()
+            return self.output
+        deferred_output = pn.panel(make_output, defer_load=True)
 
         # make us a column consisting of the input followed by the output
         # input may be invisible if not in edit mode
-        super().__init__(self.input, self.output, css_classes=["m-pair"])
+        super().__init__(self.input, deferred_output, css_classes=["m-pair"])
 
-        # initial content
-        #self.update_if_changed(force=True)
 
     # check whether input has changed, and eval if so
     def update_if_changed(self, force=False):
@@ -117,39 +123,11 @@ class Pair(pn.Column):
                 expr = fe.session.parse(expr)
                 expr = expr.evaluate(fe.session.evaluation)
                 layout = lt.expression_to_layout(fe, expr)
-                self[1][0] = layout
+                self.output[0] = layout
             self.old_expr = expr
             self.is_stale = False
             self.exec_button.visible = False
             
-                
-# TODO Page?
-class View(pn.Column):
-    """
-    A column consisting of Markdown and Pairs
-    """
-
-    def __init__(self):
-        super().__init__(css_classes=["m-view"])
-        self.items = []
-
-    def append(self, item, deferred=None):
-        """
-        Append an item. If requested will append a deferred item to self, which defers
-        computation of output, but more importantly defers sending it to the browser,
-        which makes initial page load faster. We track the underlying items as well
-        because editing will need them to get the current text.
-        """
-        self.items.append(item)
-        if deferred:
-            deferred_item = pn.panel(lambda: deferred(item), defer_load=True)
-            super().append(deferred_item)
-        else:
-            super().append(item)
-
-    def clear(self):
-        self.items.clear()
-        super().clear()
 
 #
 # We use this as a function to construct the app
@@ -177,7 +155,7 @@ class App(pn.Column):
         self.mode_start = len(self)
 
         def load_view():
-            self.view = View()
+            self.view = pn.Column(css_classes=["m-view"])
             return self.view
 
         def load_edit():
@@ -190,7 +168,7 @@ class App(pn.Column):
             return self.edit
 
         def load_help():
-            help = View()
+            help = pn.Column(css_classes=["m-view"])
             self.load_m3d_file("data/help.m3d", help)
             return help
 
@@ -236,7 +214,7 @@ class App(pn.Column):
         def shortcut_msg(event):
             force = event.data == "run_force"
             if self.mode == "view":
-                for item in self.view.items:
+                for item in self.view:
                     if isinstance(item, Pair):
                         item.update_if_changed(force=force)
             elif self.mode == "edit":
@@ -286,7 +264,7 @@ class App(pn.Column):
 
     def enter_edit(self):
         def collect():
-            for item in self.view.items:
+            for item in self.view:
                 if isinstance(item, Pair):
                     text = item.input.value_input
                     self.pair_cache[text] = item
@@ -376,16 +354,9 @@ class App(pn.Column):
                     pair = self.pair_cache[text]
                     del self.pair_cache[text]
                 except KeyError:
-                    pair = Pair(text, input_visible = not run)
+                    pair = Pair(text, input_visible = not run, run = run)
 
-                # make initial load snappier by deferring  computing the output,
-                # and more importantly sending it to the browser,
-                # allowing an initial view on the page while stll loading
-                def deferred(pair):
-                    if run:
-                        pair.update_if_changed()
-                    return pair
-                into.append(pair, deferred)
+                into.append(pair)
 
             else:
 
@@ -413,9 +384,8 @@ class App(pn.Column):
 
     def load_m(self, m_fn):
         m_str = open(m_fn).read()    
-        pair = Pair(m_str.strip())
+        pair = Pair(m_str.strip(), run=True)
         self.view.append(pair)
-        pair.update_if_changed(force=True)
 
 
     def load_files(self, fns):
