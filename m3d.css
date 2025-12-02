@@ -2,7 +2,23 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font: 10pt menlo, consolas, 'DejaVu Sans Mono', monospace;
+    /*font: 10pt menlo, consolas, 'DejaVu Sans Mono', monospace;*/
+    font: 11pt sans-serif;
+}
+
+textarea {
+    font: 9pt menlo, consolas, 'DejaVu Sans Mono', monospace !important;
+}
+
+select {
+    padding-top: 0.5em !important;
+}
+
+select option {
+    /* no effect
+    margin: 5pt !important;
+    line-height: 20pt !important;
+    */
 }
 
 body {
@@ -178,6 +194,11 @@ textarea.bk-input {
         grid-row: var(--row);
     }
 }
+
+.m-open-file {
+    gap: 1em;
+}
+
 
 
 

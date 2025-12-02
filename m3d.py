@@ -138,7 +138,7 @@ class Pair(pn.Column):
 #class App(pn.Feed):
 class App(pn.Column):
 
-    def __init__(self, load):
+    def __init__(self, load, initial_mode = "view"):
 
         # used to make exiting edit mode faster
         self.pair_cache = {}
@@ -156,6 +156,7 @@ class App(pn.Column):
 
         def load_view():
             self.view = pn.Column(css_classes=["m-view"])
+            self.load_files(load)
             return self.view
 
         def load_edit():
@@ -172,32 +173,23 @@ class App(pn.Column):
             self.load_m3d_file("data/help.m3d", help)
             return help
 
-        def load_file():
-            #file = pn.widgets.FileSelector(directory="data")
-            file = pn.widgets.FileInput()
-            file.param.watch(lambda event: print("value", event), "value")
+        def load_open():
+            selector = ui.open_file("data", lambda file: print(f"file {file}"))
             #file.param.watch(lambda event: print("value_input", event), "value_input")
-            return file
+            return selector
 
         # each mode has one or more children as specified here
         self.mode_items = {
             "view": [load_view],
             "edit": [load_edit],
             "help": [load_help],
-            "file": [load_file],
+            "open": [load_open],
         }
         self.mode = "none"
 
-        # start in view mode
-        # this will isntantiate the view by calling load_view via self.mode_items
-        self.set_mode("view")
-
-        # then load stuff
-        # TODO: maybe could be in load_view?
-        if load:
-            fns = "data/gallery.m3d" if "pyodide" in sys.modules else sys.argv[1:]
-            #with panel.io.hold():
-            self.load_files(fns)
+        # start in requested
+        # if "view" this will isntantiate the view by calling load_view via self.mode_items
+        self.set_mode(initial_mode)
 
 
     def init_shortcuts(self):
@@ -302,7 +294,7 @@ class App(pn.Column):
         file_open_button = ui.icon_button(
             "file-download",
             "Open a file",
-            lambda: self.toggle_mode("file", "view")
+            lambda: self.toggle_mode("open", "view")
         )
 
         buttons = pn.Row(
@@ -408,21 +400,36 @@ class App(pn.Column):
 #
 
 if "DEMO_BUILD_PYODIDE" in os.environ:
+
     print("building for pyodide")
-    app = App(load=False)
+    app = App(load=[])
     app.servable()
+
+
 elif "pyodide" in sys.modules:
+
     print("running under pyodide")
-    app = App(load=True)
+    app = App(load=["data/gallery.m3d"])
     app.servable()
+
 else:
     print("running as local server")
+
+    import argparse
+    parser = argparse.ArgumentParser(description="m3d")
+    parser.add_argument(
+        "--initial-mode", "-i",
+        choices=["view","edit","help","open","save"],
+        default="view"
+    )
+    parser.add_argument("files", nargs="*", type=str)
+    args = parser.parse_args()
 
     # we need to pass a function to create the app instead of
     # passing an already created app because the timer used in manipulate
     # requires that the server already be running
-    #app = App(load=True) # sliders don't work in this mode
-    app = lambda: App(load=True)
+    app = App(load=args.files, initial_mode=args.initial_mode) # sliders don't work in this mode
+    #app = lambda: App(load=args.files, initial_mode=args.initial_mode)
 
     pn.serve(
         app,

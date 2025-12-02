@@ -1,6 +1,7 @@
 import time
 import itertools
 import threading
+import os
 
 import panel as pn
 import panel.io
@@ -133,7 +134,7 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
     # when we're done if we see that a new update has been requested we schedule it
     def run_update():
         nonlocal update_running
-        #stats()
+        stats()
         try:
             with util.Timer("slider update"):
                 values = [s.value for s in pn_sliders]                
@@ -218,6 +219,62 @@ def icon_button(icon, description, on_click):
         button.description = tt()
     button.on_click(intercept)
     return button
+
+
+def open_file(root_dir: str, callback):
+
+    ti = '<i class="ti ti-heart">'
+    top = pn.Row(
+        selector := pn.widgets.MultiSelect(
+            size = 10,
+            options = ["1", "xxx", "333", ti],
+            value = [None]
+        ),
+        open_button := pn.widgets.Button(name="Open"),
+        #styles = dict(gap = "1em"),
+        stylesheets = ["""
+            .bk-Row {
+                gap: 1em;
+            }
+        """],
+        css_classes = ["m-open-file"]
+    )
+
+    def load_dir(dn):
+        folder = "\U0001F4C1 "
+        options = {}
+        if dn != root_dir:
+            options[folder + ".."] = False, os.path.dirname(dn)
+        for fn in os.listdir(dn):
+            path = os.path.join(dn, fn)
+            if os.path.isdir(path):
+                name = folder + fn
+                value = False, path
+            else:
+                name = fn
+                value = True, path
+            options[name] = value
+        sorted_items = sorted(options.items(), key=lambda item: item[1])
+        options = dict(sorted_items)
+        selector.options = options
+
+    def do_open(_):
+        is_file, path = selector.value[0]
+        if is_file:
+            callback(path)
+        else:
+            load_dir(path)
+
+    def watch_value(event):
+        open_button.disabled = len(selector.value) == 0
+
+    selector.on_double_click(do_open)
+    open_button.on_click(do_open)
+    selector.param.watch(watch_value, "value")
+
+    load_dir(root_dir)
+
+    return top
 
 
 #
