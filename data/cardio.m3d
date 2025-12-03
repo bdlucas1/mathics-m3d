@@ -1,3 +1,10 @@
+This plot is modeled after an equation floating around the web that's
+of the form $$f(x,y)=k$$, which defines a curve consisting of all
+$$(x,y)$$ that satisfy the equation. Plotting the curve requires
+`ContourPlot` which we don't have yet, but we can get a similar - in
+some ways better - figure by doing a `Plot3D` of $$\min(1, f(x,y))$$.
+Maybe when we get `Animate` implemented we can make it beat.
+
 ```
 Plot3D[
     Min[1, x^2 + (-5 y / 4 + Sqrt[Abs[x]])^2],
@@ -5,7 +12,12 @@ Plot3D[
     {y, -1, 1.8}
 ]
 ```
- 
+Here's another one I found floating around. It's a parametric plot,
+that is, the curve consists of the set of points $$(x(t),y(t))$$
+for some functions $$x$$ and $$y$$ over some range of values for $$t$$.
+If you click on the pencil to reveal the formula, you'll see that the
+function $$y(t)$$ looks suspiciously like the first few terms of a Fourier
+series that someone laboriously constructed.
 ```
 ParametricPlot[
     {
