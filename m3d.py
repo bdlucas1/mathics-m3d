@@ -129,9 +129,17 @@ class Pair(pn.Column):
                     self.is_stale = False
                     self.exec_button.visible = False
             except Exception as oops:
-                print(oops)
-                self.output[0] = pn.widgets.StaticText("oops")
-                #self.output[0] = pn.widgets.StaticText(str(oops))
+                msg = f"Internal error: {oops}"
+                print(msg)
+                util.print_exc_reversed()
+                error_box = pn.widgets.StaticText(
+                    value=msg,
+                    styles = dict(
+                        background = "#fff0f0",
+                        padding = "0.5em"
+                    )
+                )
+                self.output[0] = error_box
             
 
 class App(ui.Stack):
