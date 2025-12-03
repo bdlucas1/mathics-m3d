@@ -22,6 +22,9 @@ number of environments:
 * They also should support Jupyter and JupyterLite (Pyodide)
   integration (TBD)
 
+* Integration into a command-line shell should also be possible by
+  displaying graphics in a browser window.
+
 ### Markdown + Mathics3 notebook
 
 To run locally, you will need to have a recent development version of
