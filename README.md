@@ -48,4 +48,4 @@ a desktop browser. It also seems to work more-or-less on my iPhone but
 there are currently a number of problems with fonts, tooltips, and
 grabbing the sliders without moving the page.
 
-<img width="60%" src="pics/m3d.png" />
+<img width="60%" src="pics/cardio.png" />

@@ -3,13 +3,17 @@ of the form $$f(x,y)=k$$, which defines a curve consisting of all
 $$(x,y)$$ that satisfy the equation. Plotting the curve requires
 `ContourPlot` which we don't have yet, but we can get a similar - in
 some ways better - figure by doing a `Plot3D` of $$\min(1, f(x,y))$$.
-Maybe when we get `Animate` implemented we can make it beat.
+Maybe when we get `Animate` implemented we can make it beat, but meanwhile
+you can give this one CPR if you'd like.
 
 ```
-Plot3D[
-    Min[1, x^2 + (-5 y / 4 + Sqrt[Abs[x]])^2],
-    {x, -1.5, 1.5},
-    {y, -1, 1.8}
+Manipulate[
+    Plot3D[
+        (cpr (Min[1, x^2 + (-5 y / 4 + Sqrt[Abs[x]])^2] - 1)) + 1,
+        {x, -1.5, 1.5}, {y, -1, 1.8},
+        PlotRange->{Automatic,Automatic,{0,1}}    
+    ],
+    {{cpr,0.5}, 0, 1}
 ]
 ```
 Here's another one I found floating around. It's a parametric plot,
@@ -27,4 +31,11 @@ ParametricPlot[
     {t, -Pi, Pi}, AspectRatio -> 1
 ]
 ```
-
+No collection of such plots would be complete without that original, primitive,
+un-evolved ur-cardioid, expressed in polar form as $$1+\sin(\theta)$$.
+```
+PolarPlot[
+    {1 - Sin[theta]},
+    {theta, 0, 2 Pi}
+]
+```
