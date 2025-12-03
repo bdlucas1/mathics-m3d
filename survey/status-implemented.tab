@@ -25,7 +25,7 @@ Arrow           Graphics Primitive  yes         needs support in front-end
 Circle          Graphics Primitive  yes         needs support in front-end
 Cuboid          Graphics Primitive  yes         needs support in front-end
 Inset           Graphics Primitive  yes         needs support in front-end
-Line            Graphics Primitive  yes         needs support in front-end
+Line            Graphics Primitive  yes         good
 Point           Graphics Primitive  yes         ?
 Polygon         Graphics Primitive  yes         ?
 Rectangle       Graphics Primitive  yes         needs support in front-end
