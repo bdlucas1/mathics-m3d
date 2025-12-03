@@ -417,7 +417,7 @@ class App(ui.Stack):
     def load_files(self, fns):
         if len(fns):
             for fn in fns:
-                if fn.endswith(".m3d"):                   
+                if fn.endswith(".m3d") or fn.endswith(".md"):
                     self.load_m3d_file(fn, self.view)
                 elif fn.endswith(".m"):
                     self.load_m(fn)
