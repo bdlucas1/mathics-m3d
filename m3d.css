@@ -23,15 +23,15 @@ select option {
 
 body {
     width: fit-content;
+    height: fit-content;
     overflow-x: hidden;
-    /*margin: 1.5em;*/
     margin-left: 2.5em;
-    /*margin-top: 2em;*/
+    padding-bottom: 100px;
 }
 
 .m-app {
     gap: 1.5em;
-    height: 100vh;
+    height: fit-content;
 }
 
 .bk-TablerIcon {
