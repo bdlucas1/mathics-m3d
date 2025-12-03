@@ -1,0 +1,12 @@
+AbsArgPlot
+```
+AbsArgPlot[1/(z-1),{z,-2-2 I,2+2 I}]
+```
+ArgPlot
+```
+ArgPlot[1/(z-1),{z,-2-2 I,2+2 I}]
+```
+ComplexPlot
+```
+ComplexPlot[Exp[I z],{z,-2-2 I,2+2 I}]
+```

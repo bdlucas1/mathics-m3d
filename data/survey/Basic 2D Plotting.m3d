@@ -1,0 +1,28 @@
+DiscretePlot
+```
+DiscretePlot[n^2,{n,1,10}]
+```
+ListLinePlot
+```
+ListLinePlot[{1,4,2,5,3}]
+```
+ListPlot
+```
+ListPlot[{1,4,2,5,3}]
+```
+ListStepPlot
+```
+ListStepPlot[{1,4,2,5,3}]
+```
+ParametricPlot
+```
+ParametricPlot[{Cos[t],Sin[t]},{t,0,2 Pi}]
+```
+Plot
+```
+Plot[Sin[x], {x, 0, 2 Pi}]
+```
+PolarPlot
+```
+PolarPlot[1+0.5 Cos[3 θ],{θ,0,2 Pi}]
+```

@@ -1,0 +1,94 @@
+Function,Mathics3,Category
+AbsArgPlot,yes,Complex Visualization
+Animate,partial,Interactive & Animation
+Animate3D,partial,Interactive & Animation
+ArgPlot,yes,Complex Visualization
+ArrayPlot,yes,Image & Array Visualization
+Arrow,yes,Low-Level Graphics Primitives
+AudioPlot,no,Audio/Spectrum Visualization
+BarChart,yes,Statistical & Discrete Plots
+BodePlot,no,Specialized Plots
+BoundaryMeshRegion,limited,Region & Geometry Plots
+BoxWhiskerChart,partial,Statistical & Discrete Plots
+CandlestickChart,no,Time Series & Financial
+Circle,yes,Low-Level Graphics Primitives
+CommunityGraphPlot,no,Graph & Network Visualization
+ComplexPlot,yes,Complex Visualization
+ComplexPlot3D,no,Complex Visualization
+ContourPlot,yes,Contour & Density Plots
+ContourPlot3D,no,3D Field & Volume Plots
+Cuboid,limited,Low-Level Graphics Primitives (3D)
+DateListPlot,partial,Time Series & Financial
+DelaunayMesh,limited,Region & Geometry Plots
+DensityPlot,yes,Contour & Density Plots
+DensityPlot3D,no,3D Field & Volume Plots
+DiscretePlot,yes,Basic 2D Plotting
+DistributionChart,partial,Statistical & Discrete Plots
+FinancialPlot,no,Time Series & Financial
+GeoGraphics,no,Geographic Visualization
+GeoHistogram,no,Geographic Visualization
+GeoListPlot,no,Geographic Visualization
+GeoPlot,no,Geographic Visualization
+GeoRegionValuePlot,no,Geographic Visualization
+Graph,limited,Graph & Network Visualization
+GraphPlot,no,Graph & Network Visualization
+GraphPlot3D,no,Graph & Network Visualization
+Graphics,yes,Low-Level Graphics Constructs
+Graphics3D,yes,Low-Level Graphics Constructs
+Histogram,yes,Statistical & Discrete Plots
+Image,limited,Image & Array Visualization
+Image3D,no,Image & Array Visualization
+ImagePlot,yes,Image & Array Visualization
+Inset,yes,Low-Level Graphics Primitives
+LayeredGraphPlot,no,Graph & Network Visualization
+Line,yes,Low-Level Graphics Primitives
+ListContourPlot,no,Contour & Density Plots
+ListDensityPlot,no,Contour & Density Plots
+ListLinePlot,yes,Basic 2D Plotting
+ListLinePlot3D,no,Basic 3D Plotting
+ListPlot,yes,Basic 2D Plotting
+ListPlot3D,yes,Basic 3D Plotting
+ListPointPlot3D,limited,Basic 3D Plotting
+ListStepPlot,yes,Basic 2D Plotting
+ListStreamPlot,no,Contour & Density Plots
+ListSurfacePlot3D,no,Basic 3D Plotting
+ListVectorPlot,no,Contour & Density Plots
+MFCCPlot,no,Audio/Spectrum Visualization
+Manipulate,no,Interactive & Animation
+MatrixPlot,yes,Image & Array Visualization
+NumberLinePlot,yes,Specialized Plots
+NyquistPlot,no,Specialized Plots
+ParametricPlot,yes,Basic 2D Plotting
+ParametricPlot3D,yes,Basic 3D Plotting
+Periodogram,no,Audio/Spectrum Visualization
+PieChart,yes,Statistical & Discrete Plots
+Plot,yes,Basic 2D Plotting
+Plot3D,yes,Basic 3D Plotting
+Point,yes,Low-Level Graphics Primitives
+PolarPlot,yes,Basic 2D Plotting
+PoleZeroPlot,no,Specialized Plots
+Polygon,yes,Low-Level Graphics Primitives
+Raster,yes,Image & Array Visualization
+Rectangle,yes,Low-Level Graphics Primitives
+RegionFunction (general),limited,Region & Geometry Plots
+RegionPlot,yes,Region & Geometry Plots
+RegionPlot3D,partial,Region & Geometry Plots
+ReliefPlot,limited,Image & Array Visualization
+RootLocusPlot,no,Specialized Plots
+Show,yes,Low-Level Graphics Constructs
+SliceContourPlot3D,no,3D Field & Volume Plots
+SliceDensityPlot3D,no,3D Field & Volume Plots
+SliceVectorPlot3D,no,3D Field & Volume Plots
+SmoothHistogram,limited,Statistical & Discrete Plots
+Spectrogram,no,Audio/Spectrum Visualization
+Sphere,partial,Low-Level Graphics Primitives (3D)
+SphericalPlot3D,yes,Basic 3D Plotting
+StreamPlot,yes,Contour & Density Plots
+StreamPlot3D,no,3D Field & Volume Plots
+Text,yes,Low-Level Graphics Primitives
+TradingChart,no,Time Series & Financial
+TreePlot,no,Graph & Network Visualization
+Tube,partial,Low-Level Graphics Primitives (3D)
+VectorPlot,yes,Contour & Density Plots
+VectorPlot3D,no,3D Field & Volume Plots
+VoronoiMesh,limited,Region & Geometry Plots
