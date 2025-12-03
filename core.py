@@ -7,3 +7,4 @@ from mathics.core.expression import *
 from mathics.core.list import *
 from mathics.session import *
 from mathics.builtin.colors.color_directives import *
+from mathics_scanner.errors import SyntaxError, InvalidSyntaxError

@@ -1,0 +1,11 @@
+<!-- m3d autorun:off -->
+``` m3d autorun:on
+Plot[x,{x,0,1}]
+```
+```
+Plot[x,{x,0,1}]
+```
+<!-- m3d autorun:on -->
+```
+Plot[x,{x,0,1}]
+```

@@ -49,6 +49,7 @@ class Pair(pn.Column):
         
         self.old_expr = ""
         self.is_stale = True
+        self.opener = "```"
 
         # input
         instructions = "Type expression followed by shift-enter"
@@ -129,7 +130,8 @@ class Pair(pn.Column):
                     self.is_stale = False
                     self.exec_button.visible = False
             except Exception as oops:
-                msg = f"Internal error: {oops}"
+                kind = "Syntax error" if isinstance(oops, core.InvalidSyntaxError) else "Internal error"
+                msg = f"{kind}: {oops}"
                 print(msg)
                 util.print_exc_reversed()
                 error_box = pn.widgets.StaticText(
@@ -140,13 +142,15 @@ class Pair(pn.Column):
                     )
                 )
                 self.output[0] = error_box
-            
+        
+
 
 class App(ui.Stack):
 
     def __init__(self, load, initial_mode = "view"):
 
         self.current_fn = None
+        self.active_mode = None
 
         # used to make exiting edit mode faster
         self.pair_cache = {}
@@ -195,20 +199,22 @@ class App(ui.Stack):
         self.append("open", load_open)
 
         def load_save():
-            if not hasattr(self, "edit"):
-                return
+            if hasattr(self, "edit"):
+                text = self.edit.value_input or self.edit.value
+            else:
+                text = self.collect_text()
             def on_save(fn):
                 with open(fn) as f, open(fn+"~", "w") as t:
                     t.write(f.read())
                 with open(fn, "w") as f:
-                    f.write(self.edit.value_input)
+                    f.write(text)
                 self.activate("view")
             return ui.save_file(self.current_fn, load_save_root, on_save)
         self.append("save", load_save)
 
 
         # start in requested
-        # if "view" this will isntantiate the view by calling load_view via self.mode_items
+        # if "view" this will isntantiate the view by calling load_view via self.active_mode_items
         self.activate(initial_mode)
 
 
@@ -225,11 +231,11 @@ class App(ui.Stack):
 
         def shortcut_msg(event):
             force = event.data == "run_force"
-            if self.mode == "view":
+            if self.active_mode == "view":
                 for item in self.view:
                     if isinstance(item, Pair):
                         item.update_if_changed(force=force)
-            elif self.mode == "edit":
+            elif self.active_mode == "edit":
                 self.toggle_mode("edit", "view")
 
         shortcuts.on_msg(shortcut_msg)
@@ -251,19 +257,23 @@ class App(ui.Stack):
         self.activate(new_mode)
 
 
-    def enter_edit(self):
+    def collect_text(self):
         def collect():
             for item in self.view:
                 if isinstance(item, Pair):
                     text = item.input.value_input
                     self.pair_cache[text] = item
-                    yield f"```\n{text}\n```"
+                    yield f"{item.opener}\n{text}\n```"
                 elif isinstance(item, pn.pane.Markdown):
                     yield item.object
                 else:
                     assert False, "expect Pair or Markdown"
         text = "".join(collect())
-        self.edit.value = text
+        return text
+
+
+    def enter_edit(self):
+        self.edit.value = self.collect_text()
 
 
     def exit_edit(self):
@@ -331,12 +341,28 @@ class App(ui.Stack):
     def load_m3d_string(self, md_str, into, run=False):
 
         # TODO: allow for tags or instructions after ``` until end of line
-        md_parts = re.split("(```)", md_str)
+        md_parts = re.split("(```[^\n]*)", md_str)
         is_m3 = False
+
+        def parse_options(s):
+            options = {}
+            if "m3d" in s:
+                for nv in s.split():
+                    nv = nv.split(":")
+                    if len(nv) == 2:
+                        options[nv[0]] = nv[1]
+            return options
+                        
+        def truthful(x):
+            return str(x).lower() in ("true", "on", "yes")
+
+        global_options = {}
 
         for part in md_parts:
 
-            if part == "```":
+            if part.startswith("```"):
+                opener = part
+                options = global_options | parse_options(part)
                 is_m3 = not is_m3
 
             elif is_m3:
@@ -349,11 +375,16 @@ class App(ui.Stack):
                     print("USING CACHED PAIR")
                     del self.pair_cache[text]
                 except KeyError:
-                    pair = Pair(text, input_visible = not run, run = run)
+                    autorun = truthful(options.get("autorun", run))
+                    pair = Pair(text, input_visible = not autorun, run = autorun)
 
+                pair.opener = opener
                 into.append(pair)
 
             else:
+
+                for comment in re.findall("<!--[\\s\\S]*?-->", part):
+                    global_options |= parse_options(comment)
 
                 # render the text using Markdown
                 md = pn.pane.Markdown(
