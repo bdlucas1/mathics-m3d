@@ -191,10 +191,7 @@ class App(ui.Stack):
                 # TODO: new files always go into active item "view"
                 # do we want to give them each their own item, with some way to switch,
                 # like tabs, maybe a dropdown beside the buttons??
-                self.view[:] = []
-                # TODO: if I reverse the order of the following two switch doesn't work - ???
-                self.load_files([fn])
-                self.activate("view")
+                self.load_files([fn], activate="view")
             return ui.open_file(load_save_root, on_open)
         self.append("open", load_open)
 
@@ -310,6 +307,12 @@ class App(ui.Stack):
             lambda: self.toggle_mode("save", "view")
         )
 
+        heart_button = ui.icon_button(
+            "heart",
+            "Like it?",
+            lambda: self.load_files(["data/cardio.m3d"], activate="view")
+        )
+
         buttons = pn.Row(
             pn.widgets.ButtonIcon(icon="square-plus"),
             file_open_button,
@@ -318,11 +321,11 @@ class App(ui.Stack):
             pn.widgets.ButtonIcon(icon="player-play"),
             pn.widgets.ButtonIcon(icon="clipboard-text"),
             help_button,
+            heart_button,
             #pn.widgets.ButtonIcon(icon="mood-smile"),
             #pn.widgets.ButtonIcon(icon="mood-confuzed"),
             #pn.widgets.ButtonIcon(icon="alert-triangle"),
             #pn.widgets.ButtonIcon(icon="square-x"),
-            #pn.widgets.ButtonIcon(icon="heart"),
             #pn.widgets.ButtonIcon(icon="file-pencil"),    
             #pn.widgets.ButtonIcon(icon="player-track-next"),
             css_classes=["m-button-row"]
@@ -414,7 +417,8 @@ class App(ui.Stack):
         self.view.append(pair)
 
 
-    def load_files(self, fns):
+    def load_files(self, fns, activate=None):
+        self.view[:] = []
         if len(fns):
             for fn in fns:
                 if fn.endswith(".m3d") or fn.endswith(".md"):
@@ -427,6 +431,8 @@ class App(ui.Stack):
                 self.current_fn = fns[0]
         else:
             self.view.append(Pair(None, input_visible=True))
+        if activate:
+            self.activate(activate)
 
 
 

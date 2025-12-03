@@ -1,0 +1,18 @@
+```
+Plot3D[
+    Min[1, x^2 + (-5 y / 4 + Sqrt[Abs[x]])^2],
+    {x, -1.5, 1.5},
+    {y, -1, 1.8}
+]
+```
+ 
+```
+ParametricPlot[
+    {
+        16 Sin[t] ^ 3,
+        13 Cos[t] - 5 Cos[2 t] - 2 Cos[3 t] - Cos[4 t]
+    },
+    {t, -Pi, Pi}, AspectRatio -> 1
+]
+```
+
