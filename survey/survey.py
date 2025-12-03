@@ -47,7 +47,7 @@ def make5():
     cd = os.getcwd()
     os.chdir("/Users/bdlucas1/mathics-core")
     for name, info in s3.items():
-        rc = subprocess.run(["git", "grep", "class " + name, "mathics"])
+        rc = subprocess.run(["git", "grep", f"class {name}(", "mathics"])
         if rc.returncode == 0:
             git.add(name)
     os.chdir(cd)
