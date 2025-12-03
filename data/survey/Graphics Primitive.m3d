@@ -1,44 +1,44 @@
 Arrow
-```
+``` m3d test:Arrow
 Graphics[Arrow[{{0,0},{1,1}}]]
 ```
 Circle
-```
+``` m3d test:Circle
 Graphics[Circle[{0,0},1]]
 ```
 Cuboid
-```
+``` m3d test:Cuboid
 Graphics3D[Cuboid[{0,0,0},{1,1,1}]]
 ```
 Inset
-```
+``` m3d test:Inset
 Graphics[Inset["Hi",{1,1}]]
 ```
 Line
-```
+``` m3d test:Line
 Graphics[Line[{{0,0},{1,1}}]]
 ```
 Point
-```
+``` m3d test:Point
 Graphics[Point[{1,1}]]
 ```
 Polygon
-```
+``` m3d test:Polygon
 Graphics[Polygon[{{0,0},{1,0},{0,1}}]]
 ```
 Rectangle
-```
+``` m3d test:Rectangle
 Graphics[Rectangle[{0,0},{1,1}]]
 ```
 Sphere
-```
+``` m3d test:Sphere
 Graphics3D[Sphere[{0,0,0},1]]
 ```
 Text
-```
+``` m3d test:Text
 Graphics[Text["Hello",{0.5,0.5}]]
 ```
 Tube
-```
+``` m3d test:Tube
 Graphics3D[Tube[{{0,0,0},{1,1,1}}]]
 ```

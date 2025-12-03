@@ -1,4 +1,4 @@
 Graph
-```
+``` m3d test:Graph
 Graph[{1->2,2->3,3->1}]
 ```

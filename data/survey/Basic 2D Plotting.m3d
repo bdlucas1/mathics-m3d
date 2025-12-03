@@ -1,28 +1,28 @@
 DiscretePlot
-```
+``` m3d test:DiscretePlot
 DiscretePlot[n^2,{n,1,10}]
 ```
 ListLinePlot
-```
+``` m3d test:ListLinePlot
 ListLinePlot[{1,4,2,5,3}]
 ```
 ListPlot
-```
+``` m3d test:ListPlot
 ListPlot[{1,4,2,5,3}]
 ```
 ListStepPlot
-```
+``` m3d test:ListStepPlot
 ListStepPlot[{1,4,2,5,3}]
 ```
 ParametricPlot
-```
+``` m3d test:ParametricPlot
 ParametricPlot[{Cos[t],Sin[t]},{t,0,2 Pi}]
 ```
 Plot
-```
+``` m3d test:Plot
 Plot[Sin[x], {x, 0, 2 Pi}]
 ```
 PolarPlot
-```
+``` m3d test:PolarPlot
 PolarPlot[1+0.5 Cos[3 θ],{θ,0,2 Pi}]
 ```

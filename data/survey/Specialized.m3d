@@ -1,4 +1,4 @@
 NumberLinePlot
-```
+``` m3d test:NumberLinePlot
 NumberLinePlot[{1,3,4}]
 ```

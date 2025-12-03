@@ -1,8 +1,4 @@
-Animate
-```
-Animate[Plot[Sin[a x],{x,0,2 Pi}],{a,0,3}]
-```
-Animate3D
-```
-Animate[Plot3D[Sin[a x y],{x,-2,2},{y,-2,2}],{a,0,2}]
+Manipulate
+``` m3d test:Manipulate
+Manipulate[Plot[a x,{x,0,1}],{a,0,5}]
 ```

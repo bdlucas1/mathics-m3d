@@ -1,12 +1,12 @@
 Graphics
-```
+``` m3d test:Graphics
 Graphics[Line[{{0,0},{1,1}}]]
 ```
 Graphics3D
-```
+``` m3d test:Graphics3D
 Graphics3D[Sphere[]]
 ```
 Show
-```
+``` m3d test:Show
 Show[Plot[Sin[x],{x,0,2 Pi}],Plot[Cos[x],{x,0,2 Pi}]]
 ```

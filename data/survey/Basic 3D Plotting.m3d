@@ -1,20 +1,4 @@
-ListPlot3D
-```
-ListPlot3D[Table[{x,y,Sin[x y]},{x,0,3},{y,0,3}]]
-```
-ListPointPlot3D
-```
-ListPointPlot3D[{{0,0,0},{1,1,1}}]
-```
-ParametricPlot3D
-```
-ParametricPlot3D[{Cos[t],Sin[t],t/4},{t,0,8 Pi}]
-```
 Plot3D
-```
+``` m3d test:Plot3D
 Plot3D[Sin[x y],{x,-2,2},{y,-2,2}]
-```
-SphericalPlot3D
-```
-SphericalPlot3D[r,{θ,0,Pi},{φ,0,2 Pi}]
 ```

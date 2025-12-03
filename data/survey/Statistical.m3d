@@ -1,24 +1,12 @@
 BarChart
-```
+``` m3d test:BarChart
 BarChart[{3,5,2,7}]
 ```
-BoxWhiskerChart
-```
-BoxWhiskerChart[RandomVariate[NormalDistribution[],20]]
-```
-DistributionChart
-```
-DistributionChart[Table[RandomVariate[NormalDistribution[],20],3]]
-```
 Histogram
-```
+``` m3d test:Histogram
 Histogram[RandomVariate[NormalDistribution[],200]]
 ```
 PieChart
-```
+``` m3d test:PieChart
 PieChart[{3,2,5}]
-```
-SmoothHistogram
-```
-SmoothHistogram[RandomVariate[NormalDistribution[],200]]
 ```
