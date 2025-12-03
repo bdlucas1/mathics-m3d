@@ -1,0 +1,45 @@
+Function	Category	    Git		Comments
+
+DiscretePlot	Basic 2D Plotting   yes		good
+ListLinePlot	Basic 2D Plotting   yes		good
+ListPlot	Basic 2D Plotting   yes         good
+ListStepPlot	Basic 2D Plotting   yes		good
+ParametricPlot	Basic 2D Plotting   yes		good
+Plot		Basic 2D Plotting   yes		good
+PolarPlot	Basic 2D Plotting   yes		good
+
+Plot3D		Basic 3D Plotting   yes		good - vectorized
+
+ComplexPlot	Complex		    yes		good - vectorized
+ComplexPlot3D	Complex		    yes		good - vectorized
+
+DensityPlot	Contour & Density   yes		good - vectorized
+
+Graph		Graph		    yes	        ?
+
+Graphics	Graphics	    yes		yes
+Graphics3D	Graphics	    yes		example uses Sphere which is not impl
+Show		Graphics	    yes		output is maybe not correct
+
+Arrow		Graphics Primitive  yes		stub
+Circle		Graphics Primitive  yes		stub
+Cuboid		Graphics Primitive  yes		stub
+Inset		Graphics Primitive  yes		stub
+Line		Graphics Primitive  yes		good
+Point		Graphics Primitive  yes		?
+Polygon		Graphics Primitive  yes		?
+Rectangle	Graphics Primitive  yes		stub
+Sphere		Graphics Primitive  yes		stub
+Text		Graphics Primitive  yes		stub
+Tube		Graphics Primitive  yes		stub
+
+Image		Image		    yes		need to impl ImageBox
+
+Manipulate	Interactive	    yes		git is stub, wip in mathics-m3d
+
+NumberLinePlot	Specialized	    yes		good
+
+BarChart	Statistical	    yes		?
+Histogram	Statistical	    yes		?
+PieChart	Statistical	    yes		?
+
