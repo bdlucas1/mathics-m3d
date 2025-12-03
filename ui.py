@@ -262,6 +262,8 @@ class FileSelect(pn.widgets.MultiSelect):
             options[folder + ".."] = False, os.path.dirname(dn)
         for fn in os.listdir(dn):
             path = os.path.join(dn, fn)
+            if fn.startswith(".") or fn.endswith("~"):
+                continue
             if os.path.isdir(path):
                 name = folder + fn
                 value = False, path
