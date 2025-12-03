@@ -76,6 +76,9 @@ class GraphicsOptions:
             graphics_options,
             None
         )
+        # TODO: shouldn't this be done by _get_image_size?
+        if not aspect:
+            aspect = 1
         self.image_size = [width * multi, height * multi * aspect]
         
         # PlotRange
