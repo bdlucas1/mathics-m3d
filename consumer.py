@@ -286,9 +286,13 @@ class GraphicsConsumer:
 
         def directives(ctx, expr):
 
+            # TODO: what is the right way to detect a color directive?
             if color := core.expression_to_color(expr):
-                rgba = color.to_rgba()
-                yield (sym.SymbolRGBColor, rgba, ctx)
+                try:
+                    rgba = color.to_rgba()
+                    yield (sym.SymbolRGBColor, rgba, ctx)
+                except:
+                    print("unknown item", type(expr), expr)
 
             elif expr.head == sym.SymbolEdgeForm:
                 for e in expr.elements:

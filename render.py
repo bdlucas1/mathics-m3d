@@ -145,6 +145,9 @@ class FigureBuilder:
     @util.Timer("figure")
     def figure(self):
 
+        if not self.data:
+            return
+
         # compute data_range
         with util.Timer("data_range"):
             if self.dim == 3:
