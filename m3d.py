@@ -175,7 +175,7 @@ class App(ui.Stack):
         load_save_root = "data"
 
         def load_open():
-            def open_file(fn):
+            def on_open(fn):
                 # TODO: new files always go into active item "view"
                 # do we want to give them each their own item, with some way to switch,
                 # like tabs, maybe a dropdown beside the buttons??
@@ -183,13 +183,19 @@ class App(ui.Stack):
                 # TODO: if I reverse the order of the following two switch doesn't work - ???
                 self.load_files([fn])
                 self.activate("view")
-            return ui.open_file(load_save_root, open_file)
+            return ui.open_file(load_save_root, on_open)
         self.append("open", load_open)
 
         def load_save():
-            def save_file(fn):
-                print("xxx save")
-            return ui.save_file(self.current_fn, load_save_root, save_file)
+            if not hasattr(self, "edit"):
+                return
+            def on_save(fn):
+                with open(fn) as f, open(fn+"~", "w") as t:
+                    t.write(f.read())
+                with open(fn, "w") as f:
+                    f.write(self.edit.value_input)
+                self.activate("view")
+            return ui.save_file(self.current_fn, load_save_root, on_save)
         self.append("save", load_save)
 
 

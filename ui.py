@@ -221,32 +221,56 @@ def icon_button(icon, description, on_click):
     return button
 
 
-def _load_dir(selector, root_dir, dn):
-    folder = "\U0001F4C1 "
-    options = {}
-    if dn != root_dir:
-        options[folder + ".."] = False, os.path.dirname(dn)
-    for fn in os.listdir(dn):
-        path = os.path.join(dn, fn)
-        if os.path.isdir(path):
-            name = folder + fn
-            value = False, path
-        else:
-            name = fn
-            value = True, path
-        options[name] = value
-    sorted_items = sorted(options.items(), key=lambda item: item[1])
-    options = dict(sorted_items)
-    selector.options = options
+class FileSelect(pn.widgets.MultiSelect):
+    """ UI to navigate directory hierarchy """
 
+    def __init__(self, root_dir, on_select, on_open = lambda _: None):
 
-def open_file(root_dir: str, callback):
+        def on_double_click(event):
+            is_file, path = self.value[0]
+            if is_file:
+                on_open(path)
+            else:
+                self.load_dir(root_dir, path)
+
+        super().__init__(size=10, value=[])
+        self.on_double_click(on_double_click)
+        self.param.watch(lambda _: on_select(), "value")
+        self.load_dir(root_dir, root_dir)
+    
+    def load_dir(self, root_dir, dn):
+        folder = "\U0001F4C1 "
+        options = {}
+        if dn != root_dir:
+            options[folder + ".."] = False, os.path.dirname(dn)
+        for fn in os.listdir(dn):
+            path = os.path.join(dn, fn)
+            if os.path.isdir(path):
+                name = folder + fn
+                value = False, path
+            else:
+                name = fn
+                value = True, path
+            options[name] = value
+        sorted_items = sorted(options.items(), key=lambda item: item[1])
+        options = dict(sorted_items)
+        self.options = options
+        self.current_dir = dn
+
+    @property
+    def info(self):
+        value = self.value[0] if len(self.value) else (None, None)
+        return value
+
+def open_file(root_dir: str, on_open):
+    """ UI to open a file """
+
+    def on_select():
+        _, path = file_select.info
+        open_button.disabled = path is None
 
     top = pn.Row(
-        selector := pn.widgets.MultiSelect(
-            size = 10,
-            value = [None]
-        ),
+        file_select := FileSelect(root_dir, on_select, on_open),
         open_button := pn.widgets.Button(name="Open"),
         stylesheets = ["""
             :host {
@@ -256,32 +280,53 @@ def open_file(root_dir: str, callback):
         #css_classes = ["m-open-file"] # ugh, can't make it work
     )
 
-    def do_open(_):
-        is_file, path = selector.value[0]
-        if is_file:
-            callback(path)
-        else:
-            _load_dir(selector, root_dir, path)
-
-    def watch_value(event):
-        open_button.disabled = len(selector.value) == 0
-
-    selector.on_double_click(do_open)
-    open_button.on_click(do_open)
-    selector.param.watch(watch_value, "value")
-
-    _load_dir(selector, root_dir, root_dir)
-
     return top
 
 
-def save_file(current_fn, root_dir: str, callback):
+def save_file(current_fn, root_dir: str, on_save):
+    """ UI to save a file """
+
+    def allowed(path):
+        if not path.startswith(root_dir) or ".." in path:
+            return False
+        else:
+            dn = os.path.dirname(path)
+            if not os.path.isdir(dn):
+                return False
+        return True
+
+    def vet(is_file, path):
+        if not path or not is_file:
+            disabled, caption = True, "Nope"
+        elif path == current_fn:
+            disabled, caption = False, "Save"
+        elif os.path.exists(path):
+            disabled, caption = False, "Overwrite"
+        elif not allowed(path):
+            disabled, caption = True, "Nope"
+        else:
+            disabled, caption = False, "Save as"
+        save_button.name = caption
+        save_button.disabled = disabled
+        if path:
+            text_input.value = path
+
+    def on_select():
+        is_file, path = file_select.info
+        vet(is_file, path)
+
+    def on_input(event):
+        path = text_input.value_input
+        is_file = not os.path.isdir(path)
+        vet(is_file, path)
+
+    def on_save_button(event):
+        # .value_input is only set after some input
+        path = text_input.value_input or text_input.value
+        on_save(path)
 
     top = pn.Row(
-        selector := pn.widgets.MultiSelect(
-            size = 10,
-            value = [None]
-        ),
+        file_select := FileSelect(root_dir, on_select),
         pn.Column (
             text_input := pn.widgets.TextInput(value=current_fn),
             save_button := pn.widgets.Button(name="Save"),
@@ -294,18 +339,8 @@ def save_file(current_fn, root_dir: str, callback):
         #css_classes = ["m-open-file"] # ugh, can't make it work
     )
 
-    def do_save(_):
-        is_file, path = selector.value[0]
-        print("xxx do save", is_file, path)
-
-    def watch_value(event):
-        save_button.disabled = len(selector.value) == 0
-
-    selector.on_double_click(do_save)
-    save_button.on_click(do_save)
-    selector.param.watch(watch_value, "value")
-
-    _load_dir(selector, root_dir, root_dir)
+    save_button.on_click(on_save_button)
+    text_input.param.watch(on_input, "value_input")
 
     return top
 
@@ -347,6 +382,8 @@ class Stack(pn.Column):
         item = self.items[mode]
         if not item:
             item = self.funs[mode]()
+            if not item:
+                return
             self.items[mode] = item
             super().append(item)
         if self.active_item:
