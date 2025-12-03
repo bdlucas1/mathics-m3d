@@ -1,79 +1,77 @@
-Function		Category			Interest
+Function                Category                        Interest
 
-ContourPlot3D		3D Field & Volume Plots
-DensityPlot3D		3D Field & Volume Plots
-SliceContourPlot3D	3D Field & Volume Plots
-SliceDensityPlot3D	3D Field & Volume Plots
-SliceVectorPlot3D	3D Field & Volume Plots
-StreamPlot3D		3D Field & Volume Plots
-VectorPlot3D		3D Field & Volume Plots
+ContourPlot3D           3D Field & Volume Plots
+DensityPlot3D           3D Field & Volume Plots
+SliceContourPlot3D      3D Field & Volume Plots
+SliceDensityPlot3D      3D Field & Volume Plots
+SliceVectorPlot3D       3D Field & Volume Plots
+StreamPlot3D            3D Field & Volume Plots
+VectorPlot3D            3D Field & Volume Plots
 
-AudioPlot		Audio
-MFCCPlot		Audio
-Periodogram		Audio
-Spectrogram		Audio
+AudioPlot               Audio
+MFCCPlot                Audio
+Periodogram             Audio
+Spectrogram             Audio
 
-ListLinePlot3D		Basic 3D Plotting
-ListPlot3D		Basic 3D Plotting
-ListPointPlot3D		Basic 3D Plotting
-ListSurfacePlot3D	Basic 3D Plotting
-ParametricPlot3D	Basic 3D Plotting		yes
-SphericalPlot3D		Basic 3D Plotting		yes
+ListLinePlot3D          Basic 3D Plotting
+ListPlot3D              Basic 3D Plotting
+ListPointPlot3D         Basic 3D Plotting
+ListSurfacePlot3D       Basic 3D Plotting
+ParametricPlot3D        Basic 3D Plotting               yes
+SphericalPlot3D         Basic 3D Plotting               yes
 
-AbsArgPlot		Complex				yes
-ArgPlot			Complex				yes
+AbsArgPlot              Complex                         yes
+ArgPlot                 Complex                         yes
 
-ContourPlot		Contour & Density		yes
-ListContourPlot		Contour & Density
-ListDensityPlot		Contour & Density
-ListStreamPlot		Contour & Density
-ListVectorPlot		Contour & Density
-StreamPlot		Contour & Density		?
-VectorPlot		Contour & Density		?
+ContourPlot             Contour & Density               yes
+ListContourPlot         Contour & Density
+ListDensityPlot         Contour & Density
+ListStreamPlot          Contour & Density
+ListVectorPlot          Contour & Density
+StreamPlot              Contour & Density               ?
+VectorPlot              Contour & Density               ?
 
-CandlestickChart	Financial
-FinancialPlot		Financial
-TradingChart		Financial
+CandlestickChart        Financial
+FinancialPlot           Financial
+TradingChart            Financial
 
-GeoGraphics		Geo
-GeoHistogram		Geo
-GeoListPlot		Geo
-GeoPlot			Geo
-GeoRegionValuePlot	Geo
+GeoGraphics             Geo
+GeoHistogram            Geo
+GeoListPlot             Geo
+GeoPlot                 Geo
+GeoRegionValuePlot      Geo
 
-CommunityGraphPlot	Graph
-GraphPlot		Graph
-GraphPlot3D		Graph
-LayeredGraphPlot	Graph
-TreePlot		Graph
+CommunityGraphPlot      Graph
+GraphPlot               Graph
+GraphPlot3D             Graph
+LayeredGraphPlot        Graph
+TreePlot                Graph
 
-ArrayPlot		Image
-Image3D			Image
-ImagePlot		Image
-MatrixPlot		Image
-Raster			Image
-ReliefPlot		Image
+ArrayPlot               Image
+Image3D                 Image
+ImagePlot               Image
+MatrixPlot              Image
+Raster                  Image
+ReliefPlot              Image
 
-Animate			Interactive			yes
-Animate3D		Interactive			yes
+Animate                 Interactive                     yes
+Animate3D               Interactive                     yes
 
-BoundaryMeshRegion	Region
-DelaunayMesh		Region
-RegionPlot		Region
-RegionPlot3D		Region
-VoronoiMesh		Region
+BoundaryMeshRegion      Region
+DelaunayMesh            Region
+RegionPlot              Region
+RegionPlot3D            Region
+VoronoiMesh             Region
 
-RegionFunction		Region & Geometry Plots		?
+RegionFunction          Region & Geometry Plots         ?
 
-BodePlot		Specialized			?
-NyquistPlot		Specialized			?
-PoleZeroPlot		Specialized			?
-RootLocusPlot		Specialized			?
+BodePlot                Specialized                     ?
+NyquistPlot             Specialized                     ?
+PoleZeroPlot            Specialized                     ?
+RootLocusPlot           Specialized                     ?
 
-BoxWhiskerChart		Statistical
-DistributionChart	Statistical
-SmoothHistogram		Statistical
+BoxWhiskerChart         Statistical
+DistributionChart       Statistical
+SmoothHistogram         Statistical
 
-DateListPlot		Time Series
-
-
+DateListPlot            Time Series
