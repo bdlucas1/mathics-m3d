@@ -233,7 +233,24 @@ class FileSelect(pn.widgets.MultiSelect):
             else:
                 self.load_dir(root_dir, path)
 
-        super().__init__(size=10, value=[])
+        super().__init__(
+            size=10,
+            value=[],
+            # always show scrollbar on MacOS
+            # https://stackoverflow.com/questions/7492062
+            stylesheets=["""
+                ::-webkit-scrollbar {
+                  -webkit-appearance: none;
+                  width: 7px;
+                }
+                ::-webkit-scrollbar-thumb {
+                  border-radius: 4px;
+                  background-color: rgba(0, 0, 0, .5);
+                  box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+                }
+            """]
+        )
+
         self.on_double_click(on_double_click)
         self.param.watch(lambda _: on_select(), "value")
         self.load_dir(root_dir, root_dir)
