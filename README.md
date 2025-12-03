@@ -10,11 +10,13 @@ capability of Mathics3, and
 These technologies are interesting because they integrate well into a
 number of environments:
 
-* A work-in-progress notebook-style tool, m3d.py, that works with
+* A work-in-progress notebook-style tool, `m3d.py`, that works with
   Markdown files with embedded Mathics3 code blocks. The Markdown is
   rendered as rich text, and the Mathics3 code blocks are evaluated
-  and displayed in-place as interactive graphics. Editing is also
-  supported.
+  and displayed in-place as interactive graphics. Editing the source
+  Markdown and Mathics3 code is also supported.
+  
+  <img width="60%" src="pics/cardio.png" />
 
 * Panel and Plotly also work under Pyodide. A Pyodide embedding of the
   m3d.py notebook tools is in progress
@@ -28,7 +30,7 @@ number of environments:
 ### Markdown + Mathics3 notebook
 
 To run locally, you will need to have a recent development version of
-Mathic3 installed, and then:
+Mathics3 installed, and then:
 
     pip install -r requirements.txt
     python m3d.py data/gallery.m3d
@@ -39,7 +41,7 @@ the command line or use the file open button inside the notebook UI.
 
 The requirements file is probably not up-to-date; let me know. Also,
 if the installation of pywebview fails, the program should still run,
-displaying the result in your system browser instead of popping up a
+displaying the notebook in your system browser instead of popping up a
 dedicated window.
 
 You can also run it in your browser under Pyodide by following this
@@ -48,4 +50,4 @@ a desktop browser. It also seems to work more-or-less on my iPhone but
 there are currently a number of problems with fonts, tooltips, and
 grabbing the sliders without moving the page.
 
-<img width="60%" src="pics/cardio.png" />
+
