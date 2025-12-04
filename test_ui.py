@@ -111,6 +111,8 @@ def run_tests_really():
     change_value("open_file_select", [(True, test_file)], trigger_field="value")
     click("open_file_open_button")
     check_text("view", test_string)
+    click("edit_button")
+    check_text("edit", test_string)
 
     # clean up
     os.remove(test_file)
