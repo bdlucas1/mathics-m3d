@@ -122,11 +122,11 @@ class Pair(pn.Column):
         if expr and (force or self.is_stale):
             try:
                 with util.Timer("execute code block"):
+                    self.old_expr = expr
                     expr = fe.session.parse(expr)
                     expr = expr.evaluate(fe.session.evaluation)
                     layout = lt.expression_to_layout(fe, expr)
                     self.output[0] = layout
-                    self.old_expr = expr
                     self.is_stale = False
                     self.exec_button.visible = False
             except Exception as oops:
@@ -151,6 +151,7 @@ class App(ui.Stack):
 
         self.current_fn = None
         self.active_mode = None
+        self.text_owner = "view"
 
         # used to make exiting edit mode faster
         self.pair_cache = {}
@@ -196,13 +197,11 @@ class App(ui.Stack):
         self.append("open", load_open)
 
         def load_save():
-            if hasattr(self, "edit"):
-                text = self.edit.value_input or self.edit.value
-            else:
-                text = self.collect_text()
+            text = self.get_current_text()
             def on_save(fn):
-                with open(fn) as f, open(fn+"~", "w") as t:
-                    t.write(f.read())
+                if os.path.exists(fn):
+                    with open(fn) as f, open(fn+"~", "w") as t:
+                        t.write(f.read())
                 with open(fn, "w") as f:
                     f.write(text)
                 self.activate("view")
@@ -239,26 +238,54 @@ class App(ui.Stack):
 
         return shortcuts
 
-    def activate(self, mode):
-        if mode == self.active_mode:
-            return
-        if self.active_mode == "edit":
-            self.exit_edit()
-        super().activate(mode)
-        if mode == "edit":
-            self.enter_edit()
-
 
     def toggle_mode(self, new_mode, old_mode):
         new_mode = new_mode if self.active_mode != new_mode else old_mode
         self.activate(new_mode)
 
 
-    def collect_text(self):
+    def activate(self, new_mode):
+
+        old_mode = self.active_mode
+        if new_mode == self.active_mode:
+            return
+
+        # sets the new mode, and may instantiate associated ui artifacts
+        # so we have to do this before we can handle any transition logic
+        super().activate(new_mode)
+
+        # with the UI artifacts in place, we can handle transition logic,
+        # in particular transfer active text from old to new owner if necessary
+        if self.text_owner == "edit" and new_mode == "view":
+            # TODO: having a View class with a value property
+            # that handled this would make the logic cleanera
+            self.view.clear()
+            text = self.get_edit_text()
+            self.load_m3d_string(text, self.view, run=True)
+            self.pair_cache.clear()
+            self.text_owner = "view"
+        elif self.text_owner == "view" and new_mode == "edit":
+            self.edit.value = self.get_view_text()
+            self.text_owner = "edit"
+
+        # not reusable
+        if old_mode == "save":
+            self.close("save")
+
+
+    def get_edit_text(self):
+        # need to look at both because
+        # before user types: .value_input is "", .value has what the user sees
+        # after user types: .value_input has what the user typed, .value may be stale
+        return self.edit.value_input or self.edit.value
+
+
+    def get_view_text(self):
         def collect():
             for item in self.view:
                 if isinstance(item, Pair):
-                    text = item.input.value_input
+                    # see comment above
+                    text = item.input.value_input or item.input.value
                     self.pair_cache[text] = item
                     yield f"{item.opener}\n{text}\n```"
                 elif isinstance(item, pn.pane.Markdown):
@@ -269,16 +296,12 @@ class App(ui.Stack):
         return text
 
 
-    def enter_edit(self):
-        self.edit.value = self.collect_text()
-
-
-    def exit_edit(self):
-        self.view.clear()
-        # value_input may be None if we haven't edited :(
-        text = self.edit.value_input or self.edit.value
-        self.load_m3d_string(text, self.view, run=True)
-        self.pair_cache.clear()
+    def get_current_text(self):
+        print("get_current_text owner", self.text_owner)
+        if self.text_owner == "edit":
+            return self.get_edit_text()
+        elif self.text_owner == "view":
+            return self.get_view_text()
 
 
     def init_buttons(self): 

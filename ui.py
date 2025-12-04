@@ -411,6 +411,12 @@ class Stack(pn.Column):
         self.active_item = item
         self.active_mode = mode
 
+    def close(self, mode):
+        if mode in self.items:
+            item = self.items[mode]
+            self.remove(item)
+            self.items[mode] = None
+            
 #
 # Following code is from https://github.com/holoviz/panel/issues/3193
 #
