@@ -228,6 +228,7 @@ class FileSelect(pn.widgets.MultiSelect):
     def __init__(self, root_dir, on_select, on_open = lambda _: None):
 
         def on_double_click(event):
+            #print("xxx self.value", self.value)
             is_file, path = self.value[0]
             if is_file:
                 on_open(path)
@@ -282,92 +283,103 @@ class FileSelect(pn.widgets.MultiSelect):
         value = self.value[0] if len(self.value) else (None, None)
         return value
 
-def open_file(root_dir: str, on_open):
+class OpenFile(pn.Row):
     """ UI to open a file """
-
-    def on_select():
-        _, path = file_select.info
-        open_button.disabled = path is None
-
-    top = pn.Row(
-        file_select := FileSelect(root_dir, on_select, on_open),
-        open_button := pn.widgets.Button(name="Open"),
-        stylesheets = ["""
-            :host {
-                gap: 1em;
-            }
-        """],
-        #css_classes = ["m-open-file"] # ugh, can't make it work
-    )
     
-    test_ui.item(open_button, "open_file_open_button")
+    def __init__(self, root_dir: str, on_open):
+        self.root_dir = root_dir
+        self.on_open = on_open
 
-    return top
+        def on_select():
+            _, path = file_select.info
+            open_button.disabled = path is None
+
+        def on_open_button(_):
+            _, path = file_select.info
+            on_open(path)
+
+        super().__init__(
+            file_select := FileSelect(root_dir, on_select, on_open),
+            open_button := pn.widgets.Button(name="Open"),
+            stylesheets = ["""
+                :host {
+                    gap: 1em;
+                }
+            """],
+            #css_classes = ["m-open-file"] # ugh, can't make it work
+        )
+
+        open_button.on_click(on_open_button)
+
+        test_ui.item(file_select, "open_file_select")
+        test_ui.item(open_button, "open_file_open_button")
 
 
-def save_file(current_fn, root_dir: str, on_save):
-    """ UI to save a file """
+class SaveFile(pn.Row):
 
-    def allowed(path):
-        if not path.startswith(root_dir) or ".." in path:
-            return False
-        else:
-            dn = os.path.dirname(path)
-            if not os.path.isdir(dn):
+    def __init__(self, current_fn, root_dir: str, on_save):
+        """ UI to save a file """
+
+        def allowed(path):
+            if not path.startswith(root_dir) or ".." in path:
                 return False
-        return True
+            else:
+                dn = os.path.dirname(path)
+                if not os.path.isdir(dn):
+                    return False
+            return True
 
-    def vet(is_file, path):
-        if not path or not is_file:
-            disabled, caption = True, "Nope"
-        elif path == current_fn:
-            disabled, caption = False, "Save"
-        elif os.path.exists(path):
-            disabled, caption = False, "Overwrite"
-        elif not allowed(path):
-            disabled, caption = True, "Nope"
-        else:
-            disabled, caption = False, "Save as"
-        save_button.name = caption
-        save_button.disabled = disabled
-        if path:
-            text_input.value = path
+        def vet(is_file, path):
+            if not path or not is_file:
+                disabled, caption = True, "Nope"
+            elif not allowed(path):
+                disabled, caption = True, "Nope"
+            elif path == current_fn:
+                disabled, caption = False, "Save"
+            elif os.path.exists(path):
+                disabled, caption = False, "Overwrite"
+            else:
+                disabled, caption = False, "Save as"
+            save_button.name = caption
+            save_button.disabled = disabled
+            if path:
+                text_input.value = path
 
-    def on_select():
-        is_file, path = file_select.info
-        vet(is_file, path)
+        def on_select():
+            is_file, path = file_select.info
+            vet(is_file, path)
 
-    def on_input(event):
-        path = text_input.value_input
-        is_file = not os.path.isdir(path)
-        vet(is_file, path)
+        def on_input(event):
+            path = text_input.value_input
+            is_file = not os.path.isdir(path)
+            vet(is_file, path)
 
-    def on_save_button(event):
-        # .value_input is only set after some input
-        path = text_input.value_input or text_input.value
-        on_save(path)
+        def on_save_button(event):
+            # .value_input is only set after some input
+            path = text_input.value_input or text_input.value
+            on_save(path)
 
-    top = pn.Row(
-        file_select := FileSelect(root_dir, on_select),
-        pn.Column (
-            text_input := pn.widgets.TextInput(value=current_fn),
-            save_button := pn.widgets.Button(name="Save"),
-        ),
-        stylesheets = ["""
-            :host, * {
-                gap: 1em;
-            }
-        """],
-        #css_classes = ["m-open-file"] # ugh, can't make it work
-    )
+        super().__init__(
+            file_select := FileSelect(root_dir, on_select),
+            pn.Column (
+                text_input := pn.widgets.TextInput(value=current_fn),
+                save_button := pn.widgets.Button(name="Save"),
+            ),
+            stylesheets = ["""
+                :host, * {
+                    gap: 1em;
+                }
+            """],
+            #css_classes = ["m-open-file"] # ugh, can't make it work
+        )
 
-    save_button.on_click(on_save_button)
-    text_input.param.watch(on_input, "value_input")
+        save_button.on_click(on_save_button)
+        text_input.param.watch(on_input, "value_input")
 
-    test_ui.item(save_button, "save_file_save_button")
-    test_ui.item(text_input, "save_file_text_input")
+        test_ui.item(file_select, "save_file_select")
+        test_ui.item(text_input, "save_file_text_input")
+        test_ui.item(save_button, "save_file_save_button")
 
-    return top
 
 
 #

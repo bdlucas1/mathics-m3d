@@ -287,17 +287,12 @@ class Edit(pn.widgets.TextAreaInput):
         self.value = text
 
 
-class Open:
+class Open(ui.OpenFile):
     persistent = True
-    def __init__(self, data_root, on_open):
-        ui.open_file(data_root, on_open)
-        
 
-class Save:
+
+class Save(ui.SaveFile):
     persistent = False
-    def __init__(self, current_fn, data_root, on_save):
-        ui.save_file(current_fn, data_root, on_save)
-
 
 
 class App(ui.Stack):
@@ -315,7 +310,7 @@ class App(ui.Stack):
             css_classes=["m-app"]
         )
 
-        # TODO: cmd line flag
+        # TODO: cmd line, env flag
         autorun = True
 
         def make_view():
@@ -350,7 +345,8 @@ class App(ui.Stack):
             # do we want to give them each their own item, with some way to switch,
             # like tabs, maybe a dropdown beside the buttons??
             def on_open(fn):
-                self.view.load_files([fn])
+                self.view.load_files([fn], run=autorun)
+                self.activate("view")
             return Open(data_root, on_open)
         self.append("open", make_open)
 
@@ -367,13 +363,14 @@ class App(ui.Stack):
         self.append("save", make_save)
 
 
-        # start in requested
+        # start in requested mode
         # if "view" this will isntantiate the view by
         # calling make_view via self.active_mode_items
         self.activate(initial_mode)
 
         # start tests after we're loaded
-        pn.state.onload(test_ui.run_tests, threaded=True)
+        # TODO: command-line flag
+        #pn.state.onload(test_ui.run_tests, threaded=True)
 
 
     def init_shortcuts(self):
@@ -407,8 +404,13 @@ class App(ui.Stack):
     def activate(self, new_mode):
 
         old_mode = self.active_mode
-        if new_mode == self.active_mode:
+        if new_mode == old_mode:
             return
+
+        # we've moving away from old_mode (previous test guaranteed that)
+        # not persistent means it has state that must be renewed next time it's opened
+        #if self.active_item and not self.active_item.persistent:
+        #    self.close_item(self.active_item)
 
         # sets the new mode, and may instantiate associated ui artifacts
         # so we have to do this before we can handle any transition logic
@@ -424,10 +426,6 @@ class App(ui.Stack):
             self.text_owner = self.edit
         if new_mode == "view":
             self.text_owner = self.view
-
-        # not persistent means it  has state that must be renewed next time it's opened
-        if not self.active_item.persistent:
-            self.close_item(self.active_item)
 
 
     def get_current_text(self):
