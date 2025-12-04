@@ -11,6 +11,7 @@ import bokeh.models
 import layout as lt
 import ui
 import util
+import test_ui
 
 
 def wrap(s):
@@ -298,6 +299,8 @@ def open_file(root_dir: str, on_open):
         """],
         #css_classes = ["m-open-file"] # ugh, can't make it work
     )
+    
+    test_ui.item(open_button, "open_file_open_button")
 
     return top
 
@@ -361,6 +364,9 @@ def save_file(current_fn, root_dir: str, on_save):
     save_button.on_click(on_save_button)
     text_input.param.watch(on_input, "value_input")
 
+    test_ui.item(save_button, "save_file_save_button")
+    test_ui.item(text_input, "save_file_text_input")
+
     return top
 
 
@@ -417,6 +423,9 @@ class Stack(pn.Column):
             self.remove(item)
             self.items[mode] = None
             
+    def close_item(self, item):
+        ...
+
 #
 # Following code is from https://github.com/holoviz/panel/issues/3193
 #

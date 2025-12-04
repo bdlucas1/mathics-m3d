@@ -25,6 +25,7 @@ import hook
 import sys
 import time
 import ui
+import test_ui
 
 pn.extension()
 pn.extension('plotly')
@@ -143,148 +144,16 @@ class Pair(pn.Column):
                 )
                 self.output[0] = error_box
         
+class View(pn.Column):
 
+    persistent = True
+    pair_cache = {}
 
-class App(ui.Stack):
-
-    def __init__(self, load, initial_mode = "view"):
-
-        self.current_fn = None
-        self.active_mode = None
-        self.text_owner = "view"
-
-        # used to make exiting edit mode faster
-        self.pair_cache = {}
-
-        # set up mode-independent stuff
-        super().__init__(
-            self.init_shortcuts(),
-            self.init_buttons(),
-            css_classes=["m-app"]
-        )
-
-        def load_view():
-            self.view = pn.Column(css_classes=["m-view"])
-            self.load_files(load)
-            return self.view
-        self.append("view", load_view)
-
-        def load_edit():
-            self.edit = pn.widgets.TextAreaInput(
-                value="foo",
-                visible=False,
-                css_classes=["m-edit"],
-                styles=dict(height="100vh"),
-            )
-            return self.edit
-        self.append("edit", load_edit)
-
-        def load_help():
-            help = pn.Column(css_classes=["m-view"])
-            self.load_m3d_file("data/help.m3d", help)
-            return help
-        self.append("help", load_help)
-
-        load_save_root = "data"
-
-        def load_open():
-            def on_open(fn):
-                # TODO: new files always go into active item "view"
-                # do we want to give them each their own item, with some way to switch,
-                # like tabs, maybe a dropdown beside the buttons??
-                self.load_files([fn], activate="view")
-            return ui.open_file(load_save_root, on_open)
-        self.append("open", load_open)
-
-        def load_save():
-            text = self.get_current_text()
-            def on_save(fn):
-                if os.path.exists(fn):
-                    with open(fn) as f, open(fn+"~", "w") as t:
-                        t.write(f.read())
-                with open(fn, "w") as f:
-                    f.write(text)
-                self.activate("view")
-            return ui.save_file(self.current_fn, load_save_root, on_save)
-        self.append("save", load_save)
-
-
-        # start in requested
-        # if "view" this will isntantiate the view by calling load_view via self.active_mode_items
-        self.activate(initial_mode)
-
-
-    def init_shortcuts(self):
-
-        shortcuts = ui.KeyboardShortcuts(shortcuts=[
-            ui.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
-            ui.KeyboardShortcut(name="run", key="Enter", altKey=True),
-            ui.KeyboardShortcut(name="run", key="Enter", metaKey=True),
-            ui.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
-            ui.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
-            ui.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
-        ])
-
-        def shortcut_msg(event):
-            force = event.data == "run_force"
-            if self.active_mode == "view":
-                for item in self.view:
-                    if isinstance(item, Pair):
-                        item.update_if_changed(force=force)
-            elif self.active_mode == "edit":
-                self.toggle_mode("edit", "view")
-
-        shortcuts.on_msg(shortcut_msg)
-
-        return shortcuts
-
-
-    def toggle_mode(self, new_mode, old_mode):
-        new_mode = new_mode if self.active_mode != new_mode else old_mode
-        self.activate(new_mode)
-
-
-    def activate(self, new_mode):
-
-        old_mode = self.active_mode
-        if new_mode == self.active_mode:
-            return
-
-        # sets the new mode, and may instantiate associated ui artifacts
-        # so we have to do this before we can handle any transition logic
-        super().activate(new_mode)
-
-        # with the UI artifacts in place, we can handle transition logic,
-        # in particular transfer active text from old to new owner if necessary
-        if self.text_owner == "edit" and new_mode == "view":
-            # TODO: having a View class with a value property
-            # that handled this would make the logic cleanera
-            self.view.clear()
-            text = self.get_edit_text()
-            self.load_m3d_string(text, self.view, run=True)
-            self.pair_cache.clear()
-            self.text_owner = "view"
-        elif self.text_owner == "view" and new_mode == "edit":
-            self.edit.value = self.get_view_text()
-            self.text_owner = "edit"
-
-        # not reusable
-        if old_mode == "save":
-            self.close("save")
-
-
-    def get_edit_text(self):
-        # need to look at both because
-        # before user types: .value_input is "", .value has what the user sees
-        # after user types: .value_input has what the user typed, .value may be stale
-        return self.edit.value_input or self.edit.value
-
-
-    def get_view_text(self):
+    @property
+    def text(self):
         def collect():
-            for item in self.view:
+            for item in self:
                 if isinstance(item, Pair):
-                    # see comment above
                     text = item.input.value_input or item.input.value
                     self.pair_cache[text] = item
                     yield f"{item.opener}\n{text}\n```"
@@ -294,77 +163,37 @@ class App(ui.Stack):
                     assert False, "expect Pair or Markdown"
         text = "".join(collect())
         return text
+    
+    @text.setter
+    def text(self, text):
+        self.clear()
+        self.load_m3d_string(text, run=False)
+        self.pair_cache.clear()
 
 
-    def get_current_text(self):
-        print("get_current_text owner", self.text_owner)
-        if self.text_owner == "edit":
-            return self.get_edit_text()
-        elif self.text_owner == "view":
-            return self.get_view_text()
+    def load_files(self, fns, run):
+        self[:] = []
+        if len(fns):
+            for fn in fns:
+                if fn.endswith(".m3d") or fn.endswith(".md"):
+                    self.load_m3d_file(fn, run)
+                elif fn.endswith(".m"):
+                    self.load_m(fn)
+                else:
+                    print(f"Don't understand file {fn}")
+            if len(fns) == 1:
+                self.current_fn = fns[0]
+        else:
+            self.append(Pair(None, input_visible=True))
 
 
-    def init_buttons(self): 
-
-        edit_button = ui.icon_button(
-            "edit",
-            "Toggle editing\nentire file",
-            lambda: self.toggle_mode("edit", "view")
-        )
-
-        help_button = ui.icon_button(
-            "help",
-            "Help is on the way!",
-            lambda: self.toggle_mode("help", "view")
-        )
-
-        file_open_button = ui.icon_button(
-            "download",
-            "Open a file",
-            lambda: self.toggle_mode("open", "view")
-        )
-
-        file_save_button = ui.icon_button(
-            "upload",
-            "Save file",
-            lambda: self.toggle_mode("save", "view")
-        )
-
-        heart_button = ui.icon_button(
-            "heart",
-            "Like it?",
-            lambda: self.load_files(["data/cardio.m3d"], activate="view")
-        )
-
-        buttons = pn.Row(
-            pn.widgets.ButtonIcon(icon="square-plus"),
-            file_open_button,
-            file_save_button,
-            edit_button,
-            pn.widgets.ButtonIcon(icon="player-play"),
-            pn.widgets.ButtonIcon(icon="clipboard-text"),
-            help_button,
-            heart_button,
-            #pn.widgets.ButtonIcon(icon="mood-smile"),
-            #pn.widgets.ButtonIcon(icon="mood-confuzed"),
-            #pn.widgets.ButtonIcon(icon="alert-triangle"),
-            #pn.widgets.ButtonIcon(icon="square-x"),
-            #pn.widgets.ButtonIcon(icon="file-pencil"),    
-            #pn.widgets.ButtonIcon(icon="player-track-next"),
-            css_classes=["m-button-row"]
-        )
-
-        return buttons
-
-
-    def load_m3d_file(self, md_fn, into, run=True):
+    def load_m3d_file(self, md_fn, run):
         print("loading", md_fn)
         md_str = open(md_fn).read()
-        # TODO: autorun optional?
-        self.load_m3d_string(md_str, into, run=run)
+        self.load_m3d_string(md_str, run)
 
 
-    def load_m3d_string(self, md_str, into, run=False):
+    def load_m3d_string(self, md_str, run):
 
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```[^\n]*)", md_str)
@@ -405,7 +234,7 @@ class App(ui.Stack):
                     pair = Pair(text, input_visible = not autorun, run = autorun)
 
                 pair.opener = opener
-                into.append(pair)
+                self.append(pair)
 
             else:
 
@@ -430,32 +259,239 @@ class App(ui.Stack):
                         h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
                     """]
                 )
-                into.append(md)
-
+                self.append(md)
 
 
     def load_m(self, m_fn):
         m_str = open(m_fn).read()    
         pair = Pair(m_str.strip(), run=True)
-        self.view.append(pair)
+        self.append(pair)
+
+    def update_all_changed(self, force=False):
+        for item in self:
+            if isinstance(item, Pair):
+                item.update_if_changed(force=force)
 
 
-    def load_files(self, fns, activate=None):
-        self.view[:] = []
-        if len(fns):
-            for fn in fns:
-                if fn.endswith(".m3d") or fn.endswith(".md"):
-                    self.load_m3d_file(fn, self.view)
-                elif fn.endswith(".m"):
-                    self.load_m(fn)
-                else:
-                    print(f"Don't understand file {fn}")
-            if len(fns) == 1:
-                self.current_fn = fns[0]
-        else:
-            self.view.append(Pair(None, input_visible=True))
-        if activate:
-            self.activate(activate)
+
+class Edit(pn.widgets.TextAreaInput):
+
+    persistent = True
+
+    @property
+    def text(self):
+        return self.value_input or self.value
+
+    @text.setter
+    def text(self, text):
+        self.value = text
+
+
+class Open:
+    persistent = True
+    def __init__(self, data_root, on_open):
+        ui.open_file(data_root, on_open)
+        
+
+class Save:
+    persistent = False
+    def __init__(self, current_fn, data_root, on_save):
+        ui.save_file(current_fn, data_root, on_save)
+
+
+
+class App(ui.Stack):
+
+    def __init__(self, load, initial_mode = "view"):
+
+        self.current_fn = None
+        self.active_mode = None
+        self.text_owner = None
+
+        # set up mode-independent stuff
+        super().__init__(
+            self.init_shortcuts(),
+            self.init_buttons(),
+            css_classes=["m-app"]
+        )
+
+        # TODO: cmd line flag
+        autorun = True
+
+        def make_view():
+            self.view = View(css_classes=["m-view"])
+            test_ui.item(self.view, "view")
+            self.view.load_files(load, run=autorun)
+            return self.view
+        self.append("view", make_view)
+
+        def make_edit():
+            self.edit = Edit(
+                value="foo",
+                visible=False,
+                css_classes=["m-edit"],
+                styles=dict(height="100vh"),
+            )
+            test_ui.item(self.edit, "edit")
+            return self.edit
+        self.append("edit", make_edit)
+
+        def make_help():
+            help = View(css_classes=["m-view"])
+            help.load_m3d_file("data/help.m3d", run=True)
+            test_ui.item(help, "help")
+            return help
+        self.append("help", make_help)
+
+        data_root = "data"
+
+        def make_open():
+            # TODO: new files always go into active item "view"
+            # do we want to give them each their own item, with some way to switch,
+            # like tabs, maybe a dropdown beside the buttons??
+            def on_open(fn):
+                self.view.load_files([fn])
+            return Open(data_root, on_open)
+        self.append("open", make_open)
+
+        def make_save():
+            text = self.text_owner.text
+            def on_save(fn):
+                if os.path.exists(fn):
+                    with open(fn) as f, open(fn+"~", "w") as t:
+                        t.write(f.read())
+                with open(fn, "w") as f:
+                    f.write(text)
+                self.activate("view")
+            return Save(self.current_fn, data_root, on_save)
+        self.append("save", make_save)
+
+
+        # start in requested
+        # if "view" this will isntantiate the view by
+        # calling make_view via self.active_mode_items
+        self.activate(initial_mode)
+
+        # start tests after we're loaded
+        pn.state.onload(test_ui.run_tests, threaded=True)
+
+
+    def init_shortcuts(self):
+
+        shortcuts = ui.KeyboardShortcuts(shortcuts=[
+            ui.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
+            ui.KeyboardShortcut(name="run", key="Enter", altKey=True),
+            ui.KeyboardShortcut(name="run", key="Enter", metaKey=True),
+            ui.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
+            ui.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
+            ui.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
+        ])
+
+        def shortcut_msg(event):
+            force = event.data == "run_force"
+            if self.active_mode == "view":
+                self.view.update_all_changed()
+            elif self.active_mode == "edit":
+                self.toggle_mode("edit", "view")
+
+        shortcuts.on_msg(shortcut_msg)
+
+        return shortcuts
+
+
+    def toggle_mode(self, new_mode, old_mode):
+        new_mode = new_mode if self.active_mode != new_mode else old_mode
+        self.activate(new_mode)
+
+
+    def activate(self, new_mode):
+
+        old_mode = self.active_mode
+        if new_mode == self.active_mode:
+            return
+
+        # sets the new mode, and may instantiate associated ui artifacts
+        # so we have to do this before we can handle any transition logic
+        super().activate(new_mode)
+
+        # with the UI artifacts in place, we can handle transition logic,
+        # in particular transfer active text from old to new owner if necessary
+        if self.text_owner and new_mode == "view" and self.text_owner is not self.view:
+            self.view.text = self.text_owner.text
+        if self.text_owner and new_mode == "edit"  and self.text_owner is not self.edit:
+            self.edit.text = self.text_owner.text
+        if new_mode == "edit":
+            self.text_owner = self.edit
+        if new_mode == "view":
+            self.text_owner = self.view
+
+        # not persistent means it  has state that must be renewed next time it's opened
+        if not self.active_item.persistent:
+            self.close_item(self.active_item)
+
+
+    def get_current_text(self):
+        print("get_current_text owner", self.text_owner)
+        if self.text_owner == "edit":
+            return self.get_edit_text()
+        elif self.text_owner == "view":
+            return self.get_view_text()
+
+
+    def init_buttons(self): 
+
+        edit_button = ui.icon_button(
+            "edit",
+            "Toggle editing\nentire file",
+            lambda: self.toggle_mode("edit", "view")
+        )
+
+        help_button = ui.icon_button(
+            "help",
+            "Help is on the way!",
+            lambda: self.toggle_mode("help", "view")
+        )
+
+        file_open_button = ui.icon_button(
+            "download",
+            "Open a file",
+            lambda: self.toggle_mode("open", "view")
+        )
+
+        file_save_button = ui.icon_button(
+            "upload",
+            "Save file",
+            lambda: self.toggle_mode("save", "view")
+        )
+
+        def load_and_activate(fns, run):
+            self.view.load_files(fns, run)
+            self.activate("view")
+        heart_button = ui.icon_button(
+            "heart",
+            "Like it?",
+            lambda: load_and_activate(["data/cardio.m3d"], True)
+        )
+
+        buttons = pn.Row(
+            pn.widgets.ButtonIcon(icon="square-plus"),
+            test_ui.item(file_open_button, "open_button"),
+            test_ui.item(file_save_button, "save_button"),
+            test_ui.item(edit_button, "edit_button"),
+            pn.widgets.ButtonIcon(icon="player-play"),
+            pn.widgets.ButtonIcon(icon="clipboard-text"),
+            test_ui.item(help_button, "help_button"),
+            test_ui.item(heart_button, "heart_button"),
+            #pn.widgets.ButtonIcon(icon="mood-smile"),
+            #pn.widgets.ButtonIcon(icon="mood-confuzed"),
+            #pn.widgets.ButtonIcon(icon="alert-triangle"),
+            #pn.widgets.ButtonIcon(icon="square-x"),
+            #pn.widgets.ButtonIcon(icon="file-pencil"),    
+            #pn.widgets.ButtonIcon(icon="player-track-next"),
+            css_classes=["m-button-row"]
+        )
+
+        return buttons
 
 
 
