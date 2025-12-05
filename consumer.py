@@ -35,7 +35,9 @@ class GraphicsOptions:
         # gets option "name", converting to python
         # System`Automatic is converted to None (TODO: ok?)
         # expands to a list of size want_list if requested
-        def get_option(name, want_list=None):
+        def get_option(name, want_list=None, default=None):
+            if name not in graphics_options:
+                return default
             x = graphics_options[name].to_python()
             auto = lambda x: None if x=="System`Automatic" else x
             if want_list:
@@ -70,16 +72,31 @@ class GraphicsOptions:
         self.frame = get_option("System`Frame")
 
         # ImageSize, AspectRatio
-        # TODO: what if anyting to do with returned aspect?
-        width, height, multi, aspect = expr._get_image_size(
-            dict(layout_options), # copy because _get_image_size modifies
-            graphics_options,
-            None
-        )
-        # TODO: shouldn't this be done by _get_image_size?
-        if not aspect:
-            aspect = 1
-        self.image_size = [width * multi, height * multi * aspect]
+        image_size = get_option("System`ImageSize")
+        aspect_ratio = get_option("System`AspectRatio")
+        inside_row = layout_options.get("inside_row", False)
+        inside_grid = layout_options.get("inside_grid", False)
+        inside_list = layout_options.get("inside_list", False)
+        inside_list = get_option("inside_list")
+        auto_widths = {
+            "System`Automatic": 400,
+            "System`Tiny": 100,
+            "System`Small": 200,
+            "System`Medium": 400,
+            "System`Large": 600,
+        }
+        if isinstance(image_size, (int,float)):
+            width, height = image_size, image_size * aspect_ratio
+        elif isinstance(image_size, (list,tuple)):
+            width, height = image_size
+        elif isinstance(image_size, str):
+            width = auto_widths[image_size]
+            height = width * aspect_ratio
+        else: # Automatic
+            width = auto_widths["System`Medium"]
+            multiplier = 0.5 if inside_row or inside_list or inside_grid else 1
+            width, height = multiplier * width, multiplier * width * aspect_ratio
+        self.image_size = [width, height]
         
         # PlotRange
         self.plot_range = get_option("System`PlotRange", 3)

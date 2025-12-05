@@ -61,7 +61,7 @@ def row_box(fe, expr, layout_options):
 
 def grid_box(fe, expr, layout_options):
 
-    layout_options = frozendict(layout_options | dict(inside_row = True))
+    layout_options = frozendict(layout_options | dict(inside_grid = True))
 
     def do(e):
         layout = _boxes_to_latex_or_layout(fe, e, layout_options)
