@@ -277,7 +277,6 @@ class GraphicsConsumer:
 
             colors = colors if colors is not None else [None] * len(items)
             for item, color in zip(items, colors):
-                #if color is not None: print("xxx yielding color", color.shape)
                 yield self.waiting.kind, self.waiting.vertices, item, color
 
             self.waiting = None
@@ -285,6 +284,10 @@ class GraphicsConsumer:
     def process(self, expr, colors=None):
 
         def directives(ctx, expr):
+
+            # any directive requires that we flush pending
+            # so that directive only applies to future
+            yield from self.flush()
 
             # TODO: what is the right way to detect a color directive?
             if color := core.expression_to_color(expr):
@@ -303,7 +306,7 @@ class GraphicsConsumer:
                 pass
 
             else:
-                print(f"uknown graphics element {expr.head}")
+                raise NotImplementedError(f"Graphics element {expr.head}")
 
         if expr.head == sym.SymbolList:
             for e in expr:
