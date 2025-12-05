@@ -290,7 +290,7 @@ class GraphicsConsumer:
                 colors = [np.vstack(colors)] if colors is not None else None
             except (ValueError, TypeError):
                 shapes = np.array([item.shape for item in items])
-                print(f"can't stack {len(items)} {self.waiting.kind} {shapes}")
+                #print(f"can't stack {len(items)} {self.waiting.kind} {shapes}")
 
             colors = colors if colors is not None else [None] * len(items)
             for item, color in zip(items, colors):
