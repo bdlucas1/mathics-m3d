@@ -83,13 +83,14 @@ class Browser:
         if not webview:
             self.browser = "webbrowser"
 
-    def show(self, url, width=700, height=1000):
+    def show(self, url, width=700, height=1000, title=None):
         # display a browser window that fetches the current plot
         #print("showing", url)
         if self.browser == "webview":
             offset = 50 * self.n
             self.n += 1
-            webview.create_window(url, url, x=100+offset, y=100+offset, width=width, height=height)
+            title = title or url
+            webview.create_window(title, url, x=100+offset, y=100+offset, width=width, height=height)
         elif self.browser == "webbrowser":
             webbrowser.open_new(url)
         else:
