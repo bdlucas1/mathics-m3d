@@ -1,0 +1,28 @@
+There are two types of contour plots:
+
+* A single function $$f(x,y)$$ may be specified, in which case a set
+  of contours, as specified by the `Contours` option, are
+  plotted. Contour values are automatically chosen if not specified.
+  A background similar to a `DensityPlot`, except quantized by the
+  contours, is also shown.
+
+* One or more expressions of the form $$f(x,y) = g(x,y)$$. A a single
+  contour at $$0$$ of the function $$f(x,y)- g(x,y)$$ is plotted. In
+  this case no background is shown because the contours from the
+  different functions may overlap.
+
+
+``` m3d
+is = {300,300};
+Row[{
+    ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->is],
+    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}, ImageSize->is]
+}]
+```
+
+Let's see how the color function looks for density plots
+``` m3d autorun:off
+DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{100,200}]
+```
+
+
