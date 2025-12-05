@@ -1,0 +1,31 @@
+Problems:
+* colors arent great - try something based on hsv?
+* line colors should be different - problem in front-end?
+* graph isn't square - looks like maybe extra space in y but not x?
+```
+is = {1000,1000};
+Grid[{
+    {ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->is],
+    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}, ImageSize->is]},
+    {ContourPlot[{x^2+y^2 == 1} , {x,-2,2},{y,-2,2}]}
+}]
+```
+
+Problems:
+* not square
+```
+ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
+```
+
+Problem:
+* range specification isn't being honored in chart - should be space around circle.
+Front-end intepretation of Automatic??
+```
+ContourPlot[{x^2+y^2 == 1} , {x,-2,2},{y,-2,2}]
+```
+
+```
+DensityPlot[x^2+y^2, {x,-2,2},{y,-2,2}]
+```
+
+

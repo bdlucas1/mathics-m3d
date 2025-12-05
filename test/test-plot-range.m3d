@@ -1,0 +1,15 @@
+```
+Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}]
+```
+
+```
+Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->10]
+```
+
+```
+Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->{0,10}]
+```
+
+```
+Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->{{0,1},{0,1},Automatic}]
+```
