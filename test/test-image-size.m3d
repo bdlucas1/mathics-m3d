@@ -1,0 +1,29 @@
+Basic size
+```
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}]
+```
+
+Grid, one auto, one explicit
+```
+Grid[{{
+    ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}],
+    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}, ImageSize->{100,100}]
+}}]
+```
+
+Basic size again
+
+```
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}]
+```
+
+Explicit, just a number
+
+```
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->100]
+```
+
+Explicit, not square
+```
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->{100,200}]
+```

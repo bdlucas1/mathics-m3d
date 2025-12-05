@@ -1,31 +1,31 @@
 Problems:
 * colors arent great - try something based on hsv?
-* line colors should be different - problem in front-end?
 * graph isn't square - looks like maybe extra space in y but not x?
+* is is getting scaled when in Grid/Row even if explicitly specified
+
 ```
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}]
+```
+
+```
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->{100,100}]
+```
+
+``` m3d
 is = {1000,1000};
 Grid[{
-    {ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->is],
-    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}, ImageSize->is]},
+    {ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}],
+    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}], ImageSize->{100,100}},
     {ContourPlot[{x^2+y^2 == 1} , {x,-2,2},{y,-2,2}]}
 }]
 ```
-
-Problems:
-* not square
-```
+``` m3d autorun:off
 ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
 ```
 
-Problem:
-* range specification isn't being honored in chart - should be space around circle.
-Front-end intepretation of Automatic??
-```
-ContourPlot[{x^2+y^2 == 1} , {x,-2,2},{y,-2,2}]
-```
-
-```
-DensityPlot[x^2+y^2, {x,-2,2},{y,-2,2}]
+Let's see how the color function looks for density plots
+``` m3d autorun:off
+DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{100,200}]
 ```
 
 
