@@ -171,12 +171,12 @@ class View(pn.Column):
         self.pair_cache.clear()
 
 
-    def load_files(self, fns, run):
+    def load_files(self, fns, run, show_code=False):
         self[:] = []
         if len(fns):
             for fn in fns:
                 if fn.endswith(".m3d") or fn.endswith(".md"):
-                    self.load_m3d_file(fn, run)
+                    self.load_m3d_file(fn, run, show_code)
                 elif fn.endswith(".m"):
                     self.load_m(fn)
                 else:
@@ -187,13 +187,13 @@ class View(pn.Column):
             self.append(Pair(None, input_visible=True))
 
 
-    def load_m3d_file(self, md_fn, run):
+    def load_m3d_file(self, md_fn, run, show_code=False):
         print("loading", md_fn)
         md_str = open(md_fn).read()
-        self.load_m3d_string(md_str, run)
+        self.load_m3d_string(md_str, run, show_code)
 
 
-    def load_m3d_string(self, md_str, run):
+    def load_m3d_string(self, md_str, run, show_code=False):
 
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```[^\n]*)", md_str)
@@ -231,7 +231,8 @@ class View(pn.Column):
                     del self.pair_cache[text]
                 except KeyError:
                     autorun = truthful(options.get("autorun", run))
-                    pair = Pair(text, input_visible = not autorun, run = autorun)
+                    input_visible = show_code or not autorun
+                    pair = Pair(text, input_visible=input_visible, run=autorun)
 
                 pair.opener = opener
                 self.append(pair)
@@ -297,7 +298,7 @@ class Save(ui.SaveFile):
 
 class App(ui.Stack):
 
-    def __init__(self, load, initial_mode = "view"):
+    def __init__(self, load, initial_mode = "view", autorun=True, show_code=False):
 
         self.current_fn = None
         self.active_mode = None
@@ -310,13 +311,10 @@ class App(ui.Stack):
             css_classes=["m-app"]
         )
 
-        # TODO: cmd line, env flag
-        autorun = True
-
         def make_view():
             self.view = View(css_classes=["m-view"])
             test_ui.item(self.view, "view")
-            self.view.load_files(load, run=autorun)
+            self.view.load_files(load, run=autorun, show_code=show_code)
             return self.view
         self.append("view", make_view)
 
@@ -521,16 +519,24 @@ else:
         choices=["view","edit","help","open","save"],
         default="view"
     )
+    parser.add_argument("--no-autorun", action="store_true")
+    parser.add_argument("--show-code", action="store_true")        
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
 
-    app = App(load=args.files, initial_mode=args.initial_mode)
-
+    app = App(
+        load=args.files,
+        initial_mode=args.initial_mode,
+        show_code=args.show_code,
+        autorun=not args.no_autorun
+    )
+    title =  " ".join(["Markdown+Mathics3", *args.files])
     pn.serve(
         app,
         port=9999,
         address="localhost",
         threaded=True,
-        show=False
+        show=False,
+        title=title,
     )
-    util.Browser().show("http://localhost:9999").start()
+    util.Browser().show("http://localhost:9999", title=title).start()
