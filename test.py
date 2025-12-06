@@ -8,7 +8,6 @@ import numpy as np
 #import cv2
 import skimage.transform
 import skimage.io
-import dash.dcc
 
 import core
 import layout as lt

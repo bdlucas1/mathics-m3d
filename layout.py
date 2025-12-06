@@ -6,10 +6,6 @@ Main entry point here is expression_to_layout.
 A layout is a data structure that a front-end can display.
 The layout is constructed here and in graphics.py by calling
 ui.grid, ui.row, ui.plot, ui.manipulate, etc.
-These will be functions from either mode_dash or mode_ipy,
-depending on which widget set is needed for the current front end.
-So the net result will be either a dash or ipywidgets data structure
-that can be displayed by the front-end.
 """
 
 import mathics.core.formatter as fmt
@@ -26,7 +22,7 @@ def wrap_math(s):
     return ui.latex(s) if isinstance(s, str) else s
 
 # Concatenate latex strings as much as possible, allowing latex to handle the layout.
-# Where not possible use a object (dash or ipywidgets) representing an html layout.
+# Where not possible use a object representing an html layout.
 #
 # The return value of this function is either
 #   * a single string containing latex if everything can be handled in latex, or
@@ -86,10 +82,10 @@ special = {
 #
 # Takes boxed input, and uses the tables and functions above to compute a layout from the boxes.
 # The general strategy is to allow latex (mathjax) do as much of the layout as possible,
-# but where that isn't possible to use html primitives via mode_ipy or mode_dash.
+# but where that isn't possible to use html primitives ui.py
 #
 # This function returns a string if it is latex output that can be concatenated with other latex output
-# otherwise it returns an object of some kind (via mode_ipy or mode_dash) representing an html layout.
+# otherwise it returns an object of some kind (via ui.py) representing an html layout.
 #
 
 def _boxes_to_latex_or_layout(fe, expr, layout_options):
@@ -123,7 +119,7 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
     elif value := try_latex():
         return value
     else:
-        raise Exception(f"Don't know how to lay out {expr.head}")
+        raise NotImplementedError(f"{expr.head}")
 
 
 #
