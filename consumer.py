@@ -77,7 +77,6 @@ class GraphicsOptions:
         inside_row = layout_options.get("inside_row", False)
         inside_grid = layout_options.get("inside_grid", False)
         inside_list = layout_options.get("inside_list", False)
-        inside_list = get_option("inside_list")
         auto_widths = {
             "System`Automatic": 400,
             "System`Tiny": 100,
@@ -94,7 +93,10 @@ class GraphicsOptions:
             height = width * aspect_ratio
         else: # Automatic
             width = auto_widths["System`Medium"]
-            multiplier = 0.5 if inside_row or inside_list or inside_grid else 1
+            aspect_ratio = aspect_ratio or 1
+            if inside_row:  multiplier = 0.25
+            elif inside_list or inside_grid:  multiplier = 0.5
+            else: multiplier = 1
             width, height = multiplier * width, multiplier * width * aspect_ratio
         self.image_size = [width, height]
         
