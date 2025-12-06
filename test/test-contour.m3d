@@ -10,7 +10,7 @@ ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
 
 density plot for comparison
 ```
-DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{100,200}]
+DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{{0,1},{0,1}}]
 ```
 
 
