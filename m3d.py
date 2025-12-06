@@ -125,7 +125,9 @@ class Pair(pn.Column):
                 with util.Timer("execute code block"):
                     self.old_expr = expr
                     expr = fe.session.parse(expr)
-                    expr = expr.evaluate(fe.session.evaluation)
+                    if not expr:
+                        self.input.visible = True
+                        return
                     layout = lt.expression_to_layout(fe, expr)
                     self.output[0] = layout
                     self.is_stale = False
@@ -531,12 +533,22 @@ else:
         autorun=not args.no_autorun
     )
     title =  " ".join(["Markdown+Mathics3", *args.files])
-    pn.serve(
+
+    # find a free port
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))  # Bind to an ephemeral port chosen by the OS
+        port = s.getsockname()[1]  # Return the assigned port number
+
+    # start the server
+    server = pn.serve(
         app,
-        port=9999,
+        port=port,
         address="localhost",
         threaded=True,
         show=False,
         title=title,
     )
-    util.Browser().show("http://localhost:9999", title=title).start()
+
+    # start a browser
+    util.Browser().show(f"http://localhost:{port}", title=title).start()
