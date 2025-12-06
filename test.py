@@ -69,15 +69,17 @@ def differ(fn_im1, fn_im2):
 
         def show(i, im, name):
             if im is not None:
-                axes[i].imshow(im)
+                h, w = im.shape[:2]
+                axes[i].imshow(im, extent=[0, w, 0, h])
             axes[i].set_title(name.split("/")[-1], fontsize=10)
             axes[i].axis("off")
             axes[i].set_anchor("N")
+            #axes[i].set_aspect("auto")
 
         show(0, im1, fn_im1)
         show(1, im2, fn_im2)
         if im1 is not None and im2 is not None:
-            #im2 = skimage.transform.resize(im2, im1.shape[0:2])
+            im2 = skimage.transform.resize(im2.astype(float), im1.shape[0:2])
             diff = abs(im2-im1).astype(int)
             show(2, diff, "diff")
 
