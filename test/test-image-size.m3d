@@ -3,12 +3,18 @@ Basic size
 ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}]
 ```
 
-Grid, one auto, one explicit
+Grid - half size, except one which is explicit
 ```
-Grid[{{
-    ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}],
-    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}, ImageSize->{100,100}]
-}}]
+Grid[{
+    {
+        ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}],
+        ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
+    },
+    {
+        ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}],
+        ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->100]
+    }
+}]
 ```
 
 Basic size again
@@ -17,13 +23,30 @@ Basic size again
 ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}]
 ```
 
-Explicit, just a number
+Row - quarter size
+```
+Row[{
+    ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}],
+    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
+}]
+```
+
+List - want half size, but is in RowBox - how to handle...
+Also, funkiness with LaTeX...
+```
+{
+    ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}],
+    ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
+}
+```
+
+Explicit, just a number, 100
 
 ```
 ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->100]
 ```
 
-Explicit, not square
+Explicit, not square, tall and thin
 ```
 ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, ImageSize->{100,200}]
 ```
