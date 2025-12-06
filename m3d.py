@@ -35,7 +35,7 @@ pn.extension(raw_css=[open('m3d.css').read()])
 class FE:
     def __init__(self):
         self.session = core.MathicsSession()
-        pass
+        self.test_mode = False
 
 fe = FE()
 
@@ -46,11 +46,12 @@ fe = FE()
 
 class Pair(pn.Column):
 
-    def __init__(self, text=None, input_visible=False, run=False):
+    def __init__(self, text=None, input_visible=False, run=False, test_fn=None):
         
         self.old_expr = ""
         self.is_stale = True
         self.opener = "```"
+        self.test_fn = test_fn
 
         # input
         instructions = "Type expression followed by shift-enter"
@@ -126,45 +127,51 @@ class Pair(pn.Column):
     def update_if_changed(self, force=False):
         expr = self.input.value_input
         if expr and (force or self.is_stale):
-            try:
-                with util.Timer("execute code block"):
-                    self.old_expr = expr
-                    fe.session.evaluation.out.clear()
-                    expr = fe.session.parse(expr)
-                    if not expr:
-                        self.input.visible = True
-                        return
-                    layout = lt.expression_to_layout(fe, expr)
-                    self.output[0] = layout
-                    self.is_stale = False
-                    self.exec_button.visible = False
-            except Exception as oops:
-                if isinstance(oops, core.InvalidSyntaxError): kind = "Syntax error"
-                elif isinstance(oops, core.IncompleteSyntaxError): kind = "Syntax error"
-                elif isinstance(oops, core.SyntaxError): kind = "Syntax error"
-                elif isinstance(oops, NotImplementedError): kind = "Not implemented"
-                else: kind = "Internal error"
-                msg = f"{kind}: {oops}"
-                print(msg)
-                util.print_exc_reversed()
-                error_box = pn.widgets.StaticText(
-                    value=msg,
-                    styles = dict(
-                        background = "#fff0f0",
-                        padding = "0.5em"
-                    )
+            self.update()
+
+    @util.Timer("execute code block")
+    def update(self):
+        try:
+            expr = self.input.value_input
+            self.old_expr = expr
+            fe.session.evaluation.out.clear()
+            expr = fe.session.parse(expr)
+            if not expr:
+                self.input.visible = True
+                return
+            layout = lt.expression_to_layout(fe, expr)
+            if self.test_fn:
+                import test # does stuff on import so, ...
+                test.test(self.test_fn, layout)
+            self.output[0] = layout
+            self.is_stale = False
+            self.exec_button.visible = False
+        except Exception as oops:
+            if isinstance(oops, core.InvalidSyntaxError): kind = "Syntax error"
+            elif isinstance(oops, core.IncompleteSyntaxError): kind = "Syntax error"
+            elif isinstance(oops, core.SyntaxError): kind = "Syntax error"
+            elif isinstance(oops, NotImplementedError): kind = "Not implemented"
+            else: kind = "Internal error"
+            msg = f"{kind}: {oops}"
+            print(msg)
+            util.print_exc_reversed()
+            error_box = pn.widgets.StaticText(
+                value=msg,
+                styles = dict(
+                    background = "#fff0f0",
+                    padding = "0.5em"
                 )
-                self.output[0] = error_box
-            finally:
-                self.messages.clear()
-                for o in fe.session.evaluation.out:
-                    msg = pn.widgets.StaticText(
-                        value=o.text,
-                        styles=dict(padding="0.5em")
-                    )
-                    print(msg)
-                    self.messages.append(msg)
-                
+            )
+            self.output[0] = error_box
+        finally:
+            self.messages.clear()
+            for o in fe.session.evaluation.out:
+                msg = pn.widgets.StaticText(
+                    value=o.text,
+                    styles=dict(padding="0.5em")
+                )
+                print(msg)
+                self.messages.append(msg)
 
         
 class View(pn.Column):
@@ -213,10 +220,10 @@ class View(pn.Column):
     def load_m3d_file(self, md_fn, run, show_code=False):
         print("loading", md_fn)
         md_str = open(md_fn).read()
-        self.load_m3d_string(md_str, run, show_code)
+        self.load_m3d_string(md_str, run, show_code, fn=md_fn)
 
 
-    def load_m3d_string(self, md_str, run, show_code=False):
+    def load_m3d_string(self, md_str, run, show_code=False, fn=None):
 
         # TODO: allow for tags or instructions after ``` until end of line
         md_parts = re.split("(```[^\n]*)", md_str)
@@ -252,10 +259,24 @@ class View(pn.Column):
                     pair = self.pair_cache[text]
                     print("USING CACHED PAIR")
                     del self.pair_cache[text]
+
                 except KeyError:
+                    
+                    # override global autorun
                     autorun = truthful(options.get("autorun", run))
+
+                    # construct test file basename if this part has a test:<part> option
+                    test_fn = None
+                    if fe.test_mode and fn:
+                        if test_part := options.get("test", None):
+                            base_fn, _ = os.path.splitext(fn)
+                            test_fn = f"{base_fn}-{test_part}"
+
+                    # option to show the code for this part
                     input_visible = show_code or not autorun
-                    pair = Pair(text, input_visible=input_visible, run=autorun)
+
+                    # construct the pair
+                    pair = Pair(text, input_visible=input_visible, run=autorun, test_fn=test_fn)
 
                 pair.opener = opener
                 self.append(pair)
@@ -544,8 +565,10 @@ else:
     )
     parser.add_argument("--no-autorun", action="store_true")
     parser.add_argument("--show-code", action="store_true")        
+    parser.add_argument("--test", action="store_true")
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
+    fe.test_mode = args.test
 
     app = App(
         load=args.files,

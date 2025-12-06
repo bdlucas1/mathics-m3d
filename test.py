@@ -5,7 +5,6 @@ import sys
 import threading
 
 import numpy as np
-#import cv2
 import skimage.transform
 import skimage.io
 
@@ -13,16 +12,6 @@ import core
 import layout as lt
 import sym
 import util
-
-parser = argparse.ArgumentParser(description="Mathics3 graphics test")
-#parser.aad_argument("--accept", type=bool, action-"store_true")
-parser.add_argument("files", type=str, default=None, nargs="*")
-args = parser.parse_args()
-
-class FE:
-    pass
-fe = FE()
-fe.session = core.MathicsSession()
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -93,45 +82,69 @@ def differ(fn_im1, fn_im2):
 
     return difference
 
-failures = 0
-successes = 0
+def test(fn, layout):
+    print("=== TEST", fn, layout)
 
-for fn in args.files:
-
-    if fn in util.methods:
-        util.switch_method(fn)
-        continue
-
-    fn_m = fn.replace(".png", ".m")
-    fn_ref = fn.replace(".m", ".png")
-    fn_test = "/tmp/test.png"
-
-    print(f"=== {fn_m}")
-
-    if os.path.exists(fn_test):
-        os.remove(fn_test)
-
-    fe.test_image = fn_test
-    with open(fn_m) as f:
-        s = f.read()
-    expr = fe.session.parse(s)
-    expr = expr.evaluate(fe.session.evaluation)
-    layout = lt.expression_to_layout(fe, expr)
+    #import plotly.io as pio
+    #pio.write_image(figure, self.fe.test_image)
+    #print("wrote", self.fe.test_image)
 
     # TODO: WIP
     # ff formats too wide, so fix that first
     #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
     #
 
-    if update := differ(fn_ref, fn_test):
-        failures += 1
-        if update:
-            print(f"updating reference image {fn_ref}")
-            with open(fn_test, "rb") as f_test:
-                img_data = f_test.read()
-                with open(fn_ref, "wb") as f_ref:
-                    f_ref.write(img_data)
-    else:
-        successes += 1
 
-print(f"=== {successes} successes, {failures} failures")                    
+if __name__ == "__main__":
+
+    failures = 0
+    successes = 0
+
+    class FE:
+        pass
+    fe = FE()
+    fe.session = core.MathicsSession()
+
+    parser = argparse.ArgumentParser(description="Mathics3 graphics test")
+    parser.add_argument("files", type=str, default=None, nargs="*")
+    args = parser.parse_args()
+
+    for fn in args.files:
+
+        if fn in util.methods:
+            util.switch_method(fn)
+            continue
+
+        fn_m = fn.replace(".png", ".m")
+        fn_ref = fn.replace(".m", ".png")
+        fn_test = "/tmp/test.png"
+
+        print(f"=== {fn_m}")
+
+        if os.path.exists(fn_test):
+            os.remove(fn_test)
+
+        fe.test_image = fn_test
+        with open(fn_m) as f:
+            s = f.read()
+        expr = fe.session.parse(s)
+        expr = expr.evaluate(fe.session.evaluation)
+        layout = lt.expression_to_layout(fe, expr)
+
+        # TODO: WIP
+        # ff formats too wide, so fix that first
+        #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
+        #
+
+        if update := differ(fn_ref, fn_test):
+            failures += 1
+            if update:
+                print(f"updating reference image {fn_ref}")
+                with open(fn_test, "rb") as f_test:
+                    img_data = f_test.read()
+                    with open(fn_ref, "wb") as f_ref:
+                        f_ref.write(img_data)
+        else:
+            successes += 1
+
+    print(f"=== {successes} successes, {failures} failures")                    
