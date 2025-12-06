@@ -13,6 +13,7 @@ Plot3D          Basic 3D Plotting   yes         good - vectorized
 ComplexPlot     Complex             yes         good - vectorized
 ComplexPlot3D   Complex             yes         good - vectorized
 
+ContourPlot     Contour & Density   yes         good - vectorized
 DensityPlot     Contour & Density   yes         good - vectorized
 
 Graph           Graph               yes         ?

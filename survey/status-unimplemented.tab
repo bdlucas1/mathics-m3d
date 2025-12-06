@@ -23,7 +23,6 @@ SphericalPlot3D         Basic 3D Plotting               yes
 AbsArgPlot              Complex                         yes
 ArgPlot                 Complex                         yes
 
-ContourPlot             Contour & Density               yes
 ListContourPlot         Contour & Density
 ListDensityPlot         Contour & Density
 ListStreamPlot          Contour & Density
