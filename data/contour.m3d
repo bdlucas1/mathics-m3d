@@ -1,8 +1,8 @@
 There are two types of contour plots:
 
 * A single function $$f(x,y)$$ may be specified, in which case a set
-  of contours, as specified by the `Contours` option, are
-  plotted. Contour values are automatically chosen if not specified.
+  of contours is plotted. Contours may be specified by the `Contours`
+  option; otherwise contour values are chosen automatically.
   A background similar to a `DensityPlot`, except quantized by the
   contours, is also shown.
 
