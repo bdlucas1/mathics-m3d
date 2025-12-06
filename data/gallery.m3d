@@ -79,8 +79,7 @@ Manipulate[
     Plot[
         Abs[Zeta[x I + y]],
         {x,0,50},
-        (*PlotPoints->200,*)
-        PlotRange -> {Automatic, {0, 3}}
+        PlotRange -> {0, 4}
     ],
     {{y,0.5},0,.95,0.05}
 ]

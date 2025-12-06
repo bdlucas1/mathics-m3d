@@ -19,10 +19,3 @@ Row[{
     ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}, ImageSize->is]
 }]
 ```
-
-Let's see how the color function looks for density plots
-``` m3d autorun:off
-DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{100,200}]
-```
-
-
