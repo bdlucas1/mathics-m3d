@@ -95,6 +95,11 @@ class Pair(pn.Column):
             css_classes = ["m-button-column"]
         )
 
+        # messages
+        self.messages = pn.Column(
+            styles=dict(background="#fff0f0")
+        )
+
         # output
         # make initial load snappier by deferring computing the output,
         # and more importantly sending it to the browser,
@@ -114,7 +119,7 @@ class Pair(pn.Column):
 
         # make us a column consisting of the input followed by the output
         # input may be invisible if not in edit mode
-        super().__init__(self.input, deferred_output, css_classes=["m-pair"])
+        super().__init__(self.input, self.messages, deferred_output, css_classes=["m-pair"])
 
 
     # check whether input has changed, and eval if so
@@ -124,6 +129,7 @@ class Pair(pn.Column):
             try:
                 with util.Timer("execute code block"):
                     self.old_expr = expr
+                    fe.session.evaluation.out.clear()
                     expr = fe.session.parse(expr)
                     if not expr:
                         self.input.visible = True
@@ -133,7 +139,11 @@ class Pair(pn.Column):
                     self.is_stale = False
                     self.exec_button.visible = False
             except Exception as oops:
-                kind = "Syntax error" if isinstance(oops, core.InvalidSyntaxError) else "Internal error"
+                if isinstance(oops, core.InvalidSyntaxError): kind = "Syntax error"
+                elif isinstance(oops, core.IncompleteSyntaxError): kind = "Syntax error"
+                elif isinstance(oops, core.SyntaxError): kind = "Syntax error"
+                elif isinstance(oops, NotImplementedError): kind = "Not implemented"
+                else: kind = "Internal error"
                 msg = f"{kind}: {oops}"
                 print(msg)
                 util.print_exc_reversed()
@@ -145,6 +155,17 @@ class Pair(pn.Column):
                     )
                 )
                 self.output[0] = error_box
+            finally:
+                self.messages.clear()
+                for o in fe.session.evaluation.out:
+                    msg = pn.widgets.StaticText(
+                        value=o.text,
+                        styles=dict(padding="0.5em")
+                    )
+                    print(msg)
+                    self.messages.append(msg)
+                
+
         
 class View(pn.Column):
 
