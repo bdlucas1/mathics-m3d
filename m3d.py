@@ -36,7 +36,6 @@ pn.extension(raw_css=[open('m3d.css').read()])
 class FE:
     def __init__(self):
         self.session = core.MathicsSession()
-        self.test_mode = False
 
 fe = FE()
 
@@ -53,6 +52,10 @@ class Pair(pn.Column):
         self.is_stale = True
         self.opener = "```"
         self.test_fn = test_fn
+
+        # actual loading and therefore testing is deferred; track pending so we know when we're done
+        if test_fn:
+            test.pending()
 
         # input
         instructions = "Type expression followed by shift-enter"
@@ -142,8 +145,7 @@ class Pair(pn.Column):
                 return
             layout = lt.expression_to_layout(fe, expr)
             if self.test_fn:
-                import test2 # does stuff on import so, ...
-                test2.test(self.test_fn, layout)
+                test.test(self.test_fn, layout)
             self.output[0] = layout
             self.is_stale = False
             self.exec_button.visible = False
@@ -267,12 +269,7 @@ class View(pn.Column):
                     autorun = truthful(options.get("autorun", run))
 
                     # construct test file basename if this part has a test:<part> option
-                    test_fn = None
-                    if fe.test_mode and fn:
-                        if test_part := options.get("test", None):
-                            base_fn, _ = os.path.splitext(fn)
-                            # = sorts after .
-                            test_fn = f"{base_fn}={test_part}"
+                    test_fn = test.test_fn(fn, options) if test and fn else None
 
                     # option to show the code for this part
                     input_visible = show_code or not autorun
@@ -311,7 +308,8 @@ class View(pn.Column):
 
     def load_m(self, m_fn):
         m_str = open(m_fn).read()    
-        pair = Pair(m_str.strip(), run=True)
+        test_fn = os.path.splitext(m_fn)[0] if test else None
+        pair = Pair(m_str.strip(), run=True, test_fn=test_fn)
         self.append(pair)
 
     def update_all_changed(self, force=False):
@@ -570,7 +568,10 @@ else:
     parser.add_argument("--test", action="store_true")
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
-    fe.test_mode = args.test
+
+    test = None
+    if args.test:
+        import test2 as test
 
     app = App(
         load=args.files,

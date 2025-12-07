@@ -1,19 +1,19 @@
-```
+``` m3d test:default
 Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}]
 ```
 
-```
+``` m3d test:number
 Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->10]
 ```
 
-```
+``` m3d test:single-range
 Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->{0,10}]
 ```
 
-```
+``` m3d test:range-range-auto
 Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->{{0,1},{0,1},Automatic}]
 ```
 
-```
+``` m3d test:range-range
 DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{{0,1},{0,1}}]
 ```
