@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import skimage.transform
 import skimage.io
 import PIL
+import numpy as np
 
 import util
 
@@ -62,7 +63,9 @@ def test(fn, layout):
             cap = "Update expected image"
         elif not (im_ref - im_test == 0).all():
             print("=== images differ")
-            im_diff = abs(im_test-im_ref)
+            im_diff = abs(im_test.astype(float) - im_ref.astype(float)) # avoid overflow
+            print("max pixel diff", np.max(im_diff))
+            im_diff = im_diff.astype(np.uint8)
             row = pn.Row(img("actual",im_test), img(f"expected {fn_ref}",im_ref), img("diff",im_diff))
             cap = "Update expected image"
         else:
