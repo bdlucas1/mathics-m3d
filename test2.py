@@ -25,16 +25,18 @@ def test(fn, layout):
 
     print("=== TEST", fn, layout)
 
+    # wrap image together with caption in a column
     def img(cap, im):
         im = PIL.Image.fromarray(im)
         im = pn.pane.Image(im, width=im.width, sizing_mode='fixed')
         cap = pn.widgets.StaticText(value=cap)
         return pn.Column(cap, im)
 
+    # file names
     fn_ref = f"{fn}.png"
     fn_test = f"/tmp/{fn.replace('/','-')}.png"
 
-    # get test image as array im_test
+    # get figures - pio.write_image only works with Figures
     def collect_figures(x):
         if isinstance(x, go.Figure):
             yield x
@@ -46,6 +48,9 @@ def test(fn, layout):
     collect_figures(layout)
     figures = [*collect_figures(layout)]
     assert len(figures) == 1
+
+    # write the figure
+    # TODO: try layou.save again - requires Selenium
     pio.write_image(figures[0], fn_test) # only works for Figures
     im_test = skimage.io.imread(fn_test)[:,:,0:3]
 
@@ -55,7 +60,7 @@ def test(fn, layout):
         row = pn.Row(img("actual", im_test))
         cap = f"Save test image"
     else:
-        # ref image exists - cmpare
+        # ref image exists - compare
         im_ref = skimage.io.imread(fn_ref)[:,:,0:3]
         if im_test.shape != im_ref.shape:
             print(f"=== shapes differ: test {im_test.shape}, ref {im_ref.shape}")
@@ -71,7 +76,7 @@ def test(fn, layout):
         else:
             print("=== images are identical")
         
-    # if here was a diff show it and ask
+    # if there was a diff show it and ask
     if row:
         button = pn.widgets.Button(name=cap, styles={"font-size": "12pt"})
         def copy(_):
@@ -85,7 +90,6 @@ def test(fn, layout):
         button.on_click(copy)
         top.append(row)
         top.append(button)
-
 
 
     # TODO: WIP
