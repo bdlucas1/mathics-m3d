@@ -26,6 +26,8 @@ import time
 import ui
 import test_ui
 
+test = None # may be imported later
+
 pn.extension()
 pn.extension('plotly')
 pn.extension('mathjax')
@@ -573,7 +575,7 @@ else:
 
     test = None
     if args.test:
-        import test2 as test
+        import test
 
     app = App(
         load=args.files,

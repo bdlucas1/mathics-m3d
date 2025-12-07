@@ -1,141 +1,169 @@
-import argparse
-import importlib
 import os
-import sys
-import threading
-import time
+os.environ["MATHICS3_TIMING"] = "1"
 
-import numpy as np
+import panel as pn
+import plotly
+import plotly.io as pio
+import plotly.graph_objects as go
 import skimage.transform
 import skimage.io
-import panel as pn
+import PIL
+import numpy as np
+import time
 
-import core
-import layout as lt
-import sym
 import util
 
-import matplotlib
-matplotlib.use('Qt5Agg')
-matplotlib.rcParams['toolbar'] = 'None'
+class State: pass
+state = State()
 
-import matplotlib.pyplot as plt
-plt.ion()
+state.pending = 0
+state.run = 0
+state.missing = 0
+state.failed = 0
+state.passed = 0
+state.fixed = 0
 
-fig = None
+def summarize_and_exit():
+    msg = f"=== {state.run} run, {state.passed} passed, {state.failed} failed, {state.fixed} fixed"
+    print(msg)
+    msg = pn.widgets.StaticText(value=msg)
+    state.top[:] = [x for x in state.top if not isinstance(x, pn.widgets.Button)] + [msg]
+    time.sleep(1)
+    os._exit(0)
 
-def differ(fn_im1, fn_im2):
+state.top = pn.Column(styles={"gap": "1em"})
+util.show(state.top, "TEST", browser="webbrowser")
 
-    global fig
-    global axes
-    if fig is None:
-        fig = plt.figure(num="update reference image? (y/n)", figsize=(9,3))
-        fig.canvas.manager.window.move(10, 100)
-        axes = fig.subplots(1, 3)
+# track pending tests so we know when we're done
+def pending():
+    state.pending += 1
 
-    im1 = skimage.io.imread(fn_im1)[:,:,0:3] if os.path.exists(fn_im1) else None
-    im2 = skimage.io.imread(fn_im2)[:,:,0:3] if os.path.exists(fn_im2) else None
-    
-    difference = None
+def test(fn, layout):
 
-    if im1 is None:
-        difference = f"im1 {fn_im1} does not exist"
-    elif im2 is None:
-        difference = f"im2 {fn_im2} does not exist"
-    elif im1.shape != im2.shape:
-        difference = f"image shapes {im1.shape} {im2.shape} differ"
-    elif not (im1 - im2 == 0).all():
-        difference = f"images differ"
+    print("=== TEST", fn) #, layout)
+    state.run += 1
 
-    if difference:
+    # wrap image together with caption in a column
+    def img(cap, im):
+        im = PIL.Image.fromarray(im)
+        im = pn.pane.Image(im, width=im.width, sizing_mode='fixed')
+        cap = pn.widgets.StaticText(value=cap)
+        return pn.Column(cap, im)
 
-        print(difference)
+    # file names
+    fn_ref = f"{fn}.png"
+    fn_test = f"/tmp/{fn.replace('/','-')}.png"
 
-        keypress = None
-        def on_keypress(event):
-            nonlocal keypress
-            keypress = event.key
-        fig.canvas.mpl_connect("key_press_event", on_keypress)
-
-        def show(i, im, name):
-            if im is not None:
-                h, w = im.shape[:2]
-                axes[i].imshow(im, extent=[0, w, 0, h])
-            axes[i].set_title(name.split("/")[-1], fontsize=10)
-            axes[i].axis("off")
-            axes[i].set_anchor("N")
-            #axes[i].set_aspect("auto")
-
-        show(0, im1, fn_im1)
-        show(1, im2, fn_im2)
-        if im1 is not None and im2 is not None:
-            im2 = skimage.transform.resize(im2.astype(float), im1.shape[0:2])
-            diff = abs(im2-im1).astype(int)
-            show(2, diff, "diff")
-
-        plt.tight_layout()
-        plt.waitforbuttonpress()
-
-        return keypress == "y"
-
-
-    else:
-        print("images are identical")
-
-    return difference
-
-
-
-if __name__ == "__main__":
-
-    failures = 0
-    successes = 0
-
-    class FE:
-        pass
-    fe = FE()
-    fe.session = core.MathicsSession()
-
-    parser = argparse.ArgumentParser(description="Mathics3 graphics test")
-    parser.add_argument("files", type=str, default=None, nargs="*")
-    args = parser.parse_args()
-
-    for fn in args.files:
-
-        if fn in util.methods:
-            util.switch_method(fn)
-            continue
-
-        fn_m = fn.replace(".png", ".m")
-        fn_ref = fn.replace(".m", ".png")
-        fn_test = "/tmp/test.png"
-
-        print(f"=== {fn_m}")
-
-        if os.path.exists(fn_test):
-            os.remove(fn_test)
-
-        fe.test_image = fn_test
-        with open(fn_m) as f:
-            s = f.read()
-        expr = fe.session.parse(s)
-        expr = expr.evaluate(fe.session.evaluation)
-        layout = lt.expression_to_layout(fe, expr)
-
-        # TODO: WIP
-        # ff formats too wide, so fix that first
-        #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
-        #
-
-        if update := differ(fn_ref, fn_test):
-            failures += 1
-            if update:
-                print(f"updating reference image {fn_ref}")
-                with open(fn_test, "rb") as f_test:
-                    img_data = f_test.read()
-                    with open(fn_ref, "wb") as f_ref:
-                        f_ref.write(img_data)
+    # get figures - pio.write_image only works with Figures
+    def collect_figures(x):
+        if isinstance(x, go.Figure):
+            yield x
+        elif isinstance(x, pn.pane.Plotly):
+            yield x.object
         else:
-            successes += 1
+            try:
+                for xx in x:
+                    if xx is not x:
+                        yield from collect_figures(xx)
+            except TypeError as oops:
+                #print(oops)
+                pass
+    collect_figures(layout)
+    figures = [*collect_figures(layout)]
+    if len(figures) == 0:
+        state.failed += 1
+        print("NO FIGURES")
+        return
 
-    print(f"=== {successes} successes, {failures} failures")                    
+    # TODO: this mimics previous behavior
+    # should test each figure separately, maybe
+    figure = figures[-1] # mimic previous behavior
+
+    # TODO: look into this some more maybe
+    # uses selenium to render the entire layout e.g. including
+    # Grid, Row, Manipulate, which might be nice
+    # but is ok IF we don't also put layout in the main document 
+    # maybe that's ok for test mode?
+    # But also there was a problem where the right side of the
+    # image seemed to be cut off
+    #layout.save(fn_test)
+
+    # write the figure
+    pio.write_image(figure, fn_test) # only works for Figures
+    im_test = skimage.io.imread(fn_test)[:,:,0:3]
+
+    row, cap = None, None
+    if not os.path.exists(fn_ref):
+        print(f"=== ref image {fn_ref} does not exist")
+        state.missing += 1
+        row = pn.Row(img("actual", im_test))
+        cap = f"Save test image as {fn_ref}"
+    else:
+        # ref image exists - compare
+        im_ref = skimage.io.imread(fn_ref)[:,:,0:3]
+        if im_test.shape != im_ref.shape:
+            print(f"=== shapes differ: test {im_test.shape}, ref {im_ref.shape}")
+            state.failed += 1
+            row = pn.Row(img("actual",im_test), img(f"expected {fn_ref}",im_ref))
+            cap = "Update expected image"
+        elif not (im_ref - im_test == 0).all():
+            print("=== images differ")
+            state.failed += 1
+            im_diff = abs(im_test.astype(float) - im_ref.astype(float)) # avoid overflow
+            print("max pixel diff", np.max(im_diff))
+            im_diff = im_diff.astype(np.uint8)
+            row = pn.Row(img("actual",im_test), img(f"expected {fn_ref}",im_ref), img("diff",im_diff))
+            cap = "Update expected image"
+        else:
+            print("=== images are identical")
+            state.passed += 1
+        
+    # if there was a diff show it and ask
+    if row:
+        button = pn.widgets.Button(name=cap, styles={"font-size": "12pt"})
+        def copy(_):
+            print(f"=== copying {fn_test} to {fn_ref}")
+            state.fixed += 1
+            with open(fn_test, "rb") as f_test:
+                img_data = f_test.read()
+                with open(fn_ref, "wb") as f_ref:
+                    f_ref.write(img_data)
+            state.top.remove(row)
+            state.top.remove(button)
+        button.on_click(copy)
+        state.top.append(row)
+        state.top.append(button)
+
+    # if we've seen all tests we were promised and there were no failures just exit
+    # otherwise the user will have to press the "Finish" button
+    state.pending -= 1
+    if state.pending == 0:
+        if state.failed == 0 and state.missing == 0:
+            summarize_and_exit()
+        else:
+            finish_button = pn.widgets.Button(name="Finish")
+            finish_button.on_click(lambda _: summarize_and_exit())
+            state.top.append(finish_button)
+            print("=== there were failures - finish in browser window")
+            
+
+    # TODO: WIP
+    # ff formats too wide, so fix that first
+    #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
+    #
+
+# given a filename fn and options from the ``` line, compute test filename
+def test_fn(fn, options=None):
+
+    # compute test_fn
+    test_fn = None
+    if options is not None:
+        # this was a ``` code section of a .m3d file
+        if test_part := options.get("test", None):
+            base_fn, _ =  os.path.splitext(fn)
+            test_fn = f"{base_fn}={test_part}" # = sorts after .
+    else:
+        # this was a freestanding .m file
+        test_fn, _ = os.path.splitext(fn)
+
+    return test_fn
