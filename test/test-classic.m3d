@@ -1,0 +1,12 @@
+``` m3d test:plot3d method:classic
+Plot3D[
+   Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}
+]
+```
+
+``` m3d test:density method:classic
+DensityPlot[
+    Sin[10 x + y], {x,0,1}, {y,0,1},
+    PlotPoints -> {20,20}, Axes->True
+]
+```

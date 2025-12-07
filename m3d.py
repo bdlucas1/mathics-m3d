@@ -1,14 +1,12 @@
-import sys
-sys.stdout.flush()
-
 import os
-os.environ["DEMO_USE"] = "panel"
 if not "MATHICS3_TIMING" in os.environ:
     os.environ["MATHICS3_TIMING"] = "-1"
+os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
 
 import inspect
 import threading
 import re
+import sys
 
 import panel as pn
 import panel.widgets as pnw
@@ -566,8 +564,12 @@ else:
     parser.add_argument("--no-autorun", action="store_true")
     parser.add_argument("--show-code", action="store_true")        
     parser.add_argument("--test", action="store_true")
+    parser.add_argument("--classic", action="store_true")
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
+
+    if args.classic:
+        util.switch_method("classic")
 
     test = None
     if args.test:

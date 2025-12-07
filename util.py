@@ -8,7 +8,6 @@ import importlib
 import subprocess
 import panel as pn
 
-os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
 from mathics.core.util import *
 from mathics.timing import *
 
@@ -109,20 +108,30 @@ class Browser:
         return self
 
 methods = ["CLASSIC", "VECTORIZED"]
+muvp = "MATHICS3_USE_VECTORIZED_PLOT"
 
 def switch_method(method):
 
+    method = method.upper()
+    print("switching to method", method)
+
     if method == "CLASSIC":
         try:
-            del os.environ["MATHICS3_USE_VECTORIZED_PLOT"]
+            del os.environ[muvp]
         except Exception:
             pass
     elif method == "VECTORIZED":
-        os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
+        os.environ[muvp] = "yes"
 
     import mathics.builtin.drawing.plot as plot
     importlib.reload(plot)
 
+def ensure_method(method):
+
+    method = method.upper()
+    if (method=="CLASSIC" and muvp in os.environ
+        or method=="VECTORIZED" and muvp not in os.environ):
+        switch_method(method)
 
 
 def show(app, title, browser=None):

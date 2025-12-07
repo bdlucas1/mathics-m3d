@@ -1,5 +1,4 @@
 import os
-os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
 os.environ["MATHICS3_TIMING"] = "1"
 
 import panel as pn
@@ -155,6 +154,8 @@ def test(fn, layout):
 
 # given a filename fn and options from the ``` line, compute test filename
 def test_fn(fn, options=None):
+
+    # compute test_fn
     test_fn = None
     if options is not None:
         # this was a ``` code section of a .m3d file
@@ -164,4 +165,5 @@ def test_fn(fn, options=None):
     else:
         # this was a freestanding .m file
         test_fn, _ = os.path.splitext(fn)
+
     return test_fn
