@@ -3,7 +3,8 @@ sys.stdout.flush()
 
 import os
 os.environ["DEMO_USE"] = "panel"
-os.environ["MATHICS3_TIMING"] = "-1"
+if not "MATHICS3_TIMING" in os.environ:
+    os.environ["MATHICS3_TIMING"] = "-1"
 
 import inspect
 import threading
@@ -141,8 +142,8 @@ class Pair(pn.Column):
                 return
             layout = lt.expression_to_layout(fe, expr)
             if self.test_fn:
-                import test # does stuff on import so, ...
-                test.test(self.test_fn, layout)
+                import test2 # does stuff on import so, ...
+                test2.test(self.test_fn, layout)
             self.output[0] = layout
             self.is_stale = False
             self.exec_button.visible = False
@@ -270,7 +271,8 @@ class View(pn.Column):
                     if fe.test_mode and fn:
                         if test_part := options.get("test", None):
                             base_fn, _ = os.path.splitext(fn)
-                            test_fn = f"{base_fn}-{test_part}"
+                            # = sorts after .
+                            test_fn = f"{base_fn}={test_part}"
 
                     # option to show the code for this part
                     input_visible = show_code or not autorun
@@ -577,22 +579,5 @@ else:
         autorun=not args.no_autorun
     )
     title =  " ".join(["Markdown+Mathics3", *args.files])
+    util.show(app, title)
 
-    # find a free port
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))  # Bind to an ephemeral port chosen by the OS
-        port = s.getsockname()[1]  # Return the assigned port number
-
-    # start the server
-    server = pn.serve(
-        app,
-        port=port,
-        address="localhost",
-        threaded=True,
-        show=False,
-        title=title,
-    )
-
-    # start a browser
-    util.Browser().show(f"http://localhost:{port}", title=title).start()

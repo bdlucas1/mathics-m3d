@@ -3,10 +3,12 @@ import importlib
 import os
 import sys
 import threading
+import time
 
 import numpy as np
 import skimage.transform
 import skimage.io
+import panel as pn
 
 import core
 import layout as lt
@@ -82,17 +84,6 @@ def differ(fn_im1, fn_im2):
 
     return difference
 
-def test(fn, layout):
-    print("=== TEST", fn, layout)
-
-    #import plotly.io as pio
-    #pio.write_image(figure, self.fe.test_image)
-    #print("wrote", self.fe.test_image)
-
-    # TODO: WIP
-    # ff formats too wide, so fix that first
-    #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
-    #
 
 
 if __name__ == "__main__":

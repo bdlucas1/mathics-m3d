@@ -6,6 +6,7 @@ import urllib.parse
 import webbrowser
 import importlib
 import subprocess
+import panel as pn
 
 os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
 from mathics.core.util import *
@@ -77,9 +78,9 @@ def prt_sympy_tree(expr, indent=""):
 # webbrowser - instruct system browser to open a new window
 class Browser:
 
-    def __init__(self):
+    def __init__(self, browser=None):
         self.n = 0
-        self.browser = os.getenv("DEMO_BROWSER", "webview")
+        self.browser = browser or os.getenv("DEMO_BROWSER", "webview")
         if not webview:
             self.browser = "webbrowser"
 
@@ -121,3 +122,27 @@ def switch_method(method):
 
     import mathics.builtin.drawing.plot as plot
     importlib.reload(plot)
+
+
+
+def show(app, title, browser=None):
+
+    # find a free port
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))  # Bind to an ephemeral port chosen by the OS
+        port = s.getsockname()[1]  # Return the assigned port number
+
+    # start the server
+    server = pn.serve(
+        app,
+        port=port,
+        address="localhost",
+        threaded=True,
+        show=False,
+        title=title,
+    )
+
+    # start a browser
+    Browser(browser).show(f"http://localhost:{port}", title=title).start()
+    

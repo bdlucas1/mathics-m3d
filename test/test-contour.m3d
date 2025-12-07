@@ -9,12 +9,12 @@ ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, Contours->8]
 ```
 
 $$f(x,y)$$, specific contours
-``` m3d test:expr-n
+``` m3d test:expr-specified
 ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, Contours->{-1,0,1}]
 ```
 
 two functions each of the form $$f(x,y)=g(x,y)$$
-```
+``` m3d test:equation
 ContourPlot[{x^2+y^2 == 1, x^2-y^2==0.5} , {x,-2,2},{y,-2,2}]
 ```
 
