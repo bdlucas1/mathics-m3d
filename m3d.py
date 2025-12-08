@@ -178,12 +178,22 @@ class Pair(pn.Column):
 
         
 class View(pn.Column):
+    """
+    Displays the page as alternating parts of Markdown and
+    and Pair, where each Pair has code (input) and the result 
+    of evaluating that code (output)
+    """
 
     persistent = True
     pair_cache = {}
 
     @property
     def text(self):
+        """
+        Reconstruct the markdown for the entire page by
+        concatenating the text for the Pair and Markdown elements
+        that constitute the View
+        """
         def collect():
             for item in self:
                 if isinstance(item, Pair):
@@ -227,8 +237,10 @@ class View(pn.Column):
 
 
     def load_m3d_string(self, md_str, run, show_code=False, fn=None):
+        """ Load a Mathics3+Markdown (.m3d) document given as a string """
 
-        # TODO: allow for tags or instructions after ``` until end of line
+        # split the document at fence (lines beginning with ```) boundaries
+        # the output of re.split includes the delimiters, i.e. the fence lines
         md_parts = re.split("(```[^\n]*)", md_str)
         is_m3 = False
 
@@ -249,14 +261,19 @@ class View(pn.Column):
         for part in md_parts:
 
             if part.startswith("```"):
-                opener = part
-                options = global_options | parse_options(part)
+
+                # it's a fence, so toggle the mode flag, parse the remainder
+                # of the line as options, and remember the opening fence
+                # so we can reconstruct it later when we need to go
+                # recover markdown text for the whole page
                 is_m3 = not is_m3
+                options = global_options | parse_options(part)
+                opener = part
 
             elif is_m3:
 
-                # construct the pair, consulting the cache that may have been
-                # left when we entered edit mode
+                # this part is a code block, so  construct the pair, consulting
+                # the cache that may have been left when we entered edit mode
                 text = part.strip()
                 try:
                     pair = self.pair_cache[text]
@@ -282,6 +299,7 @@ class View(pn.Column):
 
             else:
 
+                # global options can also be found in comments
                 for comment in re.findall("<!--[\\s\\S]*?-->", part):
                     global_options |= parse_options(comment)
 
@@ -307,6 +325,7 @@ class View(pn.Column):
 
 
     def load_m(self, m_fn):
+        """ Load a .m file that contains only a Mathics3 formula """
         m_str = open(m_fn).read()    
         test_fn = os.path.splitext(m_fn)[0] if test else None
         pair = Pair(m_str.strip(), run=True, test_fn=test_fn)
@@ -320,7 +339,9 @@ class View(pn.Column):
 
 
 class Edit(pn.widgets.TextAreaInput):
+    """ Used in edit mode to display the entire file as text for editing """
 
+    # persists even between UI mode changes
     persistent = True
 
     @property
@@ -341,8 +362,19 @@ class Save(ui.SaveFile):
 
 
 class App(ui.Stack):
+    """
+    The top-level app is a Stack, which is a Column that manages mode switching
+    by instantiating and controling the visibility of its constituents
+    """
 
-    def __init__(self, load, initial_mode = "view", autorun=True, show_code=False):
+    def __init__(
+            self,
+            load,
+            initial_mode="view",
+            autorun=True,
+            show_code=False,
+            test_ui_run=False
+    ):
 
         self.current_fn = None
         self.active_mode = None
@@ -411,8 +443,8 @@ class App(ui.Stack):
         self.activate(initial_mode)
 
         # start tests after we're loaded
-        # TODO: command-line flag
-        #pn.state.onload(test_ui.run_tests, threaded=True)
+        if test_ui_run:
+            pn.state.onload(test_ui.run_tests, threaded=True)
 
 
     def init_shortcuts(self):
@@ -566,6 +598,7 @@ else:
     parser.add_argument("--no-autorun", action="store_true")
     parser.add_argument("--show-code", action="store_true")        
     parser.add_argument("--test", action="store_true")
+    parser.add_argument("--test-ui", action="store_true")
     parser.add_argument("--classic", action="store_true")
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
@@ -581,7 +614,8 @@ else:
         load=args.files,
         initial_mode=args.initial_mode,
         show_code=args.show_code,
-        autorun=not args.no_autorun
+        autorun=not args.no_autorun,
+        test_ui_run=args.test_ui,
     )
     title =  " ".join(["Markdown+Mathics3", *args.files])
     util.show(app, title)
