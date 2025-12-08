@@ -187,6 +187,10 @@ class View(pn.Column):
     persistent = True
     pair_cache = {}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_fn = None
+
     @property
     def text(self):
         """
@@ -215,8 +219,10 @@ class View(pn.Column):
 
 
     def load_files(self, fns, run, show_code=False):
+        print("xxx laoding files", fns)
         self[:] = []
         if len(fns):
+            self.current_fn = fns[0]
             for fn in fns:
                 if fn.endswith(".m3d") or fn.endswith(".md"):
                     self.load_m3d_file(fn, run, show_code)
@@ -224,8 +230,6 @@ class View(pn.Column):
                     self.load_m(fn)
                 else:
                     print(f"Don't understand file {fn}")
-            if len(fns) == 1:
-                self.current_fn = fns[0]
         else:
             self.append(Pair(None, input_visible=True))
 
@@ -376,7 +380,6 @@ class App(ui.Stack):
             test_ui_run=False
     ):
 
-        self.current_fn = None
         self.active_mode = None
         self.text_owner = None
 
@@ -425,6 +428,7 @@ class App(ui.Stack):
         self.append("open", make_open)
 
         def make_save():
+            print("xxx make_save")
             text = self.text_owner.text
             def on_save(fn):
                 if os.path.exists(fn):
@@ -433,7 +437,7 @@ class App(ui.Stack):
                 with open(fn, "w") as f:
                     f.write(text)
                 self.activate("view")
-            return Save(self.current_fn, data_root, on_save)
+            return Save(self.view.current_fn, data_root, on_save)
         self.append("save", make_save)
 
 
@@ -483,8 +487,8 @@ class App(ui.Stack):
 
         # we've moving away from old_mode (previous test guaranteed that)
         # not persistent means it has state that must be renewed next time it's opened
-        #if self.active_item and not self.active_item.persistent:
-        #    self.close_item(self.active_item)
+        if self.active_item and not self.active_item.persistent:
+            self.close_item(self.active_item)
 
         # sets the new mode, and may instantiate associated ui artifacts
         # so we have to do this before we can handle any transition logic

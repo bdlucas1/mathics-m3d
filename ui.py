@@ -225,7 +225,37 @@ def icon_button(icon, description, on_click):
 class FileSelect(pn.GridBox):
     """ UI to navigate directory hierarchy """
 
-    def __init__(self, root_dir, on_select, on_open = lambda _: None):
+    def __init__(self, init_dir, update_button, on_action):
+
+        def on_double_click(event):
+            path = self.selector.value[0]
+            if os.path.isdir(path):
+                self.load_dir(path)
+                update_button(path)
+            else:
+                on_action(self.selected_path)
+
+        def _on_select(_):
+            def show(fn):
+                self.show_fn.value = fn
+                self.button.disabled = not fn
+            if self.selector.value and self.selector.value[0]:
+                path = self.selected_path = self.selector.value[0]
+                if os.path.isdir(path):
+                    show("")
+                else:
+                    show(os.path.split(path)[-1])
+            else:
+                show("")
+            update_button(self.selected_path)
+            
+        def on_button_click(_):
+            on_action(self.selected_path)
+
+
+        self.show_path = pn.widgets.StaticText(value="path")
+        self.show_fn = pn.widgets.StaticText(value="fn")
+        self.button = pn.widgets.Button()
 
         self.selector = pn.widgets.MultiSelect(
             size=10,
@@ -245,145 +275,89 @@ class FileSelect(pn.GridBox):
             """]
         )
 
-        def on_double_click(event):
-            #print("xxx self.selector.value", self.selector.value)
-            is_file, path = self.selector.value[0]
-            if is_file:
-                on_open(path)
-            else:
-                self.selector.load_dir(root_dir, path)
-
         super().__init__(
+            self.show_path,
+            self.show_fn,
             self.selector,
-            ncols=2
+            self.button,
+            ncols=2,
+            stylesheets = ["""
+                :host {
+                    gap: 1em;
+                }
+            """],
         )
 
         self.selector.on_double_click(on_double_click)
-        self.selector.param.watch(lambda _: on_select(), "value")
-        self.load_dir(root_dir, root_dir)
+        self.button.on_click(on_button_click)
+        self.selector.param.watch(_on_select, "value")
+        self.load_dir(init_dir)
+        update_button(self.selected_path)
+
     
-    def load_dir(self, root_dir, dn):
+    def load_dir(self, load_path):
+
+        load_path = os.path.abspath(load_path)
         folder = "\U0001F4C1 "
         options = {}
-        if dn != root_dir:
-            options[folder + ".."] = False, os.path.dirname(dn)
-        for fn in os.listdir(dn):
-            path = os.path.join(dn, fn)
+
+        # add parent dir
+        options[folder + ".."] = os.path.abspath(os.path.join(load_path, ".."))
+
+        # add ls
+        for fn in list(os.listdir(load_path)):
             if fn.startswith(".") or fn.endswith("~"):
                 continue
+            path = os.path.abspath(os.path.join(load_path, fn))
             if os.path.isdir(path):
-                name = folder + fn
-                value = False, path
+                options[folder + fn] = path
             else:
-                name = fn
-                value = True, path
-            options[name] = value
-        sorted_items = sorted(options.items(), key=lambda item: item[1])
+                options[fn] = path
+
+        # sort by name, with directories first
+        sort_key = lambda item: (not os.path.isdir(item[1]), item[1])
+        sorted_items = sorted(options.items(), key=sort_key)
         options = dict(sorted_items)
+
+        # update widgets
         self.selector.options = options
-        self.selector.current_dir = dn
+        self.show_path.value = load_path + "/"
+        self.show_fn.value = ""
+
+        self.selected_path = load_path
+
 
     @property
     def info(self):
         value = self.selector.value[0] if len(self.selector.value) else (None, None)
         return value
 
-class OpenFile(pn.Row):
+class OpenFile(FileSelect):
     """ UI to open a file """
     
-    def __init__(self, root_dir: str, on_open):
-        self.root_dir = root_dir
-        self.on_open = on_open
+    def __init__(self, init_dir, on_open):
 
-        def on_select():
-            _, path = file_select.info
-            open_button.disabled = path is None
+        def update_button(path):
+            self.button.name = "Open"
 
-        def on_open_button(_):
-            _, path = file_select.info
-            on_open(path)
-
-        super().__init__(
-            file_select := FileSelect(root_dir, on_select, on_open),
-            open_button := pn.widgets.Button(name="Open"),
-            stylesheets = ["""
-                :host {
-                    gap: 1em;
-                }
-            """],
-            #css_classes = ["m-open-file"] # ugh, can't make it work
-        )
-
-        open_button.on_click(on_open_button)
-
-        test_ui.item(file_select.selector, "open_file_select")
-        test_ui.item(open_button, "open_file_open_button")
+        super().__init__(init_dir, update_button, on_open)
 
 
-class SaveFile(pn.Row):
+class SaveFile(FileSelect):
+    """ UI to save a file """
+    
+    def __init__(self, current_fn, init_dir, on_save):
 
-    def __init__(self, current_fn, root_dir: str, on_save):
-        """ UI to save a file """
+        if current_fn:
+            current_fn = os.path.abspath(current_fn)
 
-        def allowed(path):
-            if not path.startswith(root_dir) or ".." in path:
-                return False
+        def update_button(path):
+            if os.path.exists(path) and not os.path.isdir(path) and path != current_fn:
+                self.button.name = "Overwrite"
             else:
-                dn = os.path.dirname(path)
-                if not os.path.isdir(dn):
-                    return False
-            return True
+                self.button.name = "Save"
 
-        def vet(is_file, path):
-            if not path or not is_file:
-                disabled, caption = True, "Nope"
-            elif not allowed(path):
-                disabled, caption = True, "Nope"
-            elif path == current_fn:
-                disabled, caption = False, "Save"
-            elif os.path.exists(path):
-                disabled, caption = False, "Overwrite"
-            else:
-                disabled, caption = False, "Save as"
-            save_button.name = caption
-            save_button.disabled = disabled
-            if path:
-                text_input.value = path
-
-        def on_select():
-            is_file, path = file_select.info
-            vet(is_file, path)
-
-        def on_input(event):
-            path = text_input.value_input
-            is_file = not os.path.isdir(path)
-            vet(is_file, path)
-
-        def on_save_button(event):
-            # .value_input is only set after some input
-            path = text_input.value_input or text_input.value
-            on_save(path)
-
-        super().__init__(
-            file_select := FileSelect(root_dir, on_select),
-            pn.Column (
-                text_input := pn.widgets.TextInput(value=current_fn),
-                save_button := pn.widgets.Button(name="Save"),
-            ),
-            stylesheets = ["""
-                :host, * {
-                    gap: 1em;
-                }
-            """],
-            #css_classes = ["m-open-file"] # ugh, can't make it work
-        )
-
-        save_button.on_click(on_save_button)
-        text_input.param.watch(on_input, "value_input")
-
-        test_ui.item(file_select.selector, "save_file_select")
-        test_ui.item(text_input, "save_file_text_input")
-        test_ui.item(save_button, "save_file_save_button")
+        super().__init__(init_dir, update_button, on_save)
 
 
 
@@ -441,7 +415,10 @@ class Stack(pn.Column):
             self.items[mode] = None
             
     def close_item(self, item):
-        ...
+        self.remove(item)
+        modes = [mode for mode, i in self.items.items() if i==item]
+        assert len(modes)== 1
+        self.items[modes[0]] = None
 
 #
 # Following code is from https://github.com/holoviz/panel/issues/3193
