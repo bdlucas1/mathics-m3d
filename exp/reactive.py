@@ -10,23 +10,29 @@ inner_panel = pn.Column(
 )
 ti.param.watch(lambda x: print(x), "value_input")
 
-
 class Wrapper(pn.reactive.ReactiveHTML):
-    # Parameter that will hold a Panel object
+
     content = param.Parameter(precedence=-1)
+    content2 = param.Parameter(precedence=-1)
 
     _template = """
-    <div style="border: 2px solid #888; padding: 10px;">
-      <h2>Wrapper ReactiveHTML</h2>
-      <div id='xxx'>
-        <!-- Here we embed the Panel object -->
-        ${content}
-      </div>
-    </div>
+        <div style="border: 2px solid #888; padding: 10px;">
+          <h2>Wrapper ReactiveHTML</h2>
+          <div id='xxx'>
+            <!-- Here we embed the Panel object -->
+            ${content}
+            ${content2}
+          </div>
+        </div>
     """
 
+#Wrapper.content2 = content = param.Parameter(precedence=-1)
+
+print("xxx wd", Wrapper.__dict__)
+
+
 # Pass the existing Panel into the ReactiveHTML instance
-wrapper = Wrapper(content=inner_panel)
+wrapper = Wrapper(content=inner_panel, content2="xxxcontent2")
 
 #wrapper.servable()
 wrapper.show()
