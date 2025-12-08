@@ -222,20 +222,12 @@ def icon_button(icon, description, on_click):
     return button
 
 
-class FileSelect(pn.widgets.MultiSelect):
+class FileSelect(pn.GridBox):
     """ UI to navigate directory hierarchy """
 
     def __init__(self, root_dir, on_select, on_open = lambda _: None):
 
-        def on_double_click(event):
-            #print("xxx self.value", self.value)
-            is_file, path = self.value[0]
-            if is_file:
-                on_open(path)
-            else:
-                self.load_dir(root_dir, path)
-
-        super().__init__(
+        self.selector = pn.widgets.MultiSelect(
             size=10,
             value=[],
             # always show scrollbar on MacOS
@@ -253,8 +245,21 @@ class FileSelect(pn.widgets.MultiSelect):
             """]
         )
 
-        self.on_double_click(on_double_click)
-        self.param.watch(lambda _: on_select(), "value")
+        def on_double_click(event):
+            #print("xxx self.selector.value", self.selector.value)
+            is_file, path = self.selector.value[0]
+            if is_file:
+                on_open(path)
+            else:
+                self.selector.load_dir(root_dir, path)
+
+        super().__init__(
+            self.selector,
+            ncols=2
+        )
+
+        self.selector.on_double_click(on_double_click)
+        self.selector.param.watch(lambda _: on_select(), "value")
         self.load_dir(root_dir, root_dir)
     
     def load_dir(self, root_dir, dn):
@@ -275,12 +280,12 @@ class FileSelect(pn.widgets.MultiSelect):
             options[name] = value
         sorted_items = sorted(options.items(), key=lambda item: item[1])
         options = dict(sorted_items)
-        self.options = options
-        self.current_dir = dn
+        self.selector.options = options
+        self.selector.current_dir = dn
 
     @property
     def info(self):
-        value = self.value[0] if len(self.value) else (None, None)
+        value = self.selector.value[0] if len(self.selector.value) else (None, None)
         return value
 
 class OpenFile(pn.Row):
@@ -311,7 +316,7 @@ class OpenFile(pn.Row):
 
         open_button.on_click(on_open_button)
 
-        test_ui.item(file_select, "open_file_select")
+        test_ui.item(file_select.selector, "open_file_select")
         test_ui.item(open_button, "open_file_open_button")
 
 
@@ -376,7 +381,7 @@ class SaveFile(pn.Row):
         save_button.on_click(on_save_button)
         text_input.param.watch(on_input, "value_input")
 
-        test_ui.item(file_select, "save_file_select")
+        test_ui.item(file_select.selector, "save_file_select")
         test_ui.item(text_input, "save_file_text_input")
         test_ui.item(save_button, "save_file_save_button")
 
