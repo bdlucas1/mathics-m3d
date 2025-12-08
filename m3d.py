@@ -219,7 +219,6 @@ class View(pn.Column):
 
 
     def load_files(self, fns, run, show_code=False):
-        print("xxx laoding files", fns)
         self[:] = []
         if len(fns):
             self.current_fn = fns[0]
@@ -428,7 +427,6 @@ class App(ui.Stack):
         self.append("open", make_open)
 
         def make_save():
-            print("xxx make_save")
             text = self.text_owner.text
             def on_save(fn):
                 if os.path.exists(fn):

@@ -236,9 +236,11 @@ class FileSelect(pn.GridBox):
                 on_action(self.selected_path)
 
         def _on_select(_):
+
             def show(fn):
                 self.show_fn.value = fn
                 self.button.disabled = not fn
+
             if self.selector.value and self.selector.value[0]:
                 path = self.selected_path = self.selector.value[0]
                 if os.path.isdir(path):
@@ -247,14 +249,15 @@ class FileSelect(pn.GridBox):
                     show(os.path.split(path)[-1])
             else:
                 show("")
+
             update_button(self.selected_path)
             
         def on_button_click(_):
             on_action(self.selected_path)
 
 
-        self.show_path = pn.widgets.StaticText(value="path")
-        self.show_fn = pn.widgets.StaticText(value="fn")
+        self.show_path = pn.widgets.StaticText()
+        self.show_fn = pn.widgets.StaticText()
         self.button = pn.widgets.Button()
 
         self.selector = pn.widgets.MultiSelect(
