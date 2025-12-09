@@ -166,6 +166,9 @@ class Pair(pn.Column):
                 )
             )
             self.output[0] = error_box
+        except SystemExit:
+            print("bye")
+            os._exit(0)
         finally:
             self.messages.clear()
             for o in fe.session.evaluation.out:
@@ -515,6 +518,12 @@ class App(ui.Stack):
 
     def init_buttons(self): 
 
+        new_button = ui.icon_button(
+            "square-plus",
+            "New document",
+            lambda: self.view.load_files([], False)
+        )
+
         edit_button = ui.icon_button(
             "edit",
             "Toggle editing\nentire file",
@@ -549,7 +558,7 @@ class App(ui.Stack):
         )
 
         buttons = pn.Row(
-            pn.widgets.ButtonIcon(icon="square-plus"),
+            test_ui.item(new_button, "new_button"),
             test_ui.item(file_open_button, "open_button"),
             test_ui.item(file_save_button, "save_button"),
             test_ui.item(edit_button, "edit_button"),
