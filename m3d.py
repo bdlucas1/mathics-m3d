@@ -429,6 +429,7 @@ class App(ui.Stack):
         def make_save():
             text = self.text_owner.text
             def on_save(fn):
+                print(f"saving to {fn}")
                 if os.path.exists(fn):
                     with open(fn) as f, open(fn+"~", "w") as t:
                         t.write(f.read())

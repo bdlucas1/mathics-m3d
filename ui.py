@@ -225,14 +225,24 @@ def icon_button(icon, description, on_click):
 class FileSelect(pn.GridBox):
     """ UI to navigate directory hierarchy """
 
-    def __init__(self, init_dir, update_button, on_action):
+    def __init__(self, init_path, update_button, on_action, double_click_allowed):
+
+        if init_path is None:
+            init_path = os.getcwd()
+        init_path = os.path.abspath(init_path)
+        if os.path.isdir(init_path):
+            init_dir = init_path
+            init_fn = ""
+        else:
+            init_dir, init_fn = os.path.split(init_path)
 
         def on_double_click(event):
             path = self.selector.value[0]
             if os.path.isdir(path):
                 self.load_dir(path)
                 update_button(path)
-            else:
+            elif double_click_allowed:
+                print(f"on_action {self.selected_path}")
                 on_action(self.selected_path)
 
         def _on_select(_):
@@ -242,7 +252,7 @@ class FileSelect(pn.GridBox):
                 self.button.disabled = not fn
 
             if self.selector.value and self.selector.value[0]:
-                path = self.selected_path = self.selector.value[0]
+                path = self.selector.value[0]
                 if os.path.isdir(path):
                     show("")
                 else:
@@ -255,9 +265,15 @@ class FileSelect(pn.GridBox):
         def on_button_click(_):
             on_action(self.selected_path)
 
+        def on_filename_input(_):
+            self.selector.value = [self.selected_path]
 
-        self.show_path = pn.widgets.StaticText()
-        self.show_fn = pn.widgets.StaticText()
+
+        # TODO: following should be StaticText, but this works around an apparent but
+        # in Panel where updates to show_dn after the first didn't cause any change
+        # IFF there was also a View with a document with a plot loaded (whew!)
+        self.show_dn = pn.Row(styles={"padding": "0.4em"}) # TODO: hack to make baseline match TextInput
+        self.show_fn = pn.widgets.TextInput()
         self.button = pn.widgets.Button()
 
         self.selector = pn.widgets.MultiSelect(
@@ -279,28 +295,29 @@ class FileSelect(pn.GridBox):
         )
 
         super().__init__(
-            self.show_path,
+            self.show_dn,
             self.show_fn,
             self.selector,
             self.button,
             ncols=2,
-            stylesheets = ["""
-                :host {
-                    gap: 1em;
-                }
-            """],
+            styles = {
+                "gap": "1em",
+                "align-items": "baseine",
+            }
         )
 
         self.selector.on_double_click(on_double_click)
         self.button.on_click(on_button_click)
         self.selector.param.watch(_on_select, "value")
+        self.show_fn.param.watch(on_filename_input, "value_input")
+
         self.load_dir(init_dir)
-        update_button(self.selected_path)
+        self.selector.value = [init_path]
+        #update_button(self.selected_path)
 
     
     def load_dir(self, load_path):
 
-        load_path = os.path.abspath(load_path)
         folder = "\U0001F4C1 "
         options = {}
 
@@ -324,16 +341,19 @@ class FileSelect(pn.GridBox):
 
         # update widgets
         self.selector.options = options
-        self.show_path.value = load_path + "/"
+        self.show_dn[:] = [load_path + "/"]
         self.show_fn.value = ""
 
-        self.selected_path = load_path
 
+    @property
+    def selected_path(self):
+        return str(self.show_dn[0].object) + self.show_fn.value
 
     @property
     def info(self):
         value = self.selector.value[0] if len(self.selector.value) else (None, None)
         return value
+
 
 class OpenFile(FileSelect):
     """ UI to open a file """
@@ -343,7 +363,7 @@ class OpenFile(FileSelect):
         def update_button(path):
             self.button.name = "Open"
 
-        super().__init__(init_dir, update_button, on_open)
+        super().__init__(init_dir, update_button, on_open, double_click_allowed=True)
 
 
 class SaveFile(FileSelect):
@@ -357,10 +377,12 @@ class SaveFile(FileSelect):
         def update_button(path):
             if os.path.exists(path) and not os.path.isdir(path) and path != current_fn:
                 self.button.name = "Overwrite"
+                self.button.button_type = "danger"
             else:
                 self.button.name = "Save"
+                self.button.button_type = "default"
 
-        super().__init__(init_dir, update_button, on_save)
+        super().__init__(current_fn, update_button, on_save, double_click_allowed=False)
 
 
 
