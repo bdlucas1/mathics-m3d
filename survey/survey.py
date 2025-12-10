@@ -102,8 +102,9 @@ def git(status):
     infos = []
     for name, info in s5.items():
         if info["Git"] == status:
-            infos.append([name, info["Category"]])
+            infos.append([name, info["Category"], info["Example"]])
     for info in sorted(infos, key = lambda info: info[1]):
-        print(f"{info[0]},{info[1]},{status}")
-#git("yes")
-git("no")
+        #print(f"{info[0]},{info[1]},{status}")
+        print(f"{info[0]},{info[2]}")
+git("yes")
+#git("no")
