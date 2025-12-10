@@ -4,6 +4,7 @@
     box-sizing: border-box;
     /*font: 10pt menlo, consolas, 'DejaVu Sans Mono', monospace;*/
     font: 11pt sans-serif;
+    line-height: 1.4 !important;
 }
 
 textarea {
