@@ -38,7 +38,7 @@ util.show(state.top, "TEST", browser="webbrowser")
 def pending():
     state.pending += 1
 
-def test(fn, layout):
+def test(fn, layout, expr):
 
     print("=== TEST", fn) #, layout)
     state.run += 1
@@ -53,6 +53,7 @@ def test(fn, layout):
     # file names
     fn_ref = f"{fn}.png"
     fn_test = f"/tmp/{fn.replace('/','-')}.png"
+    fn_dump = f"/tmp/{fn.replace('/','-')}.txt"
 
     # get figures - pio.write_image only works with Figures
     def collect_figures(x):
@@ -91,6 +92,10 @@ def test(fn, layout):
     # write the figure
     pio.write_image(figure, fn_test) # only works for Figures
     im_test = skimage.io.imread(fn_test)[:,:,0:3]
+
+    # dump expr for debugging
+    with open(fn_dump, "w") as f:
+        util.print_expression_tree(expr, file=f, approximate=True)
 
     row, cap = None, None
     if not os.path.exists(fn_ref):

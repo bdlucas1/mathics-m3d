@@ -1,7 +1,6 @@
 import os
 if not "MATHICS3_TIMING" in os.environ:
     os.environ["MATHICS3_TIMING"] = "-1"
-os.environ["MATHICS3_USE_VECTORIZED_PLOT"] = "yes"
 
 import inspect
 import threading
@@ -39,6 +38,8 @@ class FE:
 
 fe = FE()
 
+import mathics.builtin.drawing.plot
+mathics.builtin.drawing.plot.use_vectorized_plot = True
 
 #
 # An input-output pair, as a column
@@ -143,9 +144,10 @@ class Pair(pn.Column):
             if not expr:
                 self.input.visible = True
                 return
+            expr = expr.evaluate(fe.session.evaluation)
             layout = lt.expression_to_layout(fe, expr)
             if self.test_fn:
-                test.test(self.test_fn, layout)
+                test.test(self.test_fn, layout, expr)
             self.output[0] = layout
             self.is_stale = False
             self.exec_button.visible = False
@@ -615,8 +617,7 @@ else:
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
 
-    if args.classic:
-        util.switch_method("classic")
+    mathics.builtin.drawing.plot.use_vectorized_plot = not args.classic
 
     test = None
     if args.test:

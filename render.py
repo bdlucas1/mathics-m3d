@@ -8,12 +8,20 @@ import util
 
 
 # TODO: move to consumer
-def need_vertices(vertices, items):
+# if vertices is none, that means items have the points at the leaves
+# instead of indexes into the vertices. Reshape the arrays so that
+# we have it in normalized form:
+#     vertices are point coordinates
+#     items have indexes into vertices list instead of the coordinates
+#     colors are 1-1 with vertices
+def need_vertices(vertices, items, colors):
     if vertices is None:
         with util.Timer("make vertices"):
             vertices = items.reshape(-1, items.shape[-1])
+            if colors is not None:
+                colors = colors.reshape(-1, colors.shape[-1])
             items = np.arange(len(vertices)).reshape(items.shape[:-1])
-    return vertices, items
+    return vertices, items, colors
 
 class FigureBuilder:
 
@@ -93,7 +101,7 @@ class FigureBuilder:
 
         if self.dim==3:
 
-            vertices, polys = need_vertices(vertices, polys)
+            vertices, polys, colors = need_vertices(vertices, polys, colors)
 
             # TODO: only works well for nearly planar convex polys
             with util.Timer("triangulate"):
@@ -130,6 +138,9 @@ class FigureBuilder:
 
             if True:
                 #mesh = mesh2d.mesh2d_markers(vertices, polys, colors) # 600 ms
+                vertices, polys, colors = need_vertices(vertices, polys, colors)
+                print(polys.shape, polys)
+                print(colors.shape, colors)
                 mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
 

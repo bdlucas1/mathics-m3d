@@ -107,33 +107,6 @@ class Browser:
             webview.start()
         return self
 
-methods = ["CLASSIC", "VECTORIZED"]
-muvp = "MATHICS3_USE_VECTORIZED_PLOT"
-
-def switch_method(method):
-
-    method = method.upper()
-    print("switching to method", method)
-
-    if method == "CLASSIC":
-        try:
-            del os.environ[muvp]
-        except Exception:
-            pass
-    elif method == "VECTORIZED":
-        os.environ[muvp] = "yes"
-
-    import mathics.builtin.drawing.plot as plot
-    importlib.reload(plot)
-
-def ensure_method(method):
-
-    method = method.upper()
-    if (method=="CLASSIC" and muvp in os.environ
-        or method=="VECTORIZED" and muvp not in os.environ):
-        switch_method(method)
-
-
 def show(app, title, browser=None):
 
     # find a free port
