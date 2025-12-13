@@ -1,0 +1,8 @@
+``` m3d test=doc-039
+NumberLinePlot[Prime[Range[10]]]
+```
+
+``` m3d test=doc-040
+NumberLinePlot[Table[x^2, {x, 10}]]
+```
+

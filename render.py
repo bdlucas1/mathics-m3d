@@ -24,6 +24,13 @@ def need_vertices(vertices, items, colors):
             items = np.arange(len(vertices)).reshape(items.shape[:-1])
     return vertices, items, colors
 
+
+def to_color_str(rgb):
+    t = "rgb" if len(rgb) == 3 else "rgba"
+    args = ','.join(str(int(c*255)) for c in rgb)
+    color = f"{t}({args})"
+    return color
+
 class FigureBuilder:
 
     # options are graphics_options
@@ -35,20 +42,35 @@ class FigureBuilder:
         self.img_array = None
         self.opts = options
         
-        
-        # rendering options
-        self.color = "gray"
+        # color applies to points, lines, polys
+        self.color = [0,0,0]
+        self.color_str = to_color_str(self.color)
+
+        # edge_color applies to shape edges
+        self.edge_color = [0,0,0,0]
+        self.edge_color_str = to_color_str(self.edge_color)
+
+        # similarly thickness for lines, edge_thickness for shape edges
         self.thickness = 1.5
+        self.edge_thickness = 1.5
 
     def set_color_rgb(self, rgb, ctx=None):
+
         assert len(rgb) == 3 or len(rgb) == 4
-        t = "rgb" if len(rgb) == 3 else "rgba"
-        args = ','.join(str(int(c*255)) for c in rgb)
-        color = f"{t}({args})"
-        if ctx is None:
-            self.color = color
+
+        if ctx == "edge":
+            self.edge_color = rgb
+            self.edge_color_str = to_color_str(rgb)
         else:
-            print(f"ctx {ctx} not supported")
+            # FaceForm, plain RGBColor
+            self.color = rgb
+            self.color_str = to_color_str(rgb)
+
+    def set_thickness(self, thickness, ctx=None):
+        if ctx == "edge":
+            self.edge_thickness = thickness
+        else:
+            self.thickness = thickness
 
     util.Timer("add_points")
     def add_points(self, vertices, points, colors):
@@ -57,13 +79,13 @@ class FigureBuilder:
         if self.dim == 2:
             scatter_points = go.Scatter(
                 x = points[:,0], y = points[:,1],
-                mode='markers', marker=dict(color=self.color, size=8)
+                mode='markers', marker=dict(color=self.color_str, size=8)
             )
         elif self.dim == 3:
             # TODO: not tested
             scatter_points = go.Scatter3D(
                 x = points[:,0], y = points[:,1], z = points[:,2],
-                mode='markers', marker=dict(color=self.color, size=8)
+                mode='markers', marker=dict(color=self.color_str, size=8)
             )
         self.data.append(scatter_points)
 
@@ -85,13 +107,13 @@ class FigureBuilder:
         if self.dim == 2:
             scatter_line = go.Scatter(
                 x = lines[:,0], y = lines[:,1],
-                mode='lines', line=dict(color=self.color, width=self.thickness),
+                mode='lines', line=dict(color=self.color_str, width=self.thickness),
                 showlegend=False
             )
         elif self.dim == 3:
             scatter_line = go.Scatter3d(
                 x = lines[:,0], y = lines[:,1], z = lines[:,2],
-                mode='lines', line=dict(color=self.color, width=self.thickness),
+                mode='lines', line=dict(color=self.color_str, width=self.thickness),
                 showlegend=False
             )
         self.data.append(scatter_line)
@@ -128,7 +150,7 @@ class FigureBuilder:
                 i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
                 lighting = lighting,
                 lightposition = dict(x=10000, y=10000, z=10000),
-                color = self.color,
+                color = self.color_str,
                 vertexcolor = colors,
                 hoverinfo = "none"
             )
@@ -144,9 +166,7 @@ class FigureBuilder:
                 # use mesh2d_opencv
                 vertices, polys, colors = need_vertices(vertices, polys, colors)
                 if colors is None:
-                    match = re.search(r"rgb\(([0-9]+),([0-9]+),([0-9]+)\)", self.color)
-                    color = [int(c)/255 for c in match.groups()]
-                    colors = np.array([color] * len(vertices))
+                    colors = self.color
                 mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
 
@@ -167,8 +187,8 @@ class FigureBuilder:
         # TODO: color, face color, line color - figure it out
         trace = go.Scatter(
             x=xs, y=ys,
-            mode="lines", fill="toself", fillcolor=self.color,
-            line_width=0
+            mode="lines", fill="toself", fillcolor=self.color_str,
+            line_width=self.edge_thickness, line_color=self.edge_color_str
         )
         self.data.append(trace)
 
@@ -180,35 +200,22 @@ class FigureBuilder:
             self._add_shape(xs, ys)
 
     def add_disks(self, vertices, disks, colors):
-        print("xxx disks", disks)
         for disk in disks:
-            print("xxx disk", disk)
             x, y = disk[0]
             r = disk[1] if len(disk) > 1 else 1
-            ts = np.linspace(0, 2 * np.pi, 50)
+            ts = np.linspace(0, 2 * np.pi, 100)
             xs = x + r * np.sin(ts)
             ys = y + r * np.cos(ts)
             self._add_shape(xs, ys)
 
-        """
-        x, y = disk[0]
-        r = disk[1] if len(disk) > 1 else 1
-        trace = go.Scatter(
-            x=[x],
-            y=[y],
-            mode='markers', # Specifies to use markers instead of lines
-            marker=dict(
-                symbol='circle',
-                size=r,
-                color='LightSkyBlue', # Fill color
-                line=dict(
-                    color='MediumPurple', # Outline color
-                    width=2
-                )
-            )
-        )
-        self.data.append(trace)
-        """
+
+    # TODO: should maybe be passed in using vertices and colors?
+    # instead of this way?
+    def add_insets(self, vertices, insets, colors):
+        for (x, y), text in insets:
+            trace = go.Scatter(x=[x], y=[y], mode="text", text=[text], textposition="middle center")
+            self.data.append(trace)
+
 
     @util.Timer("figure")
     def figure(self):
@@ -279,7 +286,7 @@ class FigureBuilder:
                 vertices = np.array(np.meshgrid(*plot_range)).reshape((3,-1)).T
                 lines = [(i, i^k) for i in range(8) for k in [1,2,4] if not i&k]
                 # TODO: safe because this is last, but really should have push/pop?
-                self.set_color_rgb((0,0,0))
+                self.set_color_rgb((0,0,0), None)
                 self.add_lines(vertices, lines, None)
 
             # ViewPoint

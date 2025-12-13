@@ -1,0 +1,32 @@
+``` m3d test=doc-051
+Plot3D[Exp[x] Cos[y], {x, -2, 1}, {y, -Pi, 2 Pi}]
+```
+
+``` m3d test=doc-052
+Plot3D[Log[x + y^2], {x, -1, 1}, {y, -1, 1}]
+```
+
+``` m3d test=doc-053
+Plot3D[Sin[x y] /(x y), {x, -3, 3}, {y, -3, 3}, Mesh->All]
+```
+
+``` m3d test=doc-054
+Plot3D[Sin[x y], {x, -2, 2}, {y, -2, 2}, Mesh->Full]
+```
+
+``` m3d test=doc-055
+Plot3D[Sin[y + Sin[3 x]], {x, -2, 2}, {y, -2, 2}, PlotPoints->20]
+```
+
+``` m3d test=doc-056
+Plot3D[x / (x ^ 2 + y ^ 2 + 1), {x, -2, 2}, {y, -2, 2}, Mesh->None]
+```
+
+``` m3d test=doc-057
+Plot3D[x ^ 2 + 1 / y, {x, -1, 1}, {y, 1, 4}]
+```
+
+``` m3d test=doc-058
+Plot3D[{x^2 + y^2, -x^2 - y^2}, {x, -2, 2}, {y, -2, 2}, BoxRatios-> Automatic, Mesh->None]
+```
+

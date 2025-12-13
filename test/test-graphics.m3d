@@ -2,3 +2,9 @@ Color persists, and Style is a nested context
 ```
 Graphics[{Disk[{0,0}],Red,Disk[{1,0}],Disk[{2,0},0.8],Style[{Disk[{3,1}],Disk[{3,0}]},Green],Disk[{4,0}]}]
 ```
+
+
+EdgeForm, FaceForm, plain color
+```
+Graphics[{Disk[{0,0}], EdgeForm[Red], FaceForm[Yellow], Disk[{1,0}], Green, Disk[{2,0}]}]
+```

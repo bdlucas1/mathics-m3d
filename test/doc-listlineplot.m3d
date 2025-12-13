@@ -1,0 +1,24 @@
+``` m3d test=doc-018
+ListLinePlot[Table[Cos[x], {x, -5, 5, 0.2}], Filling->Top]
+```
+
+``` m3d test=doc-019
+ListLinePlot[Table[Sin[x], {x, -5, 5, 0.2}], Filling->Axis]
+```
+
+``` m3d test=doc-020
+ListLinePlot[Table[Sin[x], {x, -5, 5, 0.2}], Filling->Bottom]
+```
+
+``` m3d test=doc-021
+ListLinePlot[Table[{n, n ^ 0.5}, {n, 10}]]
+```
+
+``` m3d test=doc-022
+ListLinePlot[list]
+```
+
+``` m3d test=doc-023
+ListLinePlot[{{-2, -1}, {-1, -1}, {1, 3}}, Filling->Axis]
+```
+

@@ -1,0 +1,16 @@
+``` m3d test=doc-125
+PolarPlot[Abs[Cos[5t]], {t, 0, Pi}]
+```
+
+``` m3d test=doc-126
+PolarPlot[Cos[5t], {t, 0, Pi}]
+```
+
+``` m3d test=doc-127
+PolarPlot[Sqrt[t], {t, 0, 16 Pi}]
+```
+
+``` m3d test=doc-128
+PolarPlot[{1, 1 + Sin[20 t] / 5}, {t, 0, 2 Pi}]
+```
+

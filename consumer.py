@@ -322,13 +322,22 @@ class GraphicsConsumer:
             # so that directive only applies to future
             yield from self.flush()
 
-            # TODO: what is the right way to detect a color directive?
-            if color := core.expression_to_color(expr):
-                try:
-                    rgba = color.to_rgba()
-                    yield (sym.SymbolRGBColor, rgba, ctx)
-                except:
-                    print("unknown item", type(expr), expr)
+            # is it a color?
+            # TODO: this seems heavy-handed - is there a better way?
+            try:
+                color = core.expression_to_color(expr)
+                rgba = color.to_rgba()
+                yield (sym.SymbolRGBColor, rgba, ctx)
+                return
+            except:
+                pass
+
+            if expr.head == sym.SymbolAbsoluteThickness:
+                yield (sym.SymbolAbsoluteThickness, expr.elements[0].to_python(), ctx)
+
+            elif expr.head == sym.SymbolList:
+                for e in expr.elements:
+                    yield from directives(ctx, e)
 
             elif expr.head == sym.SymbolEdgeForm:
                 for e in expr.elements:
@@ -381,6 +390,13 @@ class GraphicsConsumer:
             items = [e.to_python() for e in expr.elements]
             yield from self.item(sym.SymbolDisk, None, wanted_depth=3, colors=colors, items=items)  
 
+        elif expr.head in (sym.SymbolInset, sym.SymbolInsetBox):
+            # TODO: pick apart and put vertices in first position?
+            # and adjust add_insets accordingly
+            text = expr.elements[0].value
+            pos = expr.elements[1].to_python()
+            items = [pos, text]
+            yield from self.item(sym.SymbolInset, None, wanted_depth=3, colors=colors, items=items)                  
         else:
             yield from directives(None, expr)
 

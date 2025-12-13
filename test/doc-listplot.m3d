@@ -1,0 +1,28 @@
+``` m3d test=doc-026
+ListPlot[Prime[Range[30]]]
+```
+
+``` m3d test=doc-027
+ListPlot[Table[ElementData[z, "AtomicWeight"], {z, 118}]]
+```
+
+``` m3d test=doc-028
+ListPlot[Table[n ^ 2 / 8, {n, 30}]]
+```
+
+``` m3d test=doc-029
+ListPlot[Table[n ^ 2, {n, 10}], Joined->True]
+```
+
+``` m3d test=doc-030
+ListPlot[Table[n ^ 2, {n, 30}], Filling->Axis]
+```
+
+``` m3d test=doc-031
+ListPlot[Table[n ^ 2, {n, 30}], Joined->True]
+```
+
+``` m3d test=doc-032
+ListPlot[ToCharacterCode["plot this string"], Filling -> Axis]
+```
+
