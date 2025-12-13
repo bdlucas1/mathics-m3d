@@ -1,0 +1,4 @@
+Color persists, and Style is a nested context
+```
+Graphics[{Disk[{0,0}],Red,Disk[{1,0}],Disk[{2,0},0.8],Style[{Disk[{3,1}],Disk[{3,0}]},Green],Disk[{4,0}]}]
+```

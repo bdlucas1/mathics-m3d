@@ -2,6 +2,7 @@ import numpy as np
 import numpy.linalg as la
 import plotly.graph_objects as go
 import os
+import re
 
 import mesh2d
 import util
@@ -137,12 +138,21 @@ class FigureBuilder:
         elif self.dim==2:
 
             if True:
+                # use mesh2d_markers
                 #mesh = mesh2d.mesh2d_markers(vertices, polys, colors) # 600 ms
+
+                # use mesh2d_opencv
                 vertices, polys, colors = need_vertices(vertices, polys, colors)
-                print(polys.shape, polys)
-                print(colors.shape, colors)
+                if colors is None:
+                    match = re.search(r"rgb\(([0-9]+),([0-9]+),([0-9]+)\)", self.color)
+                    color = [int(c)/255 for c in match.groups()]
+                    colors = np.array([color] * len(vertices))
                 mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
+
+                # use mesh2d_svg
+                # much too slow (>1 s)
+                #mesh = mesh2d.mesh2d_svg(vertices, polys, colors)
 
             else:
                 # try doing as flat 3d projection
@@ -152,6 +162,53 @@ class FigureBuilder:
                 self.flat = True
                 vertices = np.hstack([vertices, np.full(vertices.shape[0:2], 0.0)])
                 self.add_polys(vertices, polys, colors)
+
+    def _add_shape(self, xs, ys):
+        # TODO: color, face color, line color - figure it out
+        trace = go.Scatter(
+            x=xs, y=ys,
+            mode="lines", fill="toself", fillcolor=self.color,
+            line_width=0
+        )
+        self.data.append(trace)
+
+    def add_rectangles(self, vertices, rectangles, colors):
+        for rectangle in rectangles:
+            lo, hi = rectangle
+            xs = [lo[0], lo[0], hi[0], hi[0]]
+            ys = [lo[1], hi[1], hi[1], lo[1]]
+            self._add_shape(xs, ys)
+
+    def add_disks(self, vertices, disks, colors):
+        print("xxx disks", disks)
+        for disk in disks:
+            print("xxx disk", disk)
+            x, y = disk[0]
+            r = disk[1] if len(disk) > 1 else 1
+            ts = np.linspace(0, 2 * np.pi, 50)
+            xs = x + r * np.sin(ts)
+            ys = y + r * np.cos(ts)
+            self._add_shape(xs, ys)
+
+        """
+        x, y = disk[0]
+        r = disk[1] if len(disk) > 1 else 1
+        trace = go.Scatter(
+            x=[x],
+            y=[y],
+            mode='markers', # Specifies to use markers instead of lines
+            marker=dict(
+                symbol='circle',
+                size=r,
+                color='LightSkyBlue', # Fill color
+                line=dict(
+                    color='MediumPurple', # Outline color
+                    width=2
+                )
+            )
+        )
+        self.data.append(trace)
+        """
 
     @util.Timer("figure")
     def figure(self):

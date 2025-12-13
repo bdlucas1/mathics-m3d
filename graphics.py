@@ -31,6 +31,8 @@ def layout_GraphicsBox(dim, fe, expr, layout_options):
         sym.SymbolPolygon: builder.add_polys,
         sym.SymbolLine: builder.add_lines,
         sym.SymbolPoint: builder.add_points,
+        sym.SymbolRectangle: builder.add_rectangles,
+        sym.SymbolDisk: builder.add_disks,
         sym.SymbolRGBColor: builder.set_color_rgb,
     }
 

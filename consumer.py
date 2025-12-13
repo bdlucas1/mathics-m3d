@@ -211,6 +211,9 @@ class GraphicsConsumer:
 
     def find_vertex_colors(self, expr, wanted_depth):
 
+        if expr is None:
+            return
+
         def to_rgb(colors):
             if colors is None:
                 return
@@ -243,23 +246,33 @@ class GraphicsConsumer:
             array = expr.value
         elif isinstance(expr, core.Expression):
             array = expr.to_python()
+        elif isinstance(expr, (list,tuple)):
+            array = expr
 
         # make array have the desired depth
         depth = lambda x: 1 + depth(x[0]) if isinstance(x, (list,tuple,np.ndarray)) else 0
         while depth(array) < wanted_depth:
             array = [array]
 
-        # array must be homogeneous so we can make it an array
-        array = [np.array(item) for item in array]
+        # if array is homogenous make it a numpy array
+        try:
+            array = [np.array(item) for item in array]
+        except ValueError:
+            pass
 
         return array
 
-
-    def item(self, kind, expr, wanted_depth, colors):
+    
+    # TODO: make it expr_or_items instead of two args?
+    def item(self, kind, expr, wanted_depth, colors, items=None):
 
         # item is specified either as a NumericArray or as a nest List
         items_wanted_depth = wanted_depth+1 if self.vertices is None else wanted_depth
-        items = self.list_or_array(expr.elements[0], items_wanted_depth)
+        if items is None:
+            items = self.list_or_array(expr.elements[0], items_wanted_depth)
+        else:
+            # TODO: merge with above, rename expr to expr_or_list maybe
+            items = self.list_or_array(items, items_wanted_depth)
 
         # do we have VertexColors?
         local_colors = self.find_vertex_colors(expr, wanted_depth)
@@ -291,7 +304,8 @@ class GraphicsConsumer:
                 items = [np.vstack(items)]
                 colors = [np.vstack(colors)] if colors is not None else None
             except (ValueError, TypeError):
-                shapes = np.array([item.shape for item in items])
+                pass
+                #shapes = np.array([item.shape for item in items])
                 #print(f"can't stack {len(items)} {self.waiting.kind} {shapes}")
 
             colors = colors if colors is not None else [None] * len(items)
@@ -320,11 +334,22 @@ class GraphicsConsumer:
                 for e in expr.elements:
                     yield from directives("edge", e)
 
+            elif expr.head == sym.SymbolFaceForm:
+                for e in expr.elements:
+                    yield from directives("face", e)
+
             elif expr.head == sym.SymbolRule:
                 # handled elsewhere
                 pass
 
+            elif expr.head in (sym.SymbolStyle, sym.SymbolStyleBox):
+                # TODO: do we need to push/pop context?
+                for e in expr.elements[1:]:
+                    yield from directives(None, e)
+                yield from self.process(expr.elements[0])
+
             else:
+                print("expr", expr)
                 raise NotImplementedError(f"Graphics element {expr.head}")
 
         if expr.head == sym.SymbolList:
@@ -347,8 +372,34 @@ class GraphicsConsumer:
         elif expr.head in (sym.SymbolPoint, sym.SymbolPointBox):
             yield from self.item(sym.SymbolPoint, expr, wanted_depth=2, colors=colors)
 
+        elif expr.head in (sym.SymbolRectangle, sym.SymbolRectangleBox):
+            #items = [[expr.elements[0].to_python(), expr.elements[1].to_python()]]
+            items = [e.to_python() for e in expr.elements]
+            yield from self.item(sym.SymbolRectangle, None, wanted_depth=3, colors=colors, items=items)  
+
+        elif expr.head in (sym.SymbolDisk, sym.SymbolDiskBox):
+            items = [e.to_python() for e in expr.elements]
+            yield from self.item(sym.SymbolDisk, None, wanted_depth=3, colors=colors, items=items)  
+
         else:
             yield from directives(None, expr)
+
+
+        """
+        # graphics objects
+        elif expr.head in (sym.SymbolRectangle, sym.SymbolRectangleBox):
+            lo = expr.elements[0].to_python()
+            hi = expr.elements[1].to_python()
+            a = [lo[0], hi[0]]
+            b = [lo[1], hi[0]]
+            c = [lo[1], hi[1]]
+            d = [lo[0], hi[1]]
+            print("xxx abcd", a, b, c, d)
+            expr = core.Expression(sym.SymbolPolygon, core.from_python([a, b, c, d]))
+            yield from self.process(expr)
+        """
+
+
 
     def items(self):
 

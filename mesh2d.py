@@ -2,7 +2,9 @@ import util
 import cv2
 import numpy as np
 import plotly.graph_objects as go
-
+import cairosvg
+import base64
+import io
 
 @util.Timer("mesh2d_opencv")
 def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):
@@ -48,6 +50,56 @@ def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):
 
     return mesh
 
+
+
+#
+# for 200x200 grid (40,000 quads) from DensityPlot:
+#     opencv thing above was 28 ms to generate 200x200 image
+#     svg thing below was 52 ms just to create svg
+#         but add conversion to image >1s for 200x200, so much too slow
+#
+
+def join_coordinates(v0, v1):
+    return f"{v0:.3f},{v1:.3f}"
+join_coordinates = np.frompyfunc(join_coordinates, 2, 1)
+
+def join_vertices(p0, p1):
+    return f"{p0} {p1}"
+join_vertices = np.frompyfunc(join_vertices, 2, 1)
+
+@util.Timer("mesh2d_svg")
+def mesh2d_svg(vertices, polys, colors):
+
+    if vertices is not None:
+        colors = colors[polys[:,0],:] * 255
+        polys = vertices[polys]
+
+    polys = join_coordinates.reduce(polys, axis=-1)
+    polys = join_vertices.reduce(polys, axis=-1)
+    body = ''.join(f"""<polygon points="{points}"></polygon>""" for points in polys)
+    #print(body[0:100])
+
+    head = '<svg height="200" width="200" xmlns="http://www.w3.org/2000/svg">'
+    foot = '</svg>'
+    svg = f"{head}{body}{foot}"
+
+    # no native support for svg in plotly, so this is chatgpt-recommended approach
+    # cairosvg doesn't seem to have a way to produce numpy arrays
+    buf = io.BytesIO()
+    scale=1
+    cairosvg.svg2png(
+        bytestring=svg.encode("utf-8"),
+        write_to=buf,
+        scale=scale,
+    )
+    png_bytes = buf.getvalue()
+    base64_bytes = base64.b64encode(png_bytes).decode("ascii")
+
+    return svg
+
+# <svg height="220" width="500" xmlns="http://www.w3.org/2000/svg">
+#   <polygon points="100,10 150,190 50,190" style="fill:lime;stroke:purple;stroke-width:3" />
+# </svg>
 
 
 @util.Timer("mesh2d_markers")

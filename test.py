@@ -31,7 +31,10 @@ def summarize_and_exit():
     time.sleep(1)
     os._exit(0)
 
-state.top = pn.Column(styles={"gap": "1em"})
+state.top = pn.Column(
+    heading := pn.pane.Str("Running tests "),
+    styles={"gap": "1em"}
+)
 util.show(state.top, "TEST", browser="webbrowser")
 
 # track pending tests so we know when we're done
@@ -41,6 +44,7 @@ def pending():
 def test(fn, layout, expr):
 
     print("=== TEST", fn) #, layout)
+    heading.object += "."
     state.run += 1
 
     # wrap image together with caption in a column

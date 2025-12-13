@@ -90,7 +90,7 @@ class Browser:
             offset = 50 * self.n
             self.n += 1
             title = title or url
-            webview.create_window(title, url, x=100+offset, y=100+offset, width=width, height=height)
+            webview.create_window(title, url, x=100+offset, y=100+offset, width=width, height=height, zoomable=True)
         elif self.browser == "webbrowser":
             webbrowser.open_new(url)
         else:

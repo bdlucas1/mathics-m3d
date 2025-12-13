@@ -6,6 +6,7 @@ import inspect
 import threading
 import re
 import sys
+import pathlib
 
 import panel as pn
 import panel.widgets as pnw
@@ -30,7 +31,12 @@ test = None # may be imported later
 pn.extension()
 pn.extension('plotly')
 pn.extension('mathjax')
-pn.extension(raw_css=[open('m3d.css').read()])
+
+#help(pn.config)
+#'<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=5.0; user-scalable=1;" />'
+
+css_fn = pathlib.Path(__file__).resolve().parent / "m3d.css"
+pn.extension(raw_css=[open(css_fn).read()])
 
 class FE:
     def __init__(self):
@@ -151,11 +157,12 @@ class Pair(pn.Column):
             self.output[0] = layout
             self.is_stale = False
             self.exec_button.visible = False
-        except Exception as oops:
+        except (Exception, core.AbortInterrupt) as oops:
             if isinstance(oops, core.InvalidSyntaxError): kind = "Syntax error"
             elif isinstance(oops, core.IncompleteSyntaxError): kind = "Syntax error"
             elif isinstance(oops, core.SyntaxError): kind = "Syntax error"
             elif isinstance(oops, NotImplementedError): kind = "Not implemented"
+            elif isinstance(oops, core.AbortInterrupt): kind = "Abort"
             else: kind = "Internal error"
             msg = f"{kind}: {oops}"
             print(msg)
@@ -630,6 +637,7 @@ else:
         autorun=not args.no_autorun,
         test_ui_run=args.test_ui,
     )
+
     title =  " ".join(["Markdown+Mathics3", *args.files])
     util.show(app, title)
 

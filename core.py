@@ -9,3 +9,4 @@ from mathics.session import *
 from mathics.builtin.colors.color_directives import *
 from mathics.builtin.colors.color_directives import _ColorObject
 from mathics_scanner.errors import *
+from mathics.core.interrupt import *
