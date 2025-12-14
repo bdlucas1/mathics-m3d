@@ -3,6 +3,7 @@ import numpy.linalg as la
 import plotly.graph_objects as go
 import os
 import re
+import copy
 
 import mesh2d
 import util
@@ -31,6 +32,21 @@ def to_color_str(rgb):
     color = f"{t}({args})"
     return color
 
+class Style:
+
+    # color applies to points, lines, polys
+    color = [0,0,0]
+    color_str = to_color_str(color)
+
+    # edge_color applies to shape edges
+    edge_color = [0,0,0,0]
+    edge_color_str = to_color_str(edge_color)
+
+    # similarly thickness for lines, edge_thickness for shape edges
+    thickness = 1.5
+    edge_thickness = 1.5
+
+
 class FigureBuilder:
 
     # options are graphics_options
@@ -42,35 +58,32 @@ class FigureBuilder:
         self.img_array = None
         self.opts = options
         
-        # color applies to points, lines, polys
-        self.color = [0,0,0]
-        self.color_str = to_color_str(self.color)
+        self.style = Style()
 
-        # edge_color applies to shape edges
-        self.edge_color = [0,0,0,0]
-        self.edge_color_str = to_color_str(self.edge_color)
-
-        # similarly thickness for lines, edge_thickness for shape edges
-        self.thickness = 1.5
-        self.edge_thickness = 1.5
+    def set_style(self, style):
+        if style == 1:
+            self.style0 = copy.copy(self.style)
+        if style == 0:
+            self.style = self.style0
+            delattr(self, "style0")
 
     def set_color_rgb(self, rgb, ctx=None):
 
         assert len(rgb) == 3 or len(rgb) == 4
 
         if ctx == "edge":
-            self.edge_color = rgb
-            self.edge_color_str = to_color_str(rgb)
+            self.style.edge_color = rgb
+            self.style.edge_color_str = to_color_str(rgb)
         else:
             # FaceForm, plain RGBColor
-            self.color = rgb
-            self.color_str = to_color_str(rgb)
+            self.style.color = rgb
+            self.style.color_str = to_color_str(rgb)
 
     def set_thickness(self, thickness, ctx=None):
         if ctx == "edge":
-            self.edge_thickness = thickness
+            self.style.edge_thickness = thickness
         else:
-            self.thickness = thickness
+            self.style.thickness = thickness
 
     util.Timer("add_points")
     def add_points(self, vertices, points, colors):
@@ -79,13 +92,13 @@ class FigureBuilder:
         if self.dim == 2:
             scatter_points = go.Scatter(
                 x = points[:,0], y = points[:,1],
-                mode='markers', marker=dict(color=self.color_str, size=8)
+                mode='markers', marker=dict(color=self.style.color_str, size=8)
             )
         elif self.dim == 3:
             # TODO: not tested
             scatter_points = go.Scatter3D(
                 x = points[:,0], y = points[:,1], z = points[:,2],
-                mode='markers', marker=dict(color=self.color_str, size=8)
+                mode='markers', marker=dict(color=self.style.color_str, size=8)
             )
         self.data.append(scatter_points)
 
@@ -107,13 +120,13 @@ class FigureBuilder:
         if self.dim == 2:
             scatter_line = go.Scatter(
                 x = lines[:,0], y = lines[:,1],
-                mode='lines', line=dict(color=self.color_str, width=self.thickness),
+                mode='lines', line=dict(color=self.style.color_str, width=self.style.thickness),
                 showlegend=False
             )
         elif self.dim == 3:
             scatter_line = go.Scatter3d(
                 x = lines[:,0], y = lines[:,1], z = lines[:,2],
-                mode='lines', line=dict(color=self.color_str, width=self.thickness),
+                mode='lines', line=dict(color=self.style.color_str, width=self.style.thickness),
                 showlegend=False
             )
         self.data.append(scatter_line)
@@ -150,7 +163,7 @@ class FigureBuilder:
                 i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
                 lighting = lighting,
                 lightposition = dict(x=10000, y=10000, z=10000),
-                color = self.color_str,
+                color = self.style.color_str,
                 vertexcolor = colors,
                 hoverinfo = "none"
             )
@@ -166,7 +179,7 @@ class FigureBuilder:
                 # use mesh2d_opencv
                 vertices, polys, colors = need_vertices(vertices, polys, colors)
                 if colors is None:
-                    colors = self.color
+                    colors = self.style.color
                 mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
 
@@ -184,11 +197,10 @@ class FigureBuilder:
                 self.add_polys(vertices, polys, colors)
 
     def _add_shape(self, xs, ys):
-        # TODO: color, face color, line color - figure it out
         trace = go.Scatter(
             x=xs, y=ys,
-            mode="lines", fill="toself", fillcolor=self.color_str,
-            line_width=self.edge_thickness, line_color=self.edge_color_str
+            mode="lines", fill="toself", fillcolor=self.style.color_str,
+            line_width=self.style.edge_thickness, line_color=self.style.edge_color_str
         )
         self.data.append(trace)
 

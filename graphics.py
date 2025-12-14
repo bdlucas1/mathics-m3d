@@ -34,6 +34,7 @@ def layout_GraphicsBox(dim, fe, expr, layout_options):
         sym.SymbolRectangle: builder.add_rectangles,
         sym.SymbolDisk: builder.add_disks,
         sym.SymbolInset: builder.add_insets,
+        sym.SymbolStyle: builder.set_style,
         sym.SymbolRGBColor: builder.set_color_rgb,
         sym.SymbolAbsoluteThickness: builder.set_thickness,
     }

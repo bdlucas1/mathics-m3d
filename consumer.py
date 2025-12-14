@@ -221,7 +221,6 @@ class GraphicsConsumer:
             extract = np.vectorize(extract)
             colors = np.array(extract(colors))
             colors = colors.transpose(1, 2, 0) # np.vectorize wonky behavior...
-            #print("xxx after to_rgb colors", colors.shape)
             return colors
                 
         for e in expr.elements[1:]:
@@ -353,9 +352,12 @@ class GraphicsConsumer:
 
             elif expr.head in (sym.SymbolStyle, sym.SymbolStyleBox):
                 # TODO: do we need to push/pop context?
+                yield (sym.SymbolStyle, 1)
                 for e in expr.elements[1:]:
                     yield from directives(None, e)
                 yield from self.process(expr.elements[0])
+                yield from self.flush() # must flush before going back to style 0
+                yield (sym.SymbolStyle, 0)
 
             else:
                 print("expr", expr)
@@ -399,22 +401,6 @@ class GraphicsConsumer:
             yield from self.item(sym.SymbolInset, None, wanted_depth=3, colors=colors, items=items)                  
         else:
             yield from directives(None, expr)
-
-
-        """
-        # graphics objects
-        elif expr.head in (sym.SymbolRectangle, sym.SymbolRectangleBox):
-            lo = expr.elements[0].to_python()
-            hi = expr.elements[1].to_python()
-            a = [lo[0], hi[0]]
-            b = [lo[1], hi[0]]
-            c = [lo[1], hi[1]]
-            d = [lo[0], hi[1]]
-            print("xxx abcd", a, b, c, d)
-            expr = core.Expression(sym.SymbolPolygon, core.from_python([a, b, c, d]))
-            yield from self.process(expr)
-        """
-
 
 
     def items(self):
