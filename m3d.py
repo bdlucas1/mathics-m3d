@@ -35,9 +35,6 @@ pn.extension('mathjax')
 #help(pn.config)
 #'<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=5.0; user-scalable=1;" />'
 
-css_fn = pathlib.Path(__file__).resolve().parent / "m3d.css"
-pn.extension(raw_css=[open(css_fn).read()])
-
 class FE:
     def __init__(self):
         self.session = core.MathicsSession()

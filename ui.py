@@ -2,6 +2,7 @@ import time
 import itertools
 import threading
 import os
+import pathlib
 
 import panel as pn
 import panel.io
@@ -13,6 +14,8 @@ import ui
 import util
 import test_ui
 
+css_fn = pathlib.Path(__file__).resolve().parent / "m3d.css"
+pn.extension(raw_css=[open(css_fn).read()])
 
 def wrap(s):
     return pn.widgets.StaticText(value=s)

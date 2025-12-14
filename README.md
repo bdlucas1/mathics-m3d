@@ -50,4 +50,8 @@ a desktop browser. It also seems to work more-or-less on my iPhone but
 there are currently a number of problems with fonts, tooltips, and
 grabbing the sliders without moving the page.
 
+### Demo minimal shell
+
+    $ python shell.py
+    > Manipulate[Plot3D[Sin[a x] Cos[y], {x,0,10}, {y,0,10}], {{a,1}, 0.1, 2.0, 0.1}]
 
