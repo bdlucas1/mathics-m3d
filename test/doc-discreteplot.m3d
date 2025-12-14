@@ -1,12 +1,12 @@
-``` m3d test=doc-013
+``` m3d test:doc-013
 DiscretePlot[2.5 Sqrt[k], {k, 100}]
 ```
 
-``` m3d test=doc-014
+``` m3d test:doc-014
 DiscretePlot[PrimePi[k], {k, 1, 100}]
 ```
 
-``` m3d test=doc-015
+``` m3d test:doc-015
 DiscretePlot[{Sin[Pi x/20], Cos[Pi x/20]}, {x, 0, 40}]
 ```
 

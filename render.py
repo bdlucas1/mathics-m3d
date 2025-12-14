@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import os
 import re
 import copy
+import ticker
 
 import mesh2d
 import util
@@ -27,9 +28,12 @@ def need_vertices(vertices, items, colors):
 
 
 def to_color_str(rgb):
-    t = "rgb" if len(rgb) == 3 else "rgba"
-    args = ','.join(str(int(c*255)) for c in rgb)
-    color = f"{t}({args})"
+    # rgb need to be int 0-255, opacity needs to be float 0.0-1.0
+    args = ','.join(str(int(c*255)) for c in rgb[0:3])
+    if len(rgb) == 3:
+        color = f"rgb({args})"
+    else:
+        color = f"rgba({args},{rgb[3]:.2f})"
     return color
 
 class Style:
@@ -38,7 +42,8 @@ class Style:
     color = [0,0,0]
     @property
     def color_str(self):
-        return to_color_str(self.color)
+        color_str = to_color_str(self.color)
+        return color_str
 
     # edge_color applies to shape edges
     edge_color = [0,0,0,0]
@@ -176,14 +181,39 @@ class FigureBuilder:
 
         elif self.dim==2:
 
-            if True:
+            #
+            # Plotly lacks something like Mesh2d so we have to find some workarounds
+            #
+
+            # TODO: find performance crossover?
+            if len(polys) < 10:
+
+                # use Scatter specifying each polygon as a marker
+                # this case is for things like plots with Fill=...
+                # that generate a single polygon or so
+                if vertices is not None:
+                    if colors is not None:
+                        colors = colors[polys[:,0],:] * 255
+                    polys = vertices[polys]
+                for i, poly in enumerate(polys):
+                    poly = np.array(poly)
+                    # TODO: take averagee color instead of vertex 0 color[0]
+                    color = None if colors is None else colors[i][0]
+                    self._add_shape(poly[:,0], poly[:,1], color)
+
+            else:
+
+                # this case is for things like DensityPlot that generate
+                # Polygon meshes
+
                 # use mesh2d_markers
                 #mesh = mesh2d.mesh2d_markers(vertices, polys, colors) # 600 ms
 
                 # use mesh2d_opencv
                 vertices, polys, colors = need_vertices(vertices, polys, colors)
-                if colors is None:
-                    colors = self.style.color
+                # is this correct?
+                #if colors is None:
+                #    colors = self.style.color
                 mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
 
@@ -191,20 +221,26 @@ class FigureBuilder:
                 # much too slow (>1 s)
                 #mesh = mesh2d.mesh2d_svg(vertices, polys, colors)
 
-            else:
                 # try doing as flat 3d projection
                 # problems: axis labels were wonky, lighting was wonky, scaling - ?
+                # but this would leverage efficient mesh code...
                 # if this code is removed, remove all self.flat options
-                self.dim = 3
-                self.flat = True
-                vertices = np.hstack([vertices, np.full(vertices.shape[0:2], 0.0)])
-                self.add_polys(vertices, polys, colors)
+                #self.dim = 3
+                #self.flat = True
+                #vertices = np.hstack([vertices, np.full(vertices.shape[0:2], 0.0)])
+                #self.add_polys(vertices, polys, colors)
 
-    def _add_shape(self, xs, ys):
+    def _add_shape(self, xs, ys, color=None):
+        if color is None:
+            fillcolor = self.style.color_str
+            line_color = self.style.edge_color_str
+        else:
+            fillcolor = to_color_str(color)
+            line_color = fillcolor
         trace = go.Scatter(
             x=xs, y=ys,
-            mode="lines", fill="toself", fillcolor=self.style.color_str,
-            line_width=self.style.edge_thickness, line_color=self.style.edge_color_str
+            mode="lines", fill="toself", fillcolor=fillcolor,
+            line_width=self.style.edge_thickness, line_color=line_color
         )
         self.data.append(trace)
 
@@ -248,10 +284,20 @@ class FigureBuilder:
             data_range = np.array([np.nanmin(data, axis=1), np.nanmax(data, axis=1)]).T
 
         # get plot range either from opt or from data range
-        plot_range = [
+        plot_range = np.array([
             opt if isinstance(opt, list) else data
             for opt, data in zip(self.opts.plot_range, data_range)
-        ]
+        ])
+        #if self.opts.log_plot:        
+        #    plot_range[:,0] = np.floor(plot_range[:,0]) - 0.2
+        #    plot_range[:,1] = np.ceil(plot_range[:,1]) + 0.2
+        dx, dy, *_ = plot_range.T[1] - plot_range.T[0]
+
+        # by this point width should be specified but
+        # height may be None, requesting automatic computation
+        width, height = self.opts.image_size
+        if not height:
+            height = width * dy / dx
 
         # compute axes options
         axes_opts = {}
@@ -270,11 +316,7 @@ class FigureBuilder:
             if self.dim == 2 and p == "y":
                 # for Images plotly doesn't like to scale the image to fill the figure size,
                 # so we force it to with this computation
-                # TODO: is there a single boolean that will make it do this?
-                pr = np.array(plot_range).T
-                dr = pr[1] - pr[0]
-                isz = self.opts.image_size
-                scaleratio = (isz[1] / isz[0]) * (dr[0] / dr[1])
+                scaleratio = (height / width) * (dx / dy)
                 opts |= dict(scaleanchor = "x", scaleratio = scaleratio)
             if self.dim == 3:
                 opts |= dict(showbackground = False)
@@ -282,13 +324,13 @@ class FigureBuilder:
 
         # compute layout options
         layout_opts = dict(
-            height = self.opts.image_size[1],
-            legend = None,
+            width = width,
+            height = height,
             margin = dict(l=0, r=0, t=0, b=0),
             plot_bgcolor = 'rgba(0,0,0,0)',
+            legend = None,
             showlegend = False,
             title = dict(text=""),  # Explicitly set title text to an empty string
-            width = self.opts.image_size[0],
         )
 
         if self.dim == 2:
@@ -332,6 +374,20 @@ class FigureBuilder:
         # combine data and g_layout into final figure
         with util.Timer("FigureWidget"):
             figure = go.Figure(data=self.data, layout=go_layout)
+
+        # compute ticks for log plots
+        if self.opts.log_plot:
+            lo, hi = plot_range[1]
+            #ticks = ticker.log_ticks_for_logged_data(log_vmin=lo, log_vmax=hi, base=10, minor=True)
+            ticks = ticker.log10_ticks_for_logged_data_superscript(
+                log_vmin=lo, log_vmax=hi, minor=True
+            )
+            figure.update_yaxes(**ticker.plotly_tick_array(ticks))
+
+        # TODO: consider using for linear as well? plotly seems to do ok though
+        #lo, hi = plot_range[0]
+        #ticks = ticker.nice_linear_ticks(vmin=lo, vmax=hi, nticks=7)
+        #figure.update_xaxes(**ticker.plotly_tick_array(ticks))        
 
         # if we're in test mode write the image
         if hasattr(self.fe, "test_image"):

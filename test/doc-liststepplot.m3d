@@ -1,12 +1,15 @@
-``` m3d test=doc-033
+TODO: fix ListStepPlot: it generates a Graphics
+that specifies a PlotRange ending at 8 on the x axis.
+
+``` m3d test:doc-033
 ListStepPlot[{1, 1, 2, 3, 5, 8, 13, 21}, Joined->False]
 ```
 
-``` m3d test=doc-034
+``` m3d test:doc-034
 ListStepPlot[{1, 1, 2, 3, 5, 8, 13, 21}]
 ```
 
-``` m3d test=doc-035
+``` m3d test:doc-035
 ListStepPlot[{{1, 1}, {3, 2}, {4, 5}, {5, 8}, {6, 13}, {7, 21}}, Filling->Axis]
 ```
 

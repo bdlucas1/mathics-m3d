@@ -1,8 +1,8 @@
-``` m3d test=doc-024
+``` m3d test:doc-024
 ListLogPlot[Table[Fibonacci[n], {n, 10}]]
 ```
 
-``` m3d test=doc-025
+``` m3d test:doc-025
 ListLogPlot[Table[n!, {n, 10}], Joined -> True]
 ```
 

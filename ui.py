@@ -65,7 +65,7 @@ def graph(figure, height):
     plot = pn.pane.Plotly(
         figure,
         #config={"displayModeBar": False}, # TODO: do we still want this?
-        height=int(height),
+        #height=int(height),
         css_classes = ["m-plot"]
     )
     return plot

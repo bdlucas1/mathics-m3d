@@ -92,14 +92,20 @@ class GraphicsOptions:
             width = auto_widths[image_size]
             height = width * aspect_ratio
         else: # Automatic
-            width = auto_widths["System`Medium"]
-            aspect_ratio = aspect_ratio or 1
             if inside_row:  multiplier = 0.25
             elif inside_list or inside_grid:  multiplier = 0.5
             else: multiplier = 1
-            width, height = multiplier * width, multiplier * width * aspect_ratio
+            width = auto_widths["System`Medium"] * multiplier
+            if aspect_ratio:
+                height = width * aspect_ratio
+            else:
+                # auto, will be based on data
+                height = None
         self.image_size = [width, height]
         
+        # LogPlot
+        self.log_plot = get_option("System`LogPlot", False)
+
         # PlotRange
         self.plot_range = get_option("System`PlotRange", 3)
 
