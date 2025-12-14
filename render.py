@@ -113,11 +113,13 @@ class FigureBuilder:
         # Concatenate lines, separating them with np.nan so they are
         # drawn as multiple line segments with a break between them.
         # We use nan instead of None so we can use nanmin and nanmax on the array.
+        # also we can't rely on self.dim b/c classic density plot sends dim 3 mesh
+        dim = lines[0].shape[-1]
         single = [lines[0]]
         for line in lines[1:]:
-            single.append([[np.nan] * self.dim])
+            single.append([[np.nan] * dim])
             single.append(line)
-        lines = np.vstack(single).reshape((-1, self.dim))
+        lines = np.vstack(single).reshape((-1, dim))
 
         if self.dim == 2:
             scatter_line = go.Scatter(

@@ -1,28 +1,28 @@
-``` m3d test=doc-006
+``` m3d test:doc-006
 DensityPlot[1 / x, {x, 0, 1}, {y, 0, 1}]
 ```
 
-``` m3d test=doc-007
+``` m3d test:doc-007
 DensityPlot[1/(x^2 + y^2 + 1), {x, -1, 1}, {y, -2,2}, Mesh->Full]
 ```
 
-``` m3d test=doc-008
+``` m3d test:doc-008
 DensityPlot[Sin[x y], {x, -2, 2}, {y, -2, 2}, Mesh->Full]
 ```
 
-``` m3d test=doc-009
+``` m3d test:doc-009
 DensityPlot[Sqrt[x * y], {x, -1, 1}, {y, -1, 1}]
 ```
 
-``` m3d test=doc-010
+``` m3d test:doc-010
 DensityPlot[x ^ 2 + 1 / y, {x, -1, 1}, {y, 1, 4}, ColorFunction -> (Blend[{Red, Green, Blue}, #]&)]
 ```
 
-``` m3d test=doc-011
+``` m3d test:doc-011
 DensityPlot[x ^ 2 + 1 / y, {x, -1, 1}, {y, 1, 4}]
 ```
 
-``` m3d test=doc-012
+``` m3d test:doc-012
 DensityPlot[x^2 y, {x, -1, 1}, {y, -1, 1}, Mesh->All]
 ```
 

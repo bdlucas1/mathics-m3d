@@ -10,7 +10,7 @@ import io
 def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):
 
     # images of requested size
-    img = np.full((nx,ny,3), 0, dtype=np.uint8)
+    img = np.full((nx,ny,3), 255, dtype=np.uint8)
 
     # scale vertices to nx, ny
     data_xs, data_ys = vertices[...,0], vertices[...,1]
