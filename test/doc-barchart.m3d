@@ -1,20 +1,20 @@
-``` m3d test=doc-001
+``` m3d test:doc-001
 BarChart[{1, 4, 2}, ChartStyle -> {Red, Green, Blue}]
 ```
 
-``` m3d test=doc-002
+``` m3d test:doc-002
 BarChart[{1, 4, 2}]
 ```
 
-``` m3d test=doc-003
+``` m3d test:doc-003
 BarChart[{{1, 2, 3}, {2, 3, 4}}, ChartLabels -> {"a", "b", "c"}]
 ```
 
-``` m3d test=doc-004
+``` m3d test:doc-004
 BarChart[{{1, 2, 3}, {2, 3, 4}}]
 ```
 
-``` m3d test=doc-005
+``` m3d test:doc-005
 BarChart[{{1, 5}, {3, 4}}, ChartStyle -> {{EdgeForm[Thin], White}, {EdgeForm[Thick], White}}]
 ```
 

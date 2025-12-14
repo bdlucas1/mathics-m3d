@@ -36,11 +36,15 @@ class Style:
 
     # color applies to points, lines, polys
     color = [0,0,0]
-    color_str = to_color_str(color)
+    @property
+    def color_str(self):
+        return to_color_str(self.color)
 
     # edge_color applies to shape edges
     edge_color = [0,0,0,0]
-    edge_color_str = to_color_str(edge_color)
+    @property
+    def edge_color_str(self):
+        return to_color_str(self.edge_color)
 
     # similarly thickness for lines, edge_thickness for shape edges
     thickness = 1.5
@@ -73,11 +77,9 @@ class FigureBuilder:
 
         if ctx == "edge":
             self.style.edge_color = rgb
-            self.style.edge_color_str = to_color_str(rgb)
         else:
             # FaceForm, plain RGBColor
             self.style.color = rgb
-            self.style.color_str = to_color_str(rgb)
 
     def set_thickness(self, thickness, ctx=None):
         if ctx == "edge":
