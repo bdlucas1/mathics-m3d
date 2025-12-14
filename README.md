@@ -55,3 +55,6 @@ grabbing the sliders without moving the page.
     $ python shell.py
     > Manipulate[Plot3D[Sin[a x] Cos[y], {x,0,10}, {y,0,10}], {{a,1}, 0.1, 2.0, 0.1}]
 
+This should pop up a browser window showing the plot. If it fails it might be because
+the `webview` package doesn't work properly on your system, in which case try changing
+the `mode` variable in `shell.py` to `webbrowser`
