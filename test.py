@@ -1,6 +1,9 @@
 import os
 os.environ["MATHICS3_TIMING"] = "1"
 
+import time
+import pathlib
+
 import panel as pn
 import plotly
 import plotly.io as pio
@@ -9,7 +12,6 @@ import skimage.transform
 import skimage.io
 import PIL
 import numpy as np
-import time
 
 import util
 
@@ -55,7 +57,8 @@ def test(fn, layout, expr):
         return pn.Column(cap, im)
 
     # file names
-    fn_ref = f"{fn}.png"
+    path = pathlib.Path(fn)
+    fn_ref = path.parent / "@ref" / (path.name + ".png")
     fn_test = f"/tmp/{fn.replace('/','-')}.png"
     fn_dump = f"/tmp/{fn.replace('/','-')}.txt"
 
