@@ -1,0 +1,64 @@
+``` m3d test:3d-row
+Row[{
+    "This",
+    Plot3D[
+        Sin[x]*Cos[y], {x,0,10}, {y,0,10},
+        Axes->False, Boxed->False, Mesh->None
+    ]
+    "is a",
+    Plot3D[
+        Sin[(x^2+y^2)] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+        Axes->False, Boxed->True, Mesh->None
+    ],
+    "row"
+}]
+```
+
+``` m3d test:3d-grid
+Grid[{
+    {
+        "This",
+        Plot3D[
+            Sin[x]*Cos[y], {x,0,10}, {y,0,10},
+            Axes->False, Mesh->None
+        ],
+
+        "is a"
+    },
+    {
+        Plot3D[
+            Sin[(x^2+y^2)] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+            Axes->False, Mesh->None
+        ],
+        "grid",
+        x+y^2
+    }
+}]
+```
+
+``` m3d test:mixed
+(* mixed non-math, math, and graphics *)
+(* TODO: mathjax makes nested exponents too small? can it be tweaked? *)
+Foo[
+    x+y, x+y^2^3^4^x, Nest[Sin[a+b]+Cos[3z]], "hi",
+    Plot3D[Sin[x]*Cos[y], {x,-3,3}, {y,-3,3}, Axes->False, Mesh->None]
+
+]
+```
+
+``` m3d test:special
+Grid[{
+    {
+        Plot3D[Mod[Floor[x^2+y^2], 3], {x,-3,3}, {y,-3,3}, Axes->False, Boxed->False],
+        Plot3D[FractionalPart[x y], {x,-2,2}, {y,-2,2}, Axes->False, Boxed->False],
+        Plot3D[IntegerPart[x y], {x,-2,2}, {y,-2,2}, Axes->False, Boxed->False]
+    }, {
+        Plot3D[If[Floor[x^2+y^2]==2, 1, 0], {x,-2,2}, {y,-2,2}, Axes->False, Boxed->False],
+        Plot3D[Which[Floor[x^2+y^2]==2, 1, Floor[x+0.5]==0, -1, True, 0], {x,-2,2}, {y,-2,2}, Axes->False, Boxed->False]
+    }, {
+        Plot3D[Min[x,y], {x,-2,2}, {y,-2,2}, Axes->False, Boxed->False],
+        Plot3D[Max[x,y], {x,-2,2}, {y,-2,2}, Axes->False, Boxed->False]
+    }
+}]
+```
+
