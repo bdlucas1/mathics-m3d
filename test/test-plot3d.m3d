@@ -1,0 +1,19 @@
+``` m3d test:3d-sinsqrt
+Plot3D[
+    Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}
+]
+```
+
+``` m3d test:3d-options
+Plot3D[
+    Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+    Axes->{True,False,False}
+    (*Boxed->False*)
+    (*Axes->{True,False,False}*)
+]
+```
+
+``` m3d test:3d-colors
+Plot3D[{1,2,3,4,5,6,7}, {x,0,1},{y,0,1}, BoxRatios->{1,1,1}]
+```
+
