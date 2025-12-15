@@ -1,9 +1,0 @@
-Manipulate[
-    Plot3D[
-        Sin[x]*Cos[y],
-        {x,0,xmax},
-        {y,0,ymax}
-    ],
-    {{xmax,1},0,10,0.1},
-    {{ymax,1},0,10,0.1}
-]
