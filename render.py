@@ -319,9 +319,6 @@ class FigureBuilder:
             opt if isinstance(opt, list) else data
             for opt, data in zip(self.opts.plot_range, data_range)
         ])
-        #if self.opts.log_plot:        
-        #    plot_range[1,0] = np.floor(plot_range[1,0])
-        #    plot_range[1,1] = np.ceil(plot_range[1,1])
         dx, dy, *_ = plot_range.T[1] - plot_range.T[0]
 
         # by this point width should be specified but
@@ -330,13 +327,23 @@ class FigureBuilder:
         if not height:
             height = width * dy / dx
 
+        # expand sufficiently that lines and points
+        # near edge of plot don't get cut in half,
+        # and just generally curves have a bit of breathing room
+        def expand(range, by=0.02):
+            if self.dim==2 and not self.has_image:
+                min, max = range
+                delta = max - min
+                range = [min - by*delta, max + by*delta]
+            return range
+
         # compute axes options
         axes_opts = {}
         for i, p in enumerate("xyz" if self.dim==3 else "xy"):
             opts = dict(
                 linecolor = "black",
                 linewidth = 1 if self.dim==2 else 1.5, # TODO: look again
-                range = plot_range[i],
+                range = expand(plot_range[i]),
                 showgrid = False,
                 showline = True,
                 showspikes = False,
@@ -344,18 +351,11 @@ class FigureBuilder:
                 title = None if self.dim==2 else "", # TODO: look again
                 visible = self.opts.axes[i] or self.opts.frame,
             )
-            # following isn't good for numberline plot - x axis range is too big
-            if self.dim==2 and p == "y":
-            # followning fixes numberline plot, but makes everything a bit different
-            # and in general not quite as good - not enough breathing room.
-            # probably need to expand the axis ranges a bit, but want to just do that
-            # once as it will change just about every test
-            #if self.has_image and p == "y":
+            if self.has_image and p == "y":
                 # for Images plotly doesn't like to scale the image to fill the figure size,
                 # so we force it to with this computation
                 scaleratio = (height / width) * (dx / dy)
                 opts |= dict(scaleanchor = "x", scaleratio = scaleratio)
-
             if self.dim == 3:
                 opts |= dict(showbackground = False)
             axes_opts[p+"axis"] = opts
