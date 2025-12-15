@@ -140,14 +140,14 @@ class Pair(pn.Column):
     @util.Timer("execute code block")
     def update(self):
         try:
-            expr = self.input.value_input
-            self.old_expr = expr
+            expr_str = self.input.value_input
+            self.old_expr = expr_str
             fe.session.evaluation.out.clear()
-            expr = fe.session.parse(expr)
+            #expr = fe.session.parse(expr)
+            expr = fe.session.evaluate(expr_str)
             if not expr:
                 self.input.visible = True
                 return
-            expr = expr.evaluate(fe.session.evaluation)
             layout = lt.expression_to_layout(fe, expr)
             if self.test_fn:
                 test.test(self.test_fn, layout, expr)

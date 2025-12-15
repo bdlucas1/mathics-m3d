@@ -1,12 +1,12 @@
-``` m3d test=doc-036
+``` m3d test:doc-036
 LogPlot[x^x, {x, 1, 5}]
 ```
 
-``` m3d test=doc-037
+``` m3d test:doc-037
 LogPlot[{10^x, Factorial[x], Subfactorial[x]}, {x, 0, 25}, PlotPoints->26]
 ```
 
-``` m3d test=doc-038
+``` m3d test:doc-038
 LogPlot[{x^x, Exp[x], x!}, {x, 1, 5}]
 ```
 

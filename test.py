@@ -94,6 +94,9 @@ def test(fn, layout, expr):
     #layout.save(fn_test)
 
     # write the figure
+    if not figure:
+        print("FAIL: figure is None")
+        return
     pio.write_image(figure, fn_test) # only works for Figures
     im_test = skimage.io.imread(fn_test)[:,:,0:3]
 

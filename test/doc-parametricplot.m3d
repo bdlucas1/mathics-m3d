@@ -1,16 +1,19 @@
-``` m3d test=doc-041
+TODO: AspectRatio and AxesOrigin don't match WMA
+
+``` m3d test:doc-041
 ParametricPlot[ {LegendreP[7, x], LegendreP[5, x]}, {x, -1, 1}]
 ```
 
-``` m3d test=doc-042
+``` m3d test:doc-042
 ParametricPlot[{Cos[u] / u, Sin[u] / u}, {u, 0, 50}, PlotRange->0.5]
 ```
 
-``` m3d test=doc-043
+``` m3d test:doc-043
 ParametricPlot[{Sin[u], Cos[3 u]}, {u, 0, 2 Pi}]
 ```
 
-``` m3d test=doc-044
+TODO: ParametricPlot is generating 6 empty lines in this case
+``` m3d test:doc-044
 ParametricPlot[{{Sin[u], Cos[u]},{0.6 Sin[u], 0.6 Cos[u]}, {0.2 Sin[u], 0.2 Cos[u]}}, {u, 0, 2 Pi}, PlotRange->1, AspectRatio->1]
 ```
 

@@ -1,8 +1,12 @@
-``` m3d test=doc-039
+TODO: these tests aren't incorrect exactly, but the x axis sizing
+is not right. See render.py:348 for a fix, but do it along with
+with a more general improvement of axes padding.                                               
+
+``` m3d test:doc-039
 NumberLinePlot[Prime[Range[10]]]
 ```
 
-``` m3d test=doc-040
+``` m3d test:doc-040
 NumberLinePlot[Table[x^2, {x, 10}]]
 ```
 

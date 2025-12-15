@@ -269,7 +269,14 @@ class GraphicsConsumer:
 
     
     # TODO: make it expr_or_items instead of two args?
+    # TODO: is treating expr.elements[0] specially - is this the right API?
     def item(self, kind, expr, wanted_depth, colors, items=None):
+
+        # short-circuit empty items here to avoid special checks later
+        if items is None and not isinstance(expr.elements[0], core.NumericArray) \
+            and len(expr.elements[0].elements) == 0:
+            print(f"empty {kind}")
+            return
 
         # item is specified either as a NumericArray or as a nest List
         items_wanted_depth = wanted_depth+1 if self.vertices is None else wanted_depth

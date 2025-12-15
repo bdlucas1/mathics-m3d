@@ -143,22 +143,34 @@ def log10_ticks_for_logged_data_superscript(
     log_vmin: float,
     log_vmax: float,
     *,
+    nticks: Optional[int] = None,
     major_every: int = 1,
     minor: bool = True,
     minor_subticks: Tuple[int, ...] = (2,3,4,5,6,7,8,9),
     label_major_only: bool = True,
 ) -> TickResult:
     """
-    Data already has log10 applied. Returns tickvals in log10 space.
-    Major labels are always formatted as: 10<sup>n</sup>
+    Data already has log10 applied. Tick positions are in log10 space.
+
+    Majors: integer exponents labeled as 10<sup>n</sup> at spacing major_every (or derived from nticks).
+    Minors:
+      - if major_every == 1: 2..9 within each decade (log10(2..9))
+      - if major_every  > 1: decade-only marks between majors (integer exponents, unlabeled by default)
     """
+
     if not (math.isfinite(log_vmin) and math.isfinite(log_vmax)):
         return TickResult([])
+
     if log_vmin > log_vmax:
         log_vmin, log_vmax = log_vmax, log_vmin
 
     emin = math.floor(log_vmin)
     emax = math.ceil(log_vmax)
+
+    # Derive major_every from nticks if requested
+    if nticks is not None and nticks > 1:
+        span = max(emax - emin, 1)
+        major_every = max(1, math.ceil(span / (nticks - 1)))
 
     tickvals: List[float] = []
     ticktext: List[str] = []
@@ -166,26 +178,45 @@ def log10_ticks_for_logged_data_superscript(
     def major_label(e: int) -> str:
         return f"10<sup>{e}</sup>"
 
+    def in_range(pos: float) -> bool:
+        return (log_vmin - 1e-12) <= pos <= (log_vmax + 1e-12)
+
     for e in range(emin, emax + 1):
-        # major at integer exponent
-        if (e - emin) % max(major_every, 1) == 0:
+        # major ticks (every major_every decades)
+        if (e - emin) % major_every == 0:
             pos = float(e)
-            if pos >= log_vmin - 1e-12 and pos <= log_vmax + 1e-12:
+            if in_range(pos):
                 tickvals.append(pos)
                 ticktext.append(major_label(e))
 
-        # minors between e and e+1
-        if minor and e < emax:
+        if not minor or e >= emax:
+            continue
+
+        if major_every == 1:
+            # classic log minors within the decade
             for k in minor_subticks:
                 pos = e + math.log10(k)
-                if pos >= log_vmin - 1e-12 and pos <= log_vmax + 1e-12:
+                if in_range(pos):
                     tickvals.append(pos)
                     ticktext.append("" if label_major_only else f"{k}×{major_label(e)}")
+        else:
+            # decade-only minors between majors: integer exponents not on major grid
+            # We add each decade mark once; do it when we're at the *start* of a major block.
+            if (e - emin) % major_every == 0:
+                for m in range(1, major_every):
+                    pos = e + m
+                    if pos > emax:
+                        break
+                    if in_range(pos):
+                        tickvals.append(float(pos))
+                        # unlabeled by default; if you ever want labels, set label_major_only=False
+                        ticktext.append("" if label_major_only else major_label(int(pos)))
 
     # sort by position
     pairs = sorted(zip(tickvals, ticktext), key=lambda t: t[0])
     tickvals = [v for v, _ in pairs]
     ticktext = [s for _, s in pairs]
+
     return TickResult(tickvals, ticktext)
 
 

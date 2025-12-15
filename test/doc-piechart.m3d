@@ -1,24 +1,25 @@
-``` m3d test=doc-045
+``` m3d test:doc-045
 PieChart[{1, -1, 3}]
 ```
 
-``` m3d test=doc-046
+``` m3d test:doc-046
+Dogs = "Dogs"; Cats = "Cats"; Fish = "Fish";
 PieChart[{30, 20, 10}, ChartLabels -> {Dogs, Cats, Fish}]
 ```
 
-``` m3d test=doc-047
+``` m3d test:doc-047
 PieChart[{8, 16, 2}, SectorOrigin -> {Automatic, 1.5}]
 ```
 
-``` m3d test=doc-048
-PieChart[{{10, 20, 30}, {15, 22, 30}}, ChartLabels -> {A, B, C}]
+``` m3d test:doc-048
+PieChart[{{10, 20, 30}, {15, 22, 30}}, ChartLabels -> {"A", "B", "C"<>"D"}]
 ```
 
-``` m3d test=doc-049
+``` m3d test:doc-049
 PieChart[{{10, 20, 30}, {15, 22, 30}}, SectorSpacing -> None]
 ```
 
-``` m3d test=doc-050
+``` m3d test:doc-050
 PieChart[{{10, 20, 30}, {15, 22, 30}}]
 ```
 

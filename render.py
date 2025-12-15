@@ -64,10 +64,11 @@ class FigureBuilder:
         self.dim = dim
         self.flat = False
         self.data = []
-        self.img_array = None
         self.opts = options
+        self.has_image = False
         
         self.style = Style()
+
 
     def set_style(self, style):
         if style == 1:
@@ -112,6 +113,13 @@ class FigureBuilder:
     util.Timer("add_lines")
     def add_lines(self, vertices, lines, colors):
 
+        """
+        # short-circuit em
+        if isinstance(lines, (list,tuple)) and len(lines)==0 or \
+           isinstance(lines, np.ndarray) and np.size(lines) == 0:
+            return
+        """
+
         if vertices is not None:
             lines = vertices[lines]
 
@@ -119,7 +127,9 @@ class FigureBuilder:
         # drawn as multiple line segments with a break between them.
         # We use nan instead of None so we can use nanmin and nanmax on the array.
         # also we can't rely on self.dim b/c classic density plot sends dim 3 mesh
-        dim = lines[0].shape[-1]
+        # TODO: track down why sometimes it's not coming through as an array
+        #print("xxx lines", lines)
+        dim = len(lines[0][0])
         single = [lines[0]]
         for line in lines[1:]:
             single.append([[np.nan] * dim])
@@ -211,11 +221,9 @@ class FigureBuilder:
 
                 # use mesh2d_opencv
                 vertices, polys, colors = need_vertices(vertices, polys, colors)
-                # is this correct?
-                #if colors is None:
-                #    colors = self.style.color
                 mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
+                self.has_image = True
 
                 # use mesh2d_svg
                 # much too slow (>1 s)
@@ -253,11 +261,34 @@ class FigureBuilder:
 
     def add_disks(self, vertices, disks, colors):
         for disk in disks:
+
+            # center
             x, y = disk[0]
-            r = disk[1] if len(disk) > 1 else 1
-            ts = np.linspace(0, 2 * np.pi, 100)
-            xs = x + r * np.sin(ts)
-            ys = y + r * np.cos(ts)
+            
+            # radii
+            rx = ry = 1
+            if len(disk) > 1:
+                if isinstance(disk[1], (list,tuple,np.ndarray)):
+                    rx, ry = disk[1]
+                else:
+                    rx = ry = disk[1]
+
+            # angles
+            a0, a1 = 0, 2 * np.pi
+            if len(disk) > 2:
+                a0, a1 = disk[2]
+            ts = np.linspace(a0, a1, 100)
+
+            # xs, ys
+            xs = x + rx * np.cos(ts)
+            ys = y + ry * np.sin(ts)
+
+            # angle ends to center if not a full circle
+            diff = (a0 - a1 + np.pi) %  (2 * np.pi) - np.pi
+            if not np.isclose(diff, 0):
+                xs = np.append(xs, x)
+                ys = np.append(ys, y)
+
             self._add_shape(xs, ys)
 
 
@@ -289,8 +320,8 @@ class FigureBuilder:
             for opt, data in zip(self.opts.plot_range, data_range)
         ])
         #if self.opts.log_plot:        
-        #    plot_range[:,0] = np.floor(plot_range[:,0]) - 0.2
-        #    plot_range[:,1] = np.ceil(plot_range[:,1]) + 0.2
+        #    plot_range[1,0] = np.floor(plot_range[1,0])
+        #    plot_range[1,1] = np.ceil(plot_range[1,1])
         dx, dy, *_ = plot_range.T[1] - plot_range.T[0]
 
         # by this point width should be specified but
@@ -313,11 +344,18 @@ class FigureBuilder:
                 title = None if self.dim==2 else "", # TODO: look again
                 visible = self.opts.axes[i] or self.opts.frame,
             )
-            if self.dim == 2 and p == "y":
+            # following isn't good for numberline plot - x axis range is too big
+            if self.dim==2 and p == "y":
+            # followning fixes numberline plot, but makes everything a bit different
+            # and in general not quite as good - not enough breathing room.
+            # probably need to expand the axis ranges a bit, but want to just do that
+            # once as it will change just about every test
+            #if self.has_image and p == "y":
                 # for Images plotly doesn't like to scale the image to fill the figure size,
                 # so we force it to with this computation
                 scaleratio = (height / width) * (dx / dy)
                 opts |= dict(scaleanchor = "x", scaleratio = scaleratio)
+
             if self.dim == 3:
                 opts |= dict(showbackground = False)
             axes_opts[p+"axis"] = opts
@@ -359,14 +397,18 @@ class FigureBuilder:
                     projection_type = "orthographic"
                 )
 
-            # BoxRatios
-            box_ratios = self.opts.box_ratios if not self.flat else [1, 1, 1]
+            # Put camera and BoxRatios together in scene
+            # TODO: if not self.flat
             scene = dict(
-                aspectmode = "manual",
-                aspectratio = {p: box_ratios[i] for i, p in enumerate("xyz")},
                 camera = camera,
                 **axes_opts
             )
+            # specified box ratios; otherwise Automatic, which lets figure choose
+            if self.opts.box_ratios is not None:
+                scene["aspectmode"] = "manual"
+                scene["aspectratio"] = {
+                    p: self.opts.box_ratios[i] for i, p in enumerate("xyz")
+                }
 
             # combine above into final go_layout
             go_layout = go.Layout(**layout_opts, scene = scene)
@@ -380,7 +422,7 @@ class FigureBuilder:
             lo, hi = plot_range[1]
             #ticks = ticker.log_ticks_for_logged_data(log_vmin=lo, log_vmax=hi, base=10, minor=True)
             ticks = ticker.log10_ticks_for_logged_data_superscript(
-                log_vmin=lo, log_vmax=hi, minor=True
+                log_vmin=lo, log_vmax=hi, minor=True, nticks=6
             )
             figure.update_yaxes(**ticker.plotly_tick_array(ticks))
 
