@@ -17,7 +17,8 @@ def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):
     x_min, x_max = min(data_xs), max(data_xs)
     y_min, y_max = min(data_ys), max(data_ys)
     img_xs = (data_xs - x_min) / (x_max - x_min) * nx
-    img_ys = (y_max - data_ys) / (y_max - y_min) * ny # cv2 is upside down
+    img_ys = (data_ys - y_min) / (y_max - y_min) * ny
+    #img_ys = (y_max - data_ys) / (y_max - y_min) * ny # cv2 is upside down
     
     # TODO: average poly color instead of vertex 0?
     colors = colors[polys[:,0],:] * 255
@@ -41,7 +42,6 @@ def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):
             object.__setattr__(self, "y", y)
             
     # construct our mesh to add to the figure
-    # flip the image because opencv starts y from the top
     mesh = Im(
         z=img,
         x0=x_min, dx=(x_max-x_min)/nx, x=data_xs,

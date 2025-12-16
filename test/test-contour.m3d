@@ -1,16 +1,21 @@
-$$f(x,y)$$, default contours
+$$f(x,y)$$, default contours, asymmetric to detect flips, auto aspect
 ``` m3d test:expr-default
-ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}]
+ContourPlot[x - y^3, {x, -2, 2}, {y, -1, 1}, AspectRatio->Automatic]
 ```
 
-$$f(x,y)$$, n contours
+$$f(x,y)$$, n contours, default aspect
 ``` m3d test:expr-n
-ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, Contours->8]
+ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -1, 1}, Contours->10]
 ```
 
-$$f(x,y)$$, specific contours
-``` m3d test:expr-specified
-ContourPlot[x^2 - y^2, {x, -2, 2}, {y, -2, 2}, Contours->{-1,0,1}]
+$$f(x,y)$$, specific contours in x direction, auto aspect
+``` m3d test:expr-x
+ContourPlot[x, {x, -2, 2}, {y, -1, 1}, Contours->{0, 0.5}, AspectRatio->Automatic]
+```
+
+$$f(x,y)$$, specific contours in y direction, auto aspect
+``` m3d test:expr-y
+ContourPlot[y, {x, -2, 2}, {y, -1, 1}, Contours->{0, 0.5}, AspectRatio->Automatic]
 ```
 
 two functions each of the form $$f(x,y)=g(x,y)$$
