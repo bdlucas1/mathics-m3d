@@ -14,8 +14,7 @@ import ui
 import util
 import test_ui
 
-css_fn = pathlib.Path(__file__).resolve().parent / "m3d.css"
-pn.extension(raw_css=[open(css_fn).read()])
+pn.extension(raw_css=[open(util.resource("m3d.css")).read()])
 
 def wrap(s):
     return pn.widgets.StaticText(value=s)

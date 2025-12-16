@@ -7,6 +7,7 @@ import threading
 import re
 import sys
 import pathlib
+import itertools
 
 import panel as pn
 import panel.widgets as pnw
@@ -441,12 +442,12 @@ class App(ui.Stack):
 
         def make_help():
             help = View(css_classes=["m-view"])
-            help.load_m3d_file("data/help.m3d", run=True)
+            help.load_m3d_file(util.resource("data/help.m3d"), run=True)
             test_ui.item(help, "help")
             return help
         self.append("help", make_help)
 
-        data_root = "data"
+        data_root = util.resource("data")
 
         def make_open():
             # TODO: new files always go into active item "view"
@@ -583,7 +584,7 @@ class App(ui.Stack):
         heart_button = ui.icon_button(
             "heart",
             "Like it?",
-            lambda: load_and_activate(["data/cardio.m3d"], True)
+            lambda: load_and_activate([util.resource("data/cardio.m3d")], True)
         )
 
         buttons = pn.Row(
@@ -644,12 +645,26 @@ else:
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
 
+    # use vectorized plotting by default
     mathics.builtin.drawing.plot.use_vectorized_plot = not args.classic
 
+    # trigger tests if requested
     test = None
     if args.test:
         import test
 
+    # exit when browser window closes
+    # seems to take about 30 sec, probably a timeout
+    def session_destroyed(session_context):
+        if not pn.state.session_info["live"]:
+            # delay to avoid races
+            def quit():
+                print("server exiting")
+                os._exit(0) 
+            threading.Timer(0.5, quit).start()
+    pn.state.on_session_destroyed(session_destroyed)
+
+    # start the app and point a browser at it
     app = App(
         load=args.files,
         initial_mode=args.initial_mode,
@@ -657,7 +672,5 @@ else:
         autorun=not args.no_autorun,
         test_ui_run=args.test_ui,
     )
-
     title =  " ".join(["Markdown+Mathics3", *args.files])
     util.show(app, title)
-

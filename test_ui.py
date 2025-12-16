@@ -4,6 +4,8 @@ import os
 
 import panel as pn
 
+import util
+
 items = {}
 
 def item(item, name) :
@@ -60,7 +62,7 @@ def check_file(name, expected):
         assert expected in text, f"file {name} does not contain expected text {expected}"
 
 
-test_file = f"data/test.m3d" # TODO: pick root up from main
+test_file = util.resource("data/test.m3d")
 test_string = str(time.time())
 
 def run_tests_really():

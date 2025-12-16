@@ -7,9 +7,13 @@ import webbrowser
 import importlib
 import subprocess
 import panel as pn
+import pathlib
 
 from mathics.core.util import *
 from mathics.timing import *
+
+def resource(fn):
+    return  str(pathlib.Path(__file__).resolve().parent / fn)
 
 try:
     import webview
