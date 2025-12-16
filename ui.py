@@ -22,6 +22,11 @@ def wrap(s):
 
 
 def latex(s):
+    # TODO: is this reliable? anything else needed?
+    if s == "{":
+        s = r"\{"
+    if s == "}":
+        s = r"\}"
     if isinstance(s, str):
         return pn.pane.LaTeX(f"${s}$")
     return s
@@ -54,6 +59,9 @@ def grid(grid_content):
         *children,
         ncols=n_cols,
         #sizing_mode="fixed",  # helps avoid over-expanding horizontally
+        styles = {
+            "gap": "0px",
+        }
     )
     gb.css_classes = ["m-grid"]
 
