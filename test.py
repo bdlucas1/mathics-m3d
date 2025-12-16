@@ -123,7 +123,10 @@ def test(test_info, layout, expr):
 
     # dump expr for debugging
     with open(fn_dump, "w") as f:
-        util.print_expression_tree(expr, file=f, approximate=True)
+        try:
+            util.print_expression_tree(expr, file=f, approximate=True)
+        except Exception as oops:
+            print(f"dumping to {fn_dump} got exception {oops}")
 
     # compare
     row, cap = None, None

@@ -75,8 +75,8 @@ layout_funs = {
 }
 
 special = {
-    "Sin": "\\sin",
-    "Cos": "\\cos",
+    #"Sin": "\\sin",
+    #"Cos": "\\cos",
 }
 
 #
@@ -95,6 +95,11 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
 
     def try_latex():
         try:
+            # TODO: this is hard-coded (I think) to emit \text which by default
+            # uses serif fonts (i.e. is same as \textrm. Maybe we prefer sans-serif?
+            # If so either 1) teach this call to accept a parameter to use e.g. \textsf
+            # instead of \text, or 2) figure out how to configure mathjax to use
+            # sans-serif for \text etc.
             return fmt.boxes_to_format(expr, "latex")
         except:
             return None
@@ -108,10 +113,13 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
             value = special[expr.value]
         elif len(expr.value) >= 2 and expr.value[0] == '"' and expr.value[-1] == '"':
             # strip quotes - surprising they're still present?
-            value = r"\textsf{%s}" % expr.value[1:-1]
+            # TODO: or \textsf or \text - see comment above in try_latex
+            value = r"\textrm{%s}" % expr.value[1:-1]
         elif len(expr.value) > 1:
-            value = r"\mathsf{%s}" % expr.value
+            # TODO: or \mathsf or just {} - see comment above
+            value = r"\mathrm{%s}" % expr.value
         else:
+            # TODO: or \mathsf - see comment above
             value = expr.value
         return value
     elif not hasattr(expr, "head"):
@@ -127,23 +135,24 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
 #     GraphicsComplex -> ??? GraphicsComplexBox (check W)
 #
 
-def expression_to_layout(fe, expr, layout_options={}):
+def expression_to_layout(fe, expr, layout_options={}, form=sym.SymbolTraditionalForm):
 
     """
     Our main entry point.
     Given an expression, box it if necessary, and compute a layout
+
+    Default is traditional for, but that can be overriden in a few ways:
+    - pass form=sym.SymbolStandardForm to this function
+    - user or caller does: expr // StandardForm
+    - user or caller does: ToBoxes[expr, StandardForm]
     """
 
-    #print("xxx before boxing:"); util.prt_expr_tree(expr)
-
-    # TODO: is this a hack? is it needed?
-    if str(getattr(expr, "head", None)).endswith("Box"):
+    # box if necessary
+    if expr and str(getattr(expr, "head", "")).endswith("Box"):
         boxed = expr
     else:
-        form = sym.SymbolTraditionalForm
-        boxed = core.Expression(sym.Symbol("System`ToBoxes"), expr, form).evaluate(fe.session.evaluation)
-
-    #print("after boxing:"); util.prt_expr_tree(boxed)
+        boxed = core.Expression(sym.SymbolToBoxes, expr, form)
+        boxed = boxed.evaluate(fe.session.evaluation)
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout

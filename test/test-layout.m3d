@@ -2,16 +2,24 @@
 Sqrt[y] + Cos[z] + Cos[3*z] Sin[t*Pi+2] + b + 2*c + 17*(e-3*m^(4+x))
 ```
 
-``` m3d test:mixed mode:layout
-Foo[
-    x+y, x+y^2^3^4^x, Nest[Sin[a+b]+Cos[3z]], "hi",
+``` m3d test:null mode:layout
+fancy := Foo[
+    x+y, x+y^2^3^4^x, Sqrt[Nest[Sin[a+b]+Cos[3z]]+4 yy], "hi",
     Plot3D[Sin[x]*Cos[y], {x,-3,3}, {y,-3,3}, Axes->False, Mesh->None]
 
-]
+];
 ```
 
-``` m3d test:null mode:layout
-x;
+``` m3d test:fancy-default mode:layout
+fancy
+```
+
+``` m3d test:fancy-standard mode:layout
+fancy // StandardForm
+```
+
+``` m3d test:fancy-traditional mode:layout
+ToBoxes[fancy, TraditionalForm]
 ```
 
 ``` m3d test:3d-row mode:layout
