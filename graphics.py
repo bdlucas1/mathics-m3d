@@ -42,8 +42,8 @@ def layout_GraphicsBox(dim, fe, expr, layout_options):
     for item in graphics.items():
         switch[item[0]](*item[1:])
 
-    figure = builder.figure()
-    layout = ui.graph(figure, graphics.options.image_size[1])
+    figure, height = builder.figure()
+    layout = ui.graph(figure, height)
     return layout
 
 #

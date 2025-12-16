@@ -46,6 +46,10 @@ def pending():
 
 def test(test_info, layout, expr):
 
+    # do it up front in case we return early as this is used
+    # to know when we are done
+    state.pending -= 1
+
     fn = test_info["fn"]
     test_name = test_info["test"]
 
@@ -166,7 +170,6 @@ def test(test_info, layout, expr):
 
     # if we've seen all tests we were promised and there were no failures just exit
     # otherwise the user will have to press the "Finish" button
-    state.pending -= 1
     if state.pending == 0:
         if state.failed == 0 and state.missing == 0:
             summarize_and_exit()

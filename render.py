@@ -324,7 +324,7 @@ class FigureBuilder:
         # height may be None, requesting automatic computation
         width, height = self.opts.image_size
         if not height:
-            height = width * dy / dx
+            self.opts.image_size[1] = height = width * dy / dx
 
         # expand sufficiently that lines and points
         # near edge of plot don't get cut in half,
@@ -436,5 +436,5 @@ class FigureBuilder:
             pio.write_image(figure, self.fe.test_image)
             print("wrote", self.fe.test_image)
             
-        return figure
+        return figure, height
 
