@@ -313,7 +313,7 @@ class View(pn.Column):
 
                     # remember options to past to test if there is a "test" option
                     test_info = None
-                    if "test" in options:
+                    if test and "test" in options:
                         test_info = options
                         test_info["fn"] = fn
 
