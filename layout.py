@@ -108,9 +108,9 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
             value = special[expr.value]
         elif len(expr.value) >= 2 and expr.value[0] == '"' and expr.value[-1] == '"':
             # strip quotes - surprising they're still present?
-            value = f"\\mathsf{{\\mbox{{{expr.value[1:-1]}}}}}"
+            value = r"\textsf{%s}" % expr.value[1:-1]
         elif len(expr.value) > 1:
-            value = f"\\mathop{{\\mbox{{{expr.value}}}}}"
+            value = r"\mathsf{%s}" % expr.value
         else:
             value = expr.value
         return value

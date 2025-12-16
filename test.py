@@ -3,6 +3,7 @@ os.environ["MATHICS3_TIMING"] = "1"
 
 import time
 import pathlib
+import copy
 
 import panel as pn
 import plotly
@@ -43,7 +44,18 @@ util.show(state.top, "TEST", browser="webbrowser")
 def pending():
     state.pending += 1
 
-def test(fn, layout, expr):
+def test(test_info, layout, expr):
+
+    fn = test_info["fn"]
+    test_name = test_info["test"]
+
+    # compute test filename fn
+    if test_name := test_info["test"]:
+        base_fn, _ =  os.path.splitext(fn)
+        fn = f"{base_fn}={test_name}" # = sorts after .
+    else:
+        # this was a freestanding .m file
+        fn, _ = os.path.splitext(fn)
 
     print("=== TEST", fn) #, layout)
     heading.object += "."
@@ -76,37 +88,40 @@ def test(fn, layout, expr):
             except TypeError as oops:
                 #print(oops)
                 pass
-    collect_figures(layout)
-    figures = [*collect_figures(layout)]
-    if len(figures) == 0:
-        state.failed += 1
-        print("NO FIGURES")
-        return
 
-    # TODO: this mimics previous behavior
-    # should test each figure separately, maybe
-    figure = figures[-1] # mimic previous behavior
+    mode = test_info.get("mode", "figure")
+    if mode == "figure":
 
-    # TODO: look into this some more maybe
-    # uses selenium to render the entire layout e.g. including
-    # Grid, Row, Manipulate, which might be nice
-    # but is ok IF we don't also put layout in the main document 
-    # maybe that's ok for test mode?
-    # But also there was a problem where the right side of the
-    # image seemed to be cut off
-    #layout.save(fn_test)
+        # find a figure and write it
+        collect_figures(layout)
+        figures = [*collect_figures(layout)]
+        if len(figures) == 0:
+            state.failed += 1
+            print("NO FIGURES")
+            return
 
-    # write the figure
-    if not figure:
-        print("FAIL: figure is None")
-        return
-    pio.write_image(figure, fn_test) # only works for Figures
+        # write only last figure
+        figure = figures[-1] # mimic previous behavior
+        if not figure:
+            print("FAIL: figure is None")
+            return
+        pio.write_image(figure, fn_test) # only works for Figures
+
+    elif mode == "layout":
+
+        # save entire layout
+        # hack: this cuts off a bit of the right side, so we pad it
+        hack = pn.Row(layout, pn.Spacer(width=100))
+        hack.save(fn_test)
+
+    # read image back int
     im_test = skimage.io.imread(fn_test)[:,:,0:3]
 
     # dump expr for debugging
     with open(fn_dump, "w") as f:
         util.print_expression_tree(expr, file=f, approximate=True)
 
+    # compare
     row, cap = None, None
     if not os.path.exists(fn_ref):
         print(f"=== ref image {fn_ref} does not exist")
@@ -167,18 +182,3 @@ def test(fn, layout, expr):
     #layout.save(f"/tmp/{fn_m.split('/')[-1]}-test.png")
     #
 
-# given a filename fn and options from the ``` line, compute test filename
-def test_fn(fn, options=None):
-
-    # compute test_fn
-    test_fn = None
-    if options is not None:
-        # this was a ``` code section of a .m3d file
-        if test_part := options.get("test", None):
-            base_fn, _ =  os.path.splitext(fn)
-            test_fn = f"{base_fn}={test_part}" # = sorts after .
-    else:
-        # this was a freestanding .m file
-        test_fn, _ = os.path.splitext(fn)
-
-    return test_fn

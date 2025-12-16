@@ -128,7 +128,6 @@ class FigureBuilder:
         # We use nan instead of None so we can use nanmin and nanmax on the array.
         # also we can't rely on self.dim b/c classic density plot sends dim 3 mesh
         # TODO: track down why sometimes it's not coming through as an array
-        #print("xxx lines", lines)
         dim = len(lines[0][0])
         single = [lines[0]]
         for line in lines[1:]:

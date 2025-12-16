@@ -1,10 +1,26 @@
-``` m3d test:3d-row
+``` m3d test:math mode:layout
+Sqrt[y] + Cos[z] + Cos[3*z] Sin[t*Pi+2] + b + 2*c + 17*(e-3*m^(4+x))
+```
+
+``` m3d test:mixed mode:layout
+Foo[
+    x+y, x+y^2^3^4^x, Nest[Sin[a+b]+Cos[3z]], "hi",
+    Plot3D[Sin[x]*Cos[y], {x,-3,3}, {y,-3,3}, Axes->False, Mesh->None]
+
+]
+```
+
+``` m3d test:null mode:layout
+x;
+```
+
+``` m3d test:3d-row mode:layout
 Row[{
     "This",
     Plot3D[
         Sin[x]*Cos[y], {x,0,10}, {y,0,10},
         Axes->False, Boxed->False, Mesh->None
-    ]
+    ],
     "is a",
     Plot3D[
         Sin[(x^2+y^2)] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
@@ -14,7 +30,7 @@ Row[{
 }]
 ```
 
-``` m3d test:3d-grid
+``` m3d test:3d-grid mode:layout
 Grid[{
     {
         "This",
@@ -22,7 +38,6 @@ Grid[{
             Sin[x]*Cos[y], {x,0,10}, {y,0,10},
             Axes->False, Mesh->None
         ],
-
         "is a"
     },
     {
@@ -35,15 +50,4 @@ Grid[{
     }
 }]
 ```
-
-``` m3d test:mixed
-(* mixed non-math, math, and graphics *)
-(* TODO: mathjax makes nested exponents too small? can it be tweaked? *)
-Foo[
-    x+y, x+y^2^3^4^x, Nest[Sin[a+b]+Cos[3z]], "hi",
-    Plot3D[Sin[x]*Cos[y], {x,-3,3}, {y,-3,3}, Axes->False, Mesh->None]
-
-]
-```
-
 

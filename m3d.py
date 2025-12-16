@@ -50,15 +50,16 @@ mathics.builtin.drawing.plot.use_vectorized_plot = True
 
 class Pair(pn.Column):
 
-    def __init__(self, text=None, input_visible=False, run=False, test_fn=None):
+    def __init__(self, text=None, input_visible=False, run=False, test_info=None):
         
         self.old_expr = ""
         self.is_stale = True
         self.opener = "```"
-        self.test_fn = test_fn
+        self.test_info = test_info
 
-        # actual loading and therefore testing is deferred; track pending so we know when we're done
-        if test_fn:
+        # actual loading and therefore testing is deferred;
+        # track pending so we know when we're done
+        if test_info:
             test.pending()
 
         # input
@@ -140,8 +141,11 @@ class Pair(pn.Column):
     @util.Timer("execute code block")
     def update(self):
         try:
+
             expr_str = self.input.value_input
             self.old_expr = expr_str
+            
+            # evaluate it
             fe.session.evaluation.out.clear()
             #expr = fe.session.parse(expr)
             expr = fe.session.evaluate(expr_str)
@@ -149,11 +153,19 @@ class Pair(pn.Column):
                 self.input.visible = True
                 return
             layout = lt.expression_to_layout(fe, expr)
-            if self.test_fn:
-                test.test(self.test_fn, layout, expr)
-            self.output[0] = layout
+
+            # either show it to user, or pass it to test
+            # can't do both because test "layout" mode requires
+            # that sole ownership of the layout to save it to image
+            if self.test_info:
+                test.test(self.test_info, layout, expr)
+            else:
+                self.output[0] = layout
+
+            # update state
             self.is_stale = False
             self.exec_button.visible = False
+
         except (Exception, core.AbortInterrupt) as oops:
             if isinstance(oops, core.InvalidSyntaxError): kind = "Syntax error"
             elif isinstance(oops, core.IncompleteSyntaxError): kind = "Syntax error"
@@ -172,9 +184,11 @@ class Pair(pn.Column):
                 )
             )
             self.output[0] = error_box
+
         except SystemExit:
             print("bye")
             os._exit(0)
+
         finally:
             self.messages.clear()
             for o in fe.session.evaluation.out:
@@ -297,14 +311,22 @@ class View(pn.Column):
                     # override global autorun
                     autorun = truthful(options.get("autorun", run))
 
-                    # construct test file basename if this part has a test:<part> option
-                    test_fn = test.test_fn(fn, options) if test and fn else None
+                    # remember options to past to test if there is a "test" option
+                    test_info = None
+                    if "test" in options:
+                        test_info = options
+                        test_info["fn"] = fn
 
                     # option to show the code for this part
                     input_visible = show_code or not autorun
 
                     # construct the pair
-                    pair = Pair(text, input_visible=input_visible, run=autorun, test_fn=test_fn)
+                    pair = Pair(
+                        text,
+                        input_visible=input_visible,
+                        run=autorun,
+                        test_info=test_info
+                    )
 
                 pair.opener = opener
                 self.append(pair)
@@ -339,8 +361,9 @@ class View(pn.Column):
     def load_m(self, m_fn):
         """ Load a .m file that contains only a Mathics3 formula """
         m_str = open(m_fn).read()    
-        test_fn = os.path.splitext(m_fn)[0] if test else None
-        pair = Pair(m_str.strip(), run=True, test_fn=test_fn)
+        # TODO: not sure following is right
+        test_info = dict(fn=m_fn) if test else None
+        pair = Pair(m_str.strip(), run=True, test_info=test_info)
         self.append(pair)
 
     def update_all_changed(self, force=False):
