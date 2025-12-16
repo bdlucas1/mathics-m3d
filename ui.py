@@ -31,9 +31,27 @@ def latex(s):
     return s
 
 
+# Wrap the plot in a row with a half-height spacer, which,
+# being the first item in the row, establishes the baseline
+# at the middle of the plot so that it is centered vertically.
+#
+# TODO: this seems to slow things down and cause some funky
+# behavior if the plot is near the bottom of the page,
+# so for now we only do it if the plot is in a Row or Grid.
+def establish_plot_baseline(plot):
+    height = plot._m3d_height # from ui.graph
+    row = pn.Row(
+        pn.Spacer(width=0, height=int((height or 0) / 2)),
+        plot
+    )
+    return row
+
+
 def row(ls):
     items = [pn.widgets.StaticText(value=l) if isinstance(l, str) else l for l in ls]
     for i, item in enumerate(items):
+        if isinstance(item, pn.pane.Plotly):
+            item = items[i] = establish_plot_baseline(item)
         item.styles["align-self"] = "baseline"
     return pn.Row(*items)
 
@@ -49,6 +67,8 @@ def grid(grid_content):
         for cell in r:
             if isinstance(cell, str):
                 cell = children.append(pn.widgets.StaticText(value=cell))
+            if isinstance(cell, pn.pane.Plotly):
+                cell = establish_plot_baseline(cell)
             cell.styles["align-self"] = "baseline"
             cell.styles["justify-self"] = "center"
             children.append(cell)
@@ -70,24 +90,20 @@ def grid(grid_content):
 
 
 def graph(figure, height):
-
-    row = pn.Row(
-        # this spacer, being the first item in the row, establishes the# baseline
-        # at half the height of the plot so that the plots are centered on the baseline
-        pn.Spacer(width=0, height=int((height or 0) / 2)),
-        pn.pane.Plotly(
-            figure,
-            #config={"displayModeBar": False}, # TODO: do we still want this?
-            css_classes = ["m-plot"]
-        )
+    plot = pn.pane.Plotly(
+        figure,
+        #config={"displayModeBar": False}, # TODO: do we still want this?
+        css_classes = ["m-plot"]
     )
-    return row
+    plot._m3d_height = height
+    return plot
 
 
 def manipulate(init_target_layout, sliders, eval_and_layout):
 
     # wrap plotly figures in pn.pane.Plotly for more efficient updates
     # else just use a Column (TODO: any better way in this case?)
+    # TODO: is this still needed given that ui.graph does this?
     def wrap(x):
         if isinstance(x, pn.pane.Plotly):
             return x
