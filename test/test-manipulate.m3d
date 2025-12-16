@@ -1,4 +1,4 @@
-``` m3d test:3d-sinsqrt
+``` m3d test:3d-sinsqrt mode:layout
 Manipulate[
     Plot3D[
         Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3}, {y,-3,3},
@@ -9,14 +9,14 @@ Manipulate[
 ]
 ```
 
-``` m3d test:2d-sin
+``` m3d test:2d-sin mode:layout
 Manipulate[
     Plot[Sin[x*f], {x,0,10}, PlotPoints->10],
     {{f,1.0}, 0.1, 2.0, 0.2}
 ]
 ```
 
-``` m3d test:3d-sincos
+``` m3d test:3d-sincos mode:layout
 Manipulate[
     Plot3D[
         Sin[x]*Cos[y]*a,
@@ -28,14 +28,14 @@ Manipulate[
 ]
 ```
 
-``` m3d test:1d-numberline
+``` m3d test:1d-numberline mode:layout
 Manipulate[
     NumberLinePlot[{1,x,4}],
     {{x,2}, 1.0, 4.0, 0.1}
 ]
 ```
 
-``` m3d test:2d-polar
+``` m3d test:2d-polar mode:layout
 (* TODO: axes should be centered; maybe use plotly native polar plot for this? *)
 (* Interactive speed is marginal for this plot *)
 Manipulate[
@@ -48,7 +48,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:3d-sincos-max
+``` m3d test:3d-sincos-max mode:layout
 Manipulate[
     Plot3D[
         Sin[x]*Cos[y],
@@ -60,7 +60,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:2d-if
+``` m3d test:2d-if mode:layout
 Manipulate[
     Plot[
         If[x > threshold, x, -x],
@@ -70,7 +70,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:3d-eex
+``` m3d test:3d-eex mode:layout
 Manipulate[
     Plot3D[
         {Exp[Exp[x + I y]], z},
@@ -82,7 +82,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:fp
+``` m3d test:fp mode:layout
 Manipulate[
     Plot3D[
         FractionalPart[x y],
@@ -92,7 +92,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:2d-density
+``` m3d test:2d-density mode:layout
 Manipulate[
     DensityPlot[
         Sin[a x] Cos[b y], {x,0,10 Pi}, {y,0,5 Pi}
@@ -102,7 +102,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:complex
+``` m3d test:complex mode:layout
 (* Use the sliders to move the poles and zeros *)
 Manipulate[
     ComplexPlot[
@@ -116,7 +116,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:complex-eex
+``` m3d test:complex-eex mode:layout
 Manipulate[
     ComplexPlot[
         Exp[Exp[z]]-k,
@@ -127,7 +127,7 @@ Manipulate[
 ]
 ```
 
-``` m3d test:2d-zeta
+``` m3d test:2d-zeta mode:layout
 Manipulate[
     Plot[
         Abs[Zeta[x I + y]],

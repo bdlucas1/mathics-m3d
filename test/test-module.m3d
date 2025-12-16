@@ -1,4 +1,4 @@
-``` m3d test:manipulate-plot3d-module
+``` m3d test:manipulate-plot3d-module mode:layout
 Manipulate[
     Plot3D[
         Module[
