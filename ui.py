@@ -64,16 +64,10 @@ def grid(grid_content):
 
 def graph(figure, height):
 
-    if not height:
-        # this shouldn't happen because builder.figure() should have computed
-        # a height and returned it, but just in case...
-        print("no height in ui.graph; assuming 200 for baseline purposes")
-        height = 200
-
     row = pn.Row(
         # this spacer, being the first item in the row, establishes the# baseline
         # at half the height of the plot so that the plots are centered on the baseline
-        pn.Spacer(width=0, height=int(height / 2)),
+        pn.Spacer(width=0, height=int((height or 0) / 2)),
         pn.pane.Plotly(
             figure,
             #config={"displayModeBar": False}, # TODO: do we still want this?

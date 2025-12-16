@@ -303,7 +303,7 @@ class FigureBuilder:
     def figure(self):
 
         if not self.data:
-            return
+            return None, 0
 
         # compute data_range
         with util.Timer("data_range"):
