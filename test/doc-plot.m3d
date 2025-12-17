@@ -3,7 +3,7 @@ TODO: Background is not being honored
 
 
 ``` m3d test:doc-059
-Plot[3, {x, 0, 1}, Filling->Axis]
+Plot[3, {x, 0, 1}]
 ```
 
 ``` m3d test:doc-060
