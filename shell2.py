@@ -6,12 +6,9 @@ import socket
 import mathics.builtin.drawing.plot
 mathics.builtin.drawing.plot.use_vectorized_plot = True
 
-# this is not really part of m3d per se - in this demo it's just
-# a standin for lots of imports from mathics
-import core
+from mathics.session import MathicsSession
 
 try:
-    import panel as pn
     import util
     import m3dlib
 except:
@@ -19,42 +16,24 @@ except:
 
     
 # pick one:
-mode = "webview" # pops up a new dedicated window for every output
-#mode = "webbrowser" # opens a browser window/tab using system browser for every output
+browser = "webview" # pops up a new dedicated window for every output
+#browser = "webbrowser" # opens a browser window/tab using system browser for every output
 
 
-class FE:
+class Shell:
 
     def __init__(self):
-
-        self.session = core.MathicsSession()
-        self.app = None
-
-        self.browser = util.Browser(mode)
-
-        if mode == "webview":
-
-            # start the REPL on its own thread
-            threading.Thread(target=self.repl).start()
-
-            # for webview this has to run on main thread and it blocks
-            # so we do it last
-            self.browser.start()
-
-        else:
-
-            # for webbrowser mode we can just run the REPL
-            # on the main thread
-            self.repl()
-
+        self.session = MathicsSession()
+        self.m3d_app = None
 
     def repl(self):
 
+        # the L in REPL
         while True:
 
             # get input expr_str
             try:
-                expr_str = input("i> ")
+                expr_str = input("\ni> ")
             except EOFError:
                 print("bye")
                 os._exit(0)
@@ -63,48 +42,44 @@ class FE:
 
             try:
                 # evaluate
+                self.session.evaluation.out.clear()
                 expr = self.session.parse(expr_str)
                 expr = expr.evaluate(self.session.evaluation)
 
-                # show output
-                print("o>", expr.head if hasattr(expr, "head") else str(expr))
+                # here's where we show output on terminal
+                print("\no>", expr.head if hasattr(expr, "head") else str(expr))
 
-                # suppose we decided we got graphics - use m3d to display it
-                if True:
-                    if not self.app:
-                        self.app = m3dlib.App(load=None, session=self.session)
-                        self.show(self.app, title="shell graphical output")
-                    pair = m3dlib.Pair(self.app, text=expr_str, run=True, input_visible=True)
-                    self.app.view.append(pair)
-                    pair.update()
+                # suppose we got graphics, and m3d is available
+                # then use m3d to display it
+                has_graphics = True
+                if has_graphics and m3dlib:
+
+                    # create m3d App if needed, else use the existing one
+                    m3d_app = self.m3d_app or m3dlib.App(load=None, session=self.session)
+
+                    # append an input/output pair to the m3d App
+                    # this wraps up a couple calls in m3dlib, which limits options
+                    # but narrows the interface. Could be widened if needed.
+                    # we pass it the evaluated expr to display, and it will pick up
+                    # messages from the session
+                    m3d_app.append_evaluated_pair(text=expr_str, expr=expr)
+
+                    # show the m3d App if we just created it
+                    # if using webview it needs the main thread, and util.show blocks,
+                    # so we continue the REPL on a new thread
+                    # (and this has to be at the bottom of the loop)
+                    if not self.m3d_app:
+                        self.m3d_app = m3d_app
+                        if browser == "webview":
+                            threading.Thread(target=self.repl).start()
+                        util.show(m3d_app, title="shell graphical output", browser=browser)
 
             except Exception as oops:
                 print(oops)
+                #raise
                 continue
-
-    def show(self, top, title):
-
-        # find a free port
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))  # Bind to an ephemeral port chosen by the OS
-            port = s.getsockname()[1]  # Return the assigned port number
-
-        # start the server on its own thread
-        server = pn.serve(
-            top,
-            port=port,
-            address="localhost",
-            threaded=True,
-            show=False,
-        )
-        time.sleep(0.1)
-
-        # aim a browser window at it
-        self.browser.show(f"http://localhost:{port}", title=title)
 
 
 if __name__ == "__main__":
-    FE()
-
-    
-
+    # run REPL on the main thread
+    Shell().repl()

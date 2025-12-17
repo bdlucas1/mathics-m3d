@@ -32,14 +32,6 @@ pn.extension('mathjax')
 #help(pn.config)
 #'<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=5.0; user-scalable=1;" />'
 
-"""
-class FE:
-    def __init__(self):
-        self.session = core.MathicsSession()
-
-fe = FE()
-"""
-
 import mathics.builtin.drawing.plot
 mathics.builtin.drawing.plot.use_vectorized_plot = True
 
@@ -139,20 +131,23 @@ class Pair(pn.Column):
             self.update()
 
     @util.Timer("execute code block")
-    def update(self):
+    def update(self, expr=None):
         try:
 
             expr_str = self.input.value_input
             self.old_expr = expr_str
             session = self.app.session
             
-            # evaluate it
-            session.evaluation.out.clear()
-            #expr = session.parse(expr)
-            expr = session.evaluate(expr_str)
+            # evaluate it if not provided (e.g. from shell)
             if not expr:
-                self.input.visible = True
-                return
+                session.evaluation.out.clear()
+                #expr = session.parse(expr)
+                expr = session.evaluate(expr_str)
+                if not expr:
+                    self.input.visible = True
+                    return
+            
+            # contruct layout from expr
             layout = lt.expression_to_layout(self.app, expr)
 
             # either show it to user, or pass it to test
@@ -616,3 +611,11 @@ class App(ui.Stack):
         )
 
         return buttons
+
+
+    def append_evaluated_pair(self, text, expr):
+        pair = Pair(self, text=text.strip(), run=True, input_visible=True)
+        self.view.append(pair)
+        pair.update(expr)
+    
+        
