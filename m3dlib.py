@@ -143,20 +143,21 @@ class Pair(pn.Column):
                 session.evaluation.out.clear()
                 #expr = session.parse(expr)
                 expr = session.evaluate(expr_str)
-                if not expr:
-                    self.input.visible = True
-                    return
-            
-            # contruct layout from expr
-            layout = lt.expression_to_layout(self.app, expr)
 
-            # either show it to user, or pass it to test
-            # can't do both because test "layout" mode requires
-            # that sole ownership of the layout to save it to image
-            if self.test_info:
-                test.test(self.test_info, layout, expr)
+            if expr is None:
+                # TODO: is this the right behavior?
+                self.output[0] = "None"
             else:
-                self.output[0] = layout
+                # contruct layout from expr
+                layout = lt.expression_to_layout(self.app, expr)
+
+                # either show it to user, or pass it to test
+                # can't do both because test "layout" mode requires
+                # that sole ownership of the layout to save it to image
+                if self.test_info:
+                    test.test(self.test_info, layout, expr)
+                else:
+                    self.output[0] = layout
 
             # update state
             self.is_stale = False
