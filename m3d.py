@@ -46,6 +46,7 @@ else:
     parser.add_argument("--test", action="store_true")
     parser.add_argument("--test-ui", action="store_true")
     parser.add_argument("--classic", action="store_true")
+    parser.add_argument("--browser", "-b", default=None)
     parser.add_argument("files", nargs="*", type=str)
     args = parser.parse_args()
 
@@ -77,4 +78,4 @@ else:
         test_ui_run=args.test_ui,
     )
     title =  " ".join(["Markdown+Mathics3", *args.files])
-    util.show(app, title)
+    util.show(app, title, browser=args.browser)
