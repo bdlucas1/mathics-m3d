@@ -77,5 +77,5 @@ else:
         autorun=not args.no_autorun,
         test_ui_run=args.test_ui,
     )
-    title =  " ".join(["Markdown+Mathics3", *args.files])
+    title =  " ".join(args.files)
     util.show(app, title, browser=args.browser)
