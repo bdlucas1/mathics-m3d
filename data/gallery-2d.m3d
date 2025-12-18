@@ -64,7 +64,7 @@ Manipulate[
 The slider allows us to vary $$x$$ in our plot of $$|\zeta(x + i y)|$$.
 We start out on the critical line $$x=\tfrac{1}{2}$$, and look!
 there appear to be a good number of zeros (places where the plot line touches the left axis) of
-$$\zeta(\tfrac{1}{2}+i y)$$ in the interval $$0\lt y\lt 50)$$.
+$$\zeta(\tfrac{1}{2}+i y)$$ in the interval $$0\lt y\lt 50$$.
 
 Now move the slider, varing $$x$$ from $$0$$ to $$1$$. Both above and below $$x=\tfrac{1}{2}$$
 the minima of the plot curve move away from the left axis.
