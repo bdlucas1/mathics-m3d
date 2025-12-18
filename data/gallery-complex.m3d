@@ -1,0 +1,29 @@
+# Complex plots
+
+```
+ComplexPlot3D[Exp[Exp[z]],{z,-1-I,1+I}]
+```
+
+```
+Manipulate[
+    ComplexPlot[
+        ((z + I - z1) (z - I - z2)) / ((z - 1 + I p1) (z + 1 + I p2)),
+        {z, -2 - 2 I, 2 + 2 I}
+    ],
+    {{z1,0}, -1.0, 1.0, 0.05},
+    {{z2,0}, -1.0, 1.0, 0.05},
+    {{p1,0}, -1.0, 1.0, 0.05},
+    {{p2,0}, -1.0, 1.0, 0.05}
+]
+```
+```
+Manipulate[
+    ComplexPlot[
+        Exp[Exp[z]]-k,
+        {z,-1-10 I,3+10 I},
+        PlotRange->{Automatic,Automatic,{0,4}},
+        PlotPoints->{400,400}
+    ],
+    {{k,1},0,2,0.05}
+]
+```

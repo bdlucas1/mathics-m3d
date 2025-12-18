@@ -1,0 +1,6 @@
+Plot3D: no colors emitted from Plot3D
+Plot: PlotRange->n applies +/-n to both x and y axes, should just be y axis
+Plot: colors are hard to tell apart
+Plot: some plots cut off top and bottom due to PlotRange passed through - extreme range pruning, maybe?
+Plot: Filling->Axis not supported for Plot even though it is for some plot types
+ParametricPlot: doesn't accept > 1 function

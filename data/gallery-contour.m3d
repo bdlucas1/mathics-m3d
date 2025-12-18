@@ -1,3 +1,5 @@
+# Contour plots
+
 There are two types of contour plots:
 
 * A single function $$f(x,y)$$ may be specified, in which case a set

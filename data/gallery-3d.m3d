@@ -1,0 +1,10 @@
+# Three-dimensional plots
+
+```
+Manipulate[
+    Plot3D[a Sin[f x] Cos[f y], {x, 0, 2 Pi}, {y, 0, 2 Pi},
+    PlotRange -> {Automatic, Automatic, {-2,2}}],
+    {{f,1}, 0, 2},
+    {{a,1}, -2, 2}
+]
+```
