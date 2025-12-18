@@ -431,6 +431,7 @@ class App(ui.Stack):
             css_classes=["m-app"]
         )
 
+        # "view" mode: show the m3d file
         def make_view():
             self.view = View(self, css_classes=["m-view"])
             test_ui.item(self.view, "view")
@@ -438,6 +439,7 @@ class App(ui.Stack):
             return self.view
         self.append("view", make_view)
 
+        # "edit" mode: edit the whole m3d file
         def make_edit():
             self.edit = Edit(
                 value="foo",
@@ -449,6 +451,7 @@ class App(ui.Stack):
             return self.edit
         self.append("edit", make_edit)
 
+        # "help" mode: show m3d help
         def make_help():
             help = View(self, css_classes=["m-view"])
             help.load_m3d_file(util.resource("data/help.m3d"), run=True)
@@ -458,6 +461,7 @@ class App(ui.Stack):
 
         data_root = util.resource("data")
 
+        # "open" mode: show the open file dialog
         def make_open():
             # TODO: new files always go into active item "view"
             # do we want to give them each their own item, with some way to switch,
@@ -468,6 +472,7 @@ class App(ui.Stack):
             return Open(data_root, on_open)
         self.append("open", make_open)
 
+        # "save" mode: show the save file dialog
         def make_save():
             text = self.text_owner.text
             def on_save(fn):
@@ -547,46 +552,56 @@ class App(ui.Stack):
             self.text_owner = self.view
 
 
-    def get_current_text(self):
-        print("get_current_text owner", self.text_owner)
-        if self.text_owner == "edit":
-            return self.get_edit_text()
-        elif self.text_owner == "view":
-            return self.get_view_text()
-
-
     def init_buttons(self): 
 
+        # create new document
         new_button = ui.icon_button(
             "square-plus",
             "New document",
             lambda: self.view.load_files([], False)
         )
 
+        # go into "edit" mode to edit entire document
         edit_button = ui.icon_button(
             "edit",
             "Toggle editing\nentire file",
             lambda: self.toggle_mode("edit", "view")
         )
 
+        # reload document
+        def reload():
+            # TODO: mode? cache?
+            self.activate("view")
+            if self.view.current_fn:
+                self.view.load_files([self.view.current_fn], run=True, show_code=False)
+        reload_button = ui.icon_button(
+            "reload",
+            "Reload current file",
+            reload
+        )
+
+        # go into "help" mode
         help_button = ui.icon_button(
             "help",
             "Help is on the way!",
             lambda: self.toggle_mode("help", "view")
         )
 
+        # go into "open" mode to open a file
         file_open_button = ui.icon_button(
             "download",
             "Open a file",
             lambda: self.toggle_mode("open", "view")
         )
 
+        # go into "save" mode t save a file
         file_save_button = ui.icon_button(
             "upload",
             "Save file",
             lambda: self.toggle_mode("save", "view")
         )
 
+        # go into "hear" mode
         def load_and_activate(fns, run):
             self.view.load_files(fns, run)
             self.activate("view")
@@ -601,6 +616,7 @@ class App(ui.Stack):
             test_ui.item(file_open_button, "open_button"),
             test_ui.item(file_save_button, "save_button"),
             test_ui.item(edit_button, "edit_button"),
+            test_ui.item(reload_button, "reload_button"),
             pn.widgets.ButtonIcon(icon="player-play"),
             pn.widgets.ButtonIcon(icon="clipboard-text"),
             test_ui.item(help_button, "help_button"),
