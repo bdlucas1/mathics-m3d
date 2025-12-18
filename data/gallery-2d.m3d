@@ -30,7 +30,7 @@ Now try the following:
 * Click the <i class="ti ti-edit"></i> icon again to hide the code
   block.
 
-## Riemann zeta function.
+## Riemann zeta function
 
 Now on to something a little more interesting, the famous Riemann zeta function
 $$\zeta(s)$$ of a complex variable $$s = x + i y$$. It is defined by starting with
