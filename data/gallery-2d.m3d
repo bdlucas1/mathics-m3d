@@ -47,9 +47,10 @@ hypothesis is that all non-trivial zeroes must in fact lie along the line $$x=\t
 has eluded proof for more than 160 years, yet it is widely believed by mathematicians to be true, and
 large bodies of work have been developed assuming it is true in a wide range of disciplines.
 
-Let's see what we can make of it. Here we plot $$|\zeta(x + i y)|$$ on
-the horizontal axis for a range of values $$0\lt y\lt 50$$ on the vertical axis. The zeroes of the function
-will therefore be the points where the plot line touches the left axis of the chart.
+Let's see what we can make of it. Here we plot the absolute value $$|\zeta(x + i y)|$$ on
+the horizontal axis for a range of values $$0\lt y\lt 50$$ on the vertical axis, and for values of $$x$$
+selected by the slider. The zeroes of the function wiill therefore be the points where the plot
+ line touches the left axis of the chart.
 ```
 Manipulate[
     ParametricPlot[
