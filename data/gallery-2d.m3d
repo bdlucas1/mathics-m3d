@@ -57,6 +57,7 @@ Manipulate[
         {{Abs[Zeta[x + I y]], y}},
         {y,0,50},
         PlotRange -> {{0, 4}, {0, 50}},
+        AxesLabel -> {"|zeta(x + i y)|", "y"},
         ImageSize->{300,400}
     ],
     {{x,0.5},0,.95,0.05}

@@ -34,20 +34,26 @@ class GraphicsOptions:
 
         # gets option "name", converting to python
         # System`Automatic is converted to None (TODO: ok?)
+        # quotes that to_python put around strings to distinguish from symbols are removed
         # expands to a list of size want_list if requested
         def get_option(name, want_list=None, default=None):
             if name not in graphics_options:
                 return default
             x = graphics_options[name].to_python()
-            auto = lambda x: None if x=="System`Automatic" else x
+            def munge(x):
+                # TODO: how to distinguish? ... for auto maybe?
+                if x=="System`Automatic": x = None
+                elif x=="System`None": x = None
+                elif isinstance(x, str) and x[0]=='"': x = x[1:-1]
+                return x
             if want_list:
                 if not isinstance(x, (list,tuple)):
                     x = [x] * want_list
                 x.extend([None] * (want_list - len(x)))
-                x = [auto(xx) for xx in x]
+            if isinstance(x, (list,tuple)):
+                x = [munge(xx) for xx in x]
             else:
-                x = auto(x)
-            #print(name, x)
+                x = munge(x)
             return x
 
         # NEXT
@@ -67,6 +73,18 @@ class GraphicsOptions:
 
         # Axes
         self.axes = get_option("System`Axes", 3)
+
+        # AxesLabel
+        # str -> [None, ..., str]
+        # [str, ...] -> [str, ..., None]
+        axes_label = get_option("System`AxesLabel")
+        if axes_label is None:
+            axes_label = [None] * dim
+        elif isinstance(axes_label, str):
+            axes_label = ([None] * (dim-1)) + [axes_label]
+        elif isinstance(axes_label, (list,tuple)):
+            axes_label = axes_label + ([None] * (dim - len(axes_label)))
+        self.axes_label = axes_label
 
         # Frame
         self.frame = get_option("System`Frame")
@@ -124,7 +142,6 @@ class GraphicsOptions:
         alignment_point = get_option("System`AlignmentPoint")
         aspect_ratio = get_option("System`AspectRatio")
         axes = get_option("System`Axes")
-        axes_label = get_option("System`AxesLabel")
         axes_origin = get_option("System`AxesOrigin")
         axes_style = get_option("System`AxesStyle")
         background = get_option("System`Background")

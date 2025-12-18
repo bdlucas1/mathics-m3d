@@ -1,0 +1,28 @@
+``` m3d test:2d-y
+Plot[x, {x,0,1}, AxesLabel -> "y"]
+```
+
+``` m3d test:2d-x
+Plot[x, {x,0,1}, AxesLabel -> {"x"}]
+```
+
+``` m3d test:2d-xy
+Plot[x, {x,0,1}, AxesLabel -> {"x","y"}]
+```
+
+``` m3d test:3d-z
+Plot3D[x y, {x,0,1}, {y,0,1}, AxesLabel -> "z", ViewPoint->{0,-100,50}]
+```
+
+``` m3d test:3d-x
+Plot3D[x y, {x,0,1}, {y,0,1}, AxesLabel -> {"x"}, ViewPoint->{0,-100,50}]
+```
+
+``` m3d test:3d-xy
+Plot3D[x y, {x,0,1}, {y,0,1}, AxesLabel -> {"x","y"}, ViewPoint->{0,-100,50}]
+```
+
+``` m3d test:3d-xyz
+Plot3D[x y, {x,0,1}, {y,0,1}, AxesLabel -> {"x","y", "z"}, ViewPoint->{0,-100,50}]
+```
+

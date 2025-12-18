@@ -338,6 +338,9 @@ class FigureBuilder:
 
         # compute axes options
         axes_opts = {}
+        def title(t):
+            if self.dim==2: return t  # None means no label
+            if self.dim==3: return t or ""  # "" means no label
         for i, p in enumerate("xyz" if self.dim==3 else "xy"):
             opts = dict(
                 linecolor = "black",
@@ -347,7 +350,7 @@ class FigureBuilder:
                 showline = True,
                 showspikes = False,
                 ticks = "outside",
-                title = None if self.dim==2 else "", # TODO: look again
+                title = title(self.opts.axes_label[i]),
                 visible = self.opts.axes[i] or self.opts.frame,
             )
             if self.has_image and p == "y":
