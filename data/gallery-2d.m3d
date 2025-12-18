@@ -1,0 +1,73 @@
+# Two-dimensional plots
+
+Let's start with a simple sine wave, $$y = a \sin(x + p)$$, where $$f$$
+is the frequency, $$a$$ is the amplitude, and $$p$$ is the phase.
+
+```
+Manipulate[
+    Plot[a Sin[f x + p], {x, 0, 2 Pi}, PlotRange -> {Automatic, {-2,2}}],
+    {{f,1}, 0, 2},
+    {{a,1}, -2, 2},
+    {{p,0}, -3, 3}
+]
+```
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+Now try the following:
+
+* Click the <i class="ti ti-edit"></i> icon to reveal the editable WL
+  code block that produced the plot.
+
+* Change $$x$$ to $$x^2$$ (`x^2`). You should see an icon <i class="ti
+  ti-alert-triangle"></i> indicating that the code has changed and the
+  displayed output is stale.
+
+* Click the <i class="ti ti-alert-triangle"></i> icon, or type
+  cmd+enter, to execute the code and update the displayed output.
+  The <i class="ti ti-alert-triangle"></i> icon disappears.
+
+* Click the <i class="ti ti-edit"></i> icon again to hide the code
+  block.
+
+## Riemann zeta function.
+
+Now on to something a little more interesting, the famous Riemann zeta function
+$$\zeta(s)$$ of a complex variable $$s = x + i y$$. It is defined by starting with
+
+$$\zeta(s) = \sum_{n=1}^\infty {1\over n^s}$$
+
+This sum only converges when the real part $$x\gt 1$$, but the definition of $$\zeta(s)$$ is extended to the
+entire complex plane by _analytic continuation_: the unique analytic (essentially, infinitely
+differentiable) function that agrees with the sum over the domain where the sum converges.
+
+The $$\zeta$$ function has easily-proven “trivial” zeros that at negative even integers. It is also
+known that all other zeros must be in the “critical strip” where the real part $$0\lt x\lt 1$$.  The Riemann
+hypothesis is that all non-trivial zeroes must in fact lie along the line $$x=\tfrac{1}{2}$$.  This hypothesis
+has eluded proof for more than 160 years, yet it is widely believed by mathematicians to be true, and
+large bodies of work have been developed assuming it is true in a wide range of disciplines.
+
+Let's see what we can make of it. Here we plot $$|\zeta(x + i y)|$$ on
+the horizontal axis for a range of values $$0\lt y\lt 50$$ on the vertical axis. The zeroes of the function
+will therefore be the points where the plot line touches the left axis of the chart.
+```
+Manipulate[
+    ParametricPlot[
+        {{Abs[Zeta[x + I y]], y}},
+        {y,0,50},
+        PlotRange -> {{0, 4}, {0, 50}},
+        ImageSize->{300,400}
+    ],
+    {{x,0.5},0,.95,0.05}
+]
+```
+The slider allows us to vary $$x$$ in our plot of $$|\zeta(x + i y)|$$.
+We start out on the critical line $$x=\tfrac{1}{2}$$, and look!
+there appear to be a good number of zeros (places where the plot line touches the left axis) of
+$$\zeta(\tfrac{1}{2}+i y)$$ in the interval $$0\lt y\lt 50)$$.
+
+Now move the slider, varing $$x$$ from $$0$$ to $$1$$. Both above and below $$x=\tfrac{1}{2}$$
+the minima of the plot curve move away from the left axis.
+That seems pretty conclusive to me. Have we now proven by visual inspection that all
+the non-trivial zeroes of $$\zeta(x+i y)$$ lie on the line $$x=\tfrac{1}{2}$$? Well, maybe not exactly...
+
