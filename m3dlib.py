@@ -357,6 +357,9 @@ class View(pn.Column):
                         p + p {
                             margin-top: 1em;
                         }
+                        em {
+                            font-style: italic;
+                        }
                         h1 {font-size: 20pt; margin-top: 2.0em; &:first-child {margin-top: 0em;}}
                         h2 {font-size: 18pt; margin-top: 1.6em; &:first-child {margin-top: 0em;}}
                         h3 {font-size: 16pt; margin-top: 1.2em; &:first-child {margin-top: 0em;}}
