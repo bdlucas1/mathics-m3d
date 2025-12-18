@@ -45,7 +45,8 @@ The $$\zeta$$ function has easily-proven “trivial” zeros that at negative ev
 known that all other zeros must be in the “critical strip” where the real part $$0\lt x\lt 1$$.  The Riemann
 hypothesis is that all non-trivial zeroes must in fact lie along the line $$x=\tfrac{1}{2}$$.  This hypothesis
 has eluded proof for more than 160 years, yet it is widely believed by mathematicians to be true, and
-large bodies of work have been developed assuming it is true in a wide range of disciplines.
+large bodies of work have been developed assuming it is true in a wide range of disciplines,
+from number theory and random matrix models to cryptography and quantum chaos.
 
 Let's see what we can make of it. Here we plot the absolute value $$|\zeta(x + i y)|$$ on
 the horizontal axis for a range of values $$0\lt y\lt 50$$ on the vertical axis, and for values of $$x$$
@@ -70,6 +71,6 @@ $$\zeta(\tfrac{1}{2}+i y)$$ in the interval $$0\lt y\lt 50$$.
 
 Now move the slider, varing $$x$$ from $$0$$ to $$1$$. Both above and below $$x=\tfrac{1}{2}$$
 the minima of the plot curve move away from the left axis.
-That seems pretty conclusive to me. Have we now proven by visual inspection that all
+That certainly _looks_ pretty convincing to me! Have we now proven by visual inspection that all
 the non-trivial zeroes of $$\zeta(x+i y)$$ lie on the line $$x=\tfrac{1}{2}$$? Well, maybe not exactly...
 
