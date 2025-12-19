@@ -23,6 +23,7 @@ import time
 import ui
 import test_ui
 import shortcuts
+import hider
 
 test = None
 
@@ -514,7 +515,7 @@ class Shortcuts(shortcuts.KeyboardShortcuts):
 
 
 
-class App(ui.Stack):
+class Top(ui.Stack):
     """
     The top-level app is a Stack, which is a Column that manages mode switching
     by instantiating and controling the visibility of its constituents
@@ -537,7 +538,7 @@ class App(ui.Stack):
         # set up mode-independent stuff
         super().__init__(
             Shortcuts(self),
-            ButtonBar(self),
+            #ButtonBar(self),
             css_classes=["m-app"]
         )
 
@@ -639,11 +640,17 @@ class App(ui.Stack):
             self.text_owner = self.view
 
 
-
-
     def append_evaluated_pair(self, text, expr):
         pair = Pair(self, text=text.strip(), run=True, input_visible=True)
         self.view.append(pair)
         pair.update(expr)
-    
-        
+
+
+class App(hider.HideOnScrollColumn):
+
+    def __init__(self, **kwargs):
+
+        top = Top(**kwargs);
+        buttons = ButtonBar(top)
+
+        super().__init__(buttons, top, height_px=56,  hide_after_px=80)
