@@ -43,9 +43,9 @@ mathics.builtin.drawing.plot.use_vectorized_plot = True
 
 class Pair(pn.Column):
 
-    def __init__(self, app, text=None, input_visible=False, run=False, test_info=None):
+    def __init__(self, top, text=None, input_visible=False, run=False, test_info=None):
         
-        self.app = app
+        self.top = top
         self.old_expr = ""
         self.is_stale = True
         self.opener = "```"
@@ -138,7 +138,7 @@ class Pair(pn.Column):
 
             expr_str = self.input.value_input
             self.old_expr = expr_str
-            session = self.app.session
+            session = self.top.session
             
             # evaluate it if not provided (e.g. from shell)
             if not expr:
@@ -151,7 +151,7 @@ class Pair(pn.Column):
                 self.output[0] = "None"
             else:
                 # contruct layout from expr
-                layout = lt.expression_to_layout(self.app, expr)
+                layout = lt.expression_to_layout(self.top, expr)
 
                 # either show it to user, or pass it to test
                 # can't do both because test "layout" mode requires
@@ -209,9 +209,9 @@ class View(pn.Column):
     persistent = True
     pair_cache = {}
 
-    def __init__(self, app, *args, **kwargs):
+    def __init__(self, top, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.app = app
+        self.top = top
         self.current_fn = None
 
     @property
@@ -259,7 +259,7 @@ class View(pn.Column):
                     print(f"Don't understand file {fn}")
         else:
             # fns is [], so create a blank Pair to start
-            self.append(Pair(self.app, None, input_visible=True))
+            self.append(Pair(self.top, None, input_visible=True))
 
 
     def load_m3d_file(self, md_fn, run, show_code=False):
@@ -328,7 +328,7 @@ class View(pn.Column):
 
                     # construct the pair
                     pair = Pair(
-                        self.app,
+                        self.top,
                         text,
                         input_visible=input_visible,
                         run=autorun,
@@ -376,7 +376,7 @@ class View(pn.Column):
         m_str = open(m_fn).read()    
         # TODO: not sure following is right
         test_info = dict(fn=m_fn) if test else None
-        pair = Pair(self.app, m_str.strip(), run=True, test_info=test_info)
+        pair = Pair(self.top, m_str.strip(), run=True, test_info=test_info)
         self.append(pair)
 
     def update_all_changed(self, force=False):
@@ -535,7 +535,7 @@ class ButtonBar(pn.Row):
 
 class Shortcuts(shortcuts.KeyboardShortcuts):
 
-    def __init__(self, app):
+    def __init__(self, top):
 
         super().__init__(shortcuts=[
             shortcuts.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
@@ -548,10 +548,10 @@ class Shortcuts(shortcuts.KeyboardShortcuts):
 
         def shortcut_msg(event):
             force = event.data == "run_force"
-            if app.active_mode == "view":
-                app.view.update_all_changed()
-            elif app.active_mode == "edit":
-                app.toggle_mode("edit", "view")
+            if top.active_mode == "view":
+                top.view.update_all_changed()
+            elif top.active_mode == "edit":
+                top.toggle_mode("edit", "view")
 
         self.on_msg(shortcut_msg)
 
@@ -584,7 +584,7 @@ class Top(ui.Stack):
         super().__init__(
             Shortcuts(self),
             #ButtonBar(self), moved to App
-            css_classes=["m-app"]
+            css_classes=["m-top"]
         )
 
         # "view" mode: show the m3d file
