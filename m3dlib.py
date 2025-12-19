@@ -22,6 +22,7 @@ import sys
 import time
 import ui
 import test_ui
+import shortcuts
 
 test = None
 
@@ -407,6 +408,112 @@ class Save(ui.SaveFile):
     persistent = False
 
 
+
+class ButtonBar(pn.Row):
+
+    def __init__(self, app):
+
+        # create new document
+        new_button = ui.icon_button(
+            "square-plus",
+            "New document",
+            lambda: app.view.load_files([], False)
+        )
+
+        # go into "edit" mode to edit entire document
+        edit_button = ui.icon_button(
+            "edit",
+            "Toggle editing\nentire file",
+            lambda: app.toggle_mode("edit", "view")
+        )
+
+        # reload document
+        def reload():
+            # TODO: mode? cache?
+            app.activate("view")
+            if app.view.current_fn:
+                app.view.load_files([app.view.current_fn], run=True, show_code=False)
+        reload_button = ui.icon_button(
+            "reload",
+            "Reload current file",
+            reload
+        )
+
+        # go into "help" mode
+        help_button = ui.icon_button(
+            "help",
+            "Help is on the way!",
+            lambda: app.toggle_mode("help", "view")
+        )
+
+        # go into "open" mode to open a file
+        file_open_button = ui.icon_button(
+            "download",
+            "Open a file",
+            lambda: app.toggle_mode("open", "view")
+        )
+
+        # go into "save" mode t save a file
+        file_save_button = ui.icon_button(
+            "upload",
+            "Save file",
+            lambda: app.toggle_mode("save", "view")
+        )
+
+        # go into "hear" mode
+        def load_and_activate(fns, run):
+            app.view.load_files(fns, run)
+            app.activate("view")
+        heart_button = ui.icon_button(
+            "heart",
+            "Like it?",
+            lambda: load_and_activate([util.resource("data/cardio.m3d")], True)
+        )
+
+        super().__init__(
+            test_ui.item(new_button, "new_button"),
+            test_ui.item(file_open_button, "open_button"),
+            test_ui.item(file_save_button, "save_button"),
+            test_ui.item(edit_button, "edit_button"),
+            test_ui.item(reload_button, "reload_button"),
+            pn.widgets.ButtonIcon(icon="player-play"),
+            pn.widgets.ButtonIcon(icon="clipboard-text"),
+            test_ui.item(help_button, "help_button"),
+            test_ui.item(heart_button, "heart_button"),
+            #pn.widgets.ButtonIcon(icon="mood-smile"),
+            #pn.widgets.ButtonIcon(icon="mood-confuzed"),
+            #pn.widgets.ButtonIcon(icon="alert-triangle"),
+            #pn.widgets.ButtonIcon(icon="square-x"),
+            #pn.widgets.ButtonIcon(icon="file-pencil"),    
+            #pn.widgets.ButtonIcon(icon="player-track-next"),
+            css_classes=["m-button-row"]
+        )
+
+
+class Shortcuts(shortcuts.KeyboardShortcuts):
+
+    def __init__(self, app):
+
+        super().__init__(shortcuts=[
+            shortcuts.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
+            shortcuts.KeyboardShortcut(name="run", key="Enter", altKey=True),
+            shortcuts.KeyboardShortcut(name="run", key="Enter", metaKey=True),
+            shortcuts.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
+            shortcuts.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
+            shortcuts.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
+        ])
+
+        def shortcut_msg(event):
+            force = event.data == "run_force"
+            if app.active_mode == "view":
+                app.view.update_all_changed()
+            elif app.active_mode == "edit":
+                app.toggle_mode("edit", "view")
+
+        self.on_msg(shortcut_msg)
+
+
+
 class App(ui.Stack):
     """
     The top-level app is a Stack, which is a Column that manages mode switching
@@ -429,8 +536,8 @@ class App(ui.Stack):
 
         # set up mode-independent stuff
         super().__init__(
-            self.init_shortcuts(),
-            self.init_buttons(),
+            Shortcuts(self),
+            ButtonBar(self),
             css_classes=["m-app"]
         )
 
@@ -500,29 +607,6 @@ class App(ui.Stack):
             pn.state.onload(test_ui.run_tests, threaded=True)
 
 
-    def init_shortcuts(self):
-
-        shortcuts = ui.KeyboardShortcuts(shortcuts=[
-            ui.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
-            ui.KeyboardShortcut(name="run", key="Enter", altKey=True),
-            ui.KeyboardShortcut(name="run", key="Enter", metaKey=True),
-            ui.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
-            ui.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
-            ui.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
-        ])
-
-        def shortcut_msg(event):
-            force = event.data == "run_force"
-            if self.active_mode == "view":
-                self.view.update_all_changed()
-            elif self.active_mode == "edit":
-                self.toggle_mode("edit", "view")
-
-        shortcuts.on_msg(shortcut_msg)
-
-        return shortcuts
-
-
     def toggle_mode(self, new_mode, old_mode):
         new_mode = new_mode if self.active_mode != new_mode else old_mode
         self.activate(new_mode)
@@ -555,85 +639,6 @@ class App(ui.Stack):
             self.text_owner = self.view
 
 
-    def init_buttons(self): 
-
-        # create new document
-        new_button = ui.icon_button(
-            "square-plus",
-            "New document",
-            lambda: self.view.load_files([], False)
-        )
-
-        # go into "edit" mode to edit entire document
-        edit_button = ui.icon_button(
-            "edit",
-            "Toggle editing\nentire file",
-            lambda: self.toggle_mode("edit", "view")
-        )
-
-        # reload document
-        def reload():
-            # TODO: mode? cache?
-            self.activate("view")
-            if self.view.current_fn:
-                self.view.load_files([self.view.current_fn], run=True, show_code=False)
-        reload_button = ui.icon_button(
-            "reload",
-            "Reload current file",
-            reload
-        )
-
-        # go into "help" mode
-        help_button = ui.icon_button(
-            "help",
-            "Help is on the way!",
-            lambda: self.toggle_mode("help", "view")
-        )
-
-        # go into "open" mode to open a file
-        file_open_button = ui.icon_button(
-            "download",
-            "Open a file",
-            lambda: self.toggle_mode("open", "view")
-        )
-
-        # go into "save" mode t save a file
-        file_save_button = ui.icon_button(
-            "upload",
-            "Save file",
-            lambda: self.toggle_mode("save", "view")
-        )
-
-        # go into "hear" mode
-        def load_and_activate(fns, run):
-            self.view.load_files(fns, run)
-            self.activate("view")
-        heart_button = ui.icon_button(
-            "heart",
-            "Like it?",
-            lambda: load_and_activate([util.resource("data/cardio.m3d")], True)
-        )
-
-        buttons = pn.Row(
-            test_ui.item(new_button, "new_button"),
-            test_ui.item(file_open_button, "open_button"),
-            test_ui.item(file_save_button, "save_button"),
-            test_ui.item(edit_button, "edit_button"),
-            test_ui.item(reload_button, "reload_button"),
-            pn.widgets.ButtonIcon(icon="player-play"),
-            pn.widgets.ButtonIcon(icon="clipboard-text"),
-            test_ui.item(help_button, "help_button"),
-            test_ui.item(heart_button, "heart_button"),
-            #pn.widgets.ButtonIcon(icon="mood-smile"),
-            #pn.widgets.ButtonIcon(icon="mood-confuzed"),
-            #pn.widgets.ButtonIcon(icon="alert-triangle"),
-            #pn.widgets.ButtonIcon(icon="square-x"),
-            #pn.widgets.ButtonIcon(icon="file-pencil"),    
-            #pn.widgets.ButtonIcon(icon="player-track-next"),
-            css_classes=["m-button-row"]
-        )
-
-        return buttons
 
 
     def append_evaluated_pair(self, text, expr):
