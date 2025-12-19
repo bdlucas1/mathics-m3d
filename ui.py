@@ -225,17 +225,17 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
 
 
 # helper for defining buttons with tooltip descripton
-# TODO: move to ui.py
-def icon_button(icon, description, on_click):
+def icon_button(icon,tip, on_click):
     def tt():
         return bokeh.models.Tooltip(
-            content=description,
+            content=tip,
             position="bottom",
             show_arrow=False
         )
     button = pn.widgets.ButtonIcon(
         icon = icon,
         description = tt(),
+        css_classes = ["m-button"]
     )
     def intercept(event):
         on_click()

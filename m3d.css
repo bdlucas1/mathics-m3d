@@ -44,16 +44,27 @@ body {
 
 .bk-TablerIcon {
     font-size: 21px;
+    line-height: 1 !important;
+}
+
+/* suppresses gap between tabler icon and label
+   so that icon remains centered */
+.bk-IconRow .bk-TablerIcon ~ .bk-IconLabel {
+    display: none;
 }
 
 .m-view {
     gap: 1.5em;
 }
 
-.m-button-row, .m-button-column {
-    gap: 0.5em;
-    padding-top: 12px;
-    padding-bottom: 8px;
+.m-button-row {
+    gap: 0.8em;
+    padding-top: 1.2em;
+    padding-bottom: 0.6em;
+}
+
+.m-button-column {
+    gap: 0.2em;
 }
 
 .m-pair {
@@ -68,6 +79,15 @@ body {
 
 .m-input, .m-edit {
     width: calc(100vw - 4.5em);
+}
+
+.m-button {
+    padding: 2px;
+}
+
+.m-mode-button.m-active {
+    border-radius: 5px;
+    background: #e8e8e8;
 }
 
 textarea.bk-input {

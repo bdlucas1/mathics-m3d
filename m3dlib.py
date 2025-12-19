@@ -414,61 +414,94 @@ class ButtonBar(pn.Row):
 
     def __init__(self, app):
 
+        # used to change icon when activated or inactivated
+        self.mode_buttons = {}
+
+        # buttons that switch mode and have different icons to indicate current mode
+        def mode_button(mode, icon, tip):
+            button = ui.icon_button(
+                icon=icon,
+                tip=tip,
+                on_click=lambda: app.top.toggle_mode(mode, "view")
+            )
+            mode_button = pn.Row(button, css_classes=["m-mode-button"])
+            self.mode_buttons[mode] = mode_button
+            return mode_button
+            
         # create new document
         new_button = ui.icon_button(
-            "square-plus",
-            "New document",
-            lambda: app.view.load_files([], False)
+            icon="square-plus",
+            tip="New document",
+            on_click=lambda: app.top.view.load_files([], False)
         )
 
         # go into "edit" mode to edit entire document
-        edit_button = ui.icon_button(
-            "edit",
-            "Toggle editing\nentire file",
-            lambda: app.toggle_mode("edit", "view")
+        edit_button = mode_button(
+            mode="edit",
+            icon="edit",
+            tip="Toggle editing\nentire file",
         )
 
         # reload document
+        # TODO: move top top
         def reload():
             # TODO: mode? cache?
-            app.activate("view")
-            if app.view.current_fn:
-                app.view.load_files([app.view.current_fn], run=True, show_code=False)
+            app.top.activate("view")
+            if app.top.view.current_fn:
+                app.top.view.load_files([app.top.view.current_fn], run=True, show_code=False)
         reload_button = ui.icon_button(
-            "reload",
-            "Reload current file",
-            reload
+            icon="reload",
+            tip="Reload current file",
+            on_click=reload
+        )
+
+        # execute, TBD exactly what - all? changed?
+        def play():
+            print("TBD")
+        play_button = ui.icon_button(
+            icon="player-play",
+            tip="TBD",
+            on_click=play
+        )
+
+        # TODO: this will actually be a mode button, I think
+        def log():
+            print("TBD")
+        log_button = ui.icon_button(
+            icon="clipboard-text",
+            tip="TBD",
+            on_click=log
         )
 
         # go into "help" mode
-        help_button = ui.icon_button(
-            "help",
-            "Help is on the way!",
-            lambda: app.toggle_mode("help", "view")
+        help_button = mode_button(
+            mode="help",
+            icon="help",
+            tip="Help is on the way!",
         )
 
         # go into "open" mode to open a file
-        file_open_button = ui.icon_button(
-            "download",
-            "Open a file",
-            lambda: app.toggle_mode("open", "view")
+        file_open_button = mode_button(
+            mode="open",
+            icon="download",
+            tip="Open a file",
         )
 
         # go into "save" mode t save a file
-        file_save_button = ui.icon_button(
-            "upload",
-            "Save file",
-            lambda: app.toggle_mode("save", "view")
+        file_save_button = mode_button(
+            mode="save",
+            icon="upload",
+            tip="Save file",
         )
 
-        # go into "hear" mode
+        # like it
         def load_and_activate(fns, run):
-            app.view.load_files(fns, run)
-            app.activate("view")
+            app.top.view.load_files(fns, run)
+            app.top.activate("view")
         heart_button = ui.icon_button(
-            "heart",
-            "Like it?",
-            lambda: load_and_activate([util.resource("data/cardio.m3d")], True)
+            icon="heart",
+            tip="Like it?",
+            on_click=lambda: load_and_activate([util.resource("data/cardio.m3d")], True)
         )
 
         super().__init__(
@@ -477,8 +510,8 @@ class ButtonBar(pn.Row):
             test_ui.item(file_save_button, "save_button"),
             test_ui.item(edit_button, "edit_button"),
             test_ui.item(reload_button, "reload_button"),
-            pn.widgets.ButtonIcon(icon="player-play"),
-            pn.widgets.ButtonIcon(icon="clipboard-text"),
+            test_ui.item(play_button, "play_button"),
+            test_ui.item(log_button, "clipboard-text"),
             test_ui.item(help_button, "help_button"),
             test_ui.item(heart_button, "heart_button"),
             #pn.widgets.ButtonIcon(icon="mood-smile"),
@@ -489,6 +522,15 @@ class ButtonBar(pn.Row):
             #pn.widgets.ButtonIcon(icon="player-track-next"),
             css_classes=["m-button-row"]
         )
+
+    def activate_button(self, new_mode):
+        for mode, button in self.mode_buttons.items():
+            active_cls = "m-active"
+            if new_mode == mode:
+                button.css_classes.append(active_cls)
+            elif active_cls in button.css_classes:
+                button.css_classes.remove(active_cls)
+            button.param.trigger('css_classes')
 
 
 class Shortcuts(shortcuts.KeyboardShortcuts):
@@ -524,6 +566,7 @@ class Top(ui.Stack):
 
     def __init__(
             self,
+            app,
             load=[],
             initial_mode="view",
             autorun=True,
@@ -533,6 +576,7 @@ class Top(ui.Stack):
     ):
 
         self.session = session or core.MathicsSession()
+        self.app = app
         self.active_mode = None
         self.text_owner = None
 
@@ -640,6 +684,9 @@ class Top(ui.Stack):
         if new_mode == "view":
             self.text_owner = self.view
 
+        # indicate mode in toolbar
+        self.app.buttons.activate_button(new_mode)
+
 
     def append_evaluated_pair(self, text, expr):
         pair = Pair(self, text=text.strip(), run=True, input_visible=True)
@@ -651,11 +698,11 @@ class App(hider.Hider):
 
     def __init__(self, **kwargs):
 
-        self.top = Top(**kwargs);
-        buttons = ButtonBar(self.top)
+        self.buttons = ButtonBar(self)
+        self.top = Top(self, **kwargs);
 
         super().__init__(
-            buttons,
+            self.buttons,
             self.top,
             hide_after_px=50,
             fixed=False
