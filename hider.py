@@ -81,10 +81,8 @@ class Hider(pn.Column):
                         window.addEventListener('scroll', () => {{
                             const y = window.scrollY;
                             if (y > lastY && y > hideAfter) {{
-                                console.log("xxx adding hidden " + hiddenClass)
                                 toolbar.classList.add(hiddenClass);
                             }} else {{
-                                console.log("xxx removing hidden " + hiddenClass)
                                 toolbar.classList.remove(hiddenClass);
                             }}
                             lastY = y;
