@@ -241,12 +241,15 @@ class View(pn.Column):
         self.pair_cache.clear()
 
 
+    def append_item(self, item):
+        self.new_items.append(item)
+
     def load_files(self, fns, run, show_code=False):
-        self[:] = []
+        self.new_items = []
         if fns is None:
             # completely empty view is requested
             # TODO: subsequent append doesn't work without the following - ?
-            self.append("")
+            self.append_item("")
         elif len(fns):
             # load some files
             self.current_fn = fns[0]
@@ -259,7 +262,8 @@ class View(pn.Column):
                     print(f"Don't understand file {fn}")
         else:
             # fns is [], so create a blank Pair to start
-            self.append(Pair(self.top, None, input_visible=True))
+            self.append_item(Pair(self.top, None, input_visible=True))
+        self.objects = self.new_items
 
 
     def load_m3d_file(self, md_fn, run, show_code=False):
@@ -336,7 +340,7 @@ class View(pn.Column):
                     )
 
                 pair.opener = opener
-                self.append(pair)
+                self.append_item(pair)
 
             else:
 
@@ -368,7 +372,7 @@ class View(pn.Column):
                         h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
                     """]
                 )
-                self.append(md)
+                self.append_item(md)
 
 
     def load_m(self, m_fn):
@@ -377,7 +381,7 @@ class View(pn.Column):
         # TODO: not sure following is right
         test_info = dict(fn=m_fn) if test else None
         pair = Pair(self.top, m_str.strip(), run=True, test_info=test_info)
-        self.append(pair)
+        self.append_item(pair)
 
     def update_all_changed(self, force=False):
         for item in self:
@@ -452,15 +456,10 @@ class ButtonBar(pn.Row):
         )
 
         # reload document action
-        def reload():
-            # TODO: mode? cache?
-            app.top.activate("view")
-            if app.top.view.current_fn:
-                app.top.view.load_files([app.top.view.current_fn], run=True, show_code=False)
         reload_button = action_button(
             icon="reload",
             tip="Reload current file",
-            on_click=reload,
+            on_click=app.top.reload,
             test_name="reload_button",
         )
 
