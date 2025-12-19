@@ -6,6 +6,8 @@ In the button bar at the top:
 * <i class="ti ti-download"></i> open a file
 * <i class="ti ti-upload"></i> save the file
 * <i class="ti ti-edit"></i> toggle the file editor
+* <i class="ti ti-reload"></i> reload the file, picking up external changes
+* <i class="ti ti-eye"></i> watch the file and automatically reload on any external change
 * <i class="ti ti-alert-triangle"></i> one or more outputs are stale; click or type cmd-enter to execute all stale
 * <i class="ti ti-help"></i> this help
 
@@ -39,6 +41,14 @@ Manipulate[
 
 * Click the <i class="ti ti-edit"></i> icon again to hide the code
   block.
+
+* Probably you have your favorite editor like vi, emacs, or visual notepad.
+  You can edit your .m3d files in your editor and the click the reload button
+  <i class="ti ti-reload"></i> to pick up those changes.
+
+* You can automate the reload process by clicking the eye button <i class="ti
+  ti-eye"></i> to watch the file and automatically reload if it
+  changes.
 
 
 

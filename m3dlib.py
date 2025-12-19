@@ -486,6 +486,14 @@ class ButtonBar(pn.Row):
             test_name="reload_button",
         )
 
+        # go into "watch" mode to watch for changes
+        watch_button = mode_button(
+            mode="watch",
+            icon="eye",
+            tip="Watch file and\nreload on changes",
+            test_name="watch_button",
+        )
+
         # execute action, TBD exactly what - all? changed?
         def play():
             print("TBD")
@@ -547,6 +555,7 @@ class ButtonBar(pn.Row):
             file_save_button,
             edit_button,
             reload_button,
+            watch_button,
             play_button,
             log_button,
             help_button,
@@ -615,6 +624,7 @@ class Top(ui.Stack):
         self.session = session or core.MathicsSession()
         self.app = app
         self.active_mode = None
+        self.watching = False # effectively, a submode of "view"
         self.text_owner = None
 
         # set up mode-independent stuff
@@ -691,16 +701,29 @@ class Top(ui.Stack):
 
 
     def toggle_mode(self, new_mode, old_mode):
-        new_mode = new_mode if self.active_mode != new_mode else old_mode
-        self.activate_mode(new_mode)
+        active_mode = "watch" if self.watching else self.active_mode
+        to_mode = old_mode if active_mode == new_mode else new_mode
+        self.activate_mode(to_mode)
 
 
     def activate_mode(self, new_mode):
 
-        old_mode = self.active_mode
+        old_mode = "watch" if self.watching else self.active_mode
+        print("xx am", old_mode, new_mode)
         if new_mode == old_mode:
             return
 
+        # indicate mode in toolbar
+        self.app.buttons.activate_button(new_mode)
+
+        # handle watch mode specially: from the perspective of Top, it's just
+        # "view" mode with an active thread doing reloads
+        if new_mode == "watch":
+            new_mode = "view"
+            self.watcher(watch=True)
+        else:
+            self.watcher(watch=False)
+        
         # we've moving away from old_mode (previous test guaranteed that)
         # not persistent means it has state that must be renewed next time it's opened
         if self.active_item and not self.active_item.persistent:
@@ -721,8 +744,23 @@ class Top(ui.Stack):
         if new_mode == "view":
             self.text_owner = self.view
 
-        # indicate mode in toolbar
-        self.app.buttons.activate_button(new_mode)
+    def watcher(self, watch):
+        if watch and not self.watching:
+            self.watching = True
+            def watch():
+                fn = self.view.current_fn
+                print("watching", fn)
+                last_mod = 0 # do an initial reload
+                while self.watching:
+                    mod = os.path.getmtime(fn)
+                    if mod > last_mod:
+                        print("reloading")
+                        self.reload()
+                        last_mod = mod
+                    time.sleep(1)
+                print("not watching")
+            threading.Thread(target=watch).start()
+        self.watching = watch
 
 
     def append_evaluated_pair(self, text, expr, finish=True):
@@ -735,7 +773,8 @@ class Top(ui.Stack):
 
     def reload(self):
         # TODO: do in edit mode? prime cache?
-        self.activate_mode("view")
+        if not self.watching:
+            self.activate_mode("view")
         if self.view.current_fn:
             self.view.load_files([self.view.current_fn], run=True, show_code=False)
         
