@@ -213,6 +213,7 @@ class View(pn.Column):
         super().__init__(*args, **kwargs)
         self.top = top
         self.current_fn = None
+        self.new_items = []
 
     @property
     def text(self):
@@ -240,39 +241,54 @@ class View(pn.Column):
         self.load_m3d_string(text, run=False)
         self.pair_cache.clear()
 
+    #
+    # When reloading the view we accumulate a list of new items in
+    # self.new_items, and then load them all into the view at once
+    # when self.finish_new_items is called. This reduces flash,
+    # makes loading faster (since computing plots happens after loading),
+    # and we maintain our scroll position when reloading.
+    # Each loading method has a finish parameter that controls whether it
+    # calls finish; defaults to True, but override to batch.
+    #
+    # TODO: why is the scroll pos reset top when loading new file (as it should be)?
+    #
 
-    def append_item(self, item):
+    def append_new_item(self, item):
         self.new_items.append(item)
 
-    def load_files(self, fns, run, show_code=False):
+    def finish_new_items(self):
+        self.objects = self.new_items
         self.new_items = []
+
+    def load_files(self, fns, run, show_code=False, finish=True):
         if fns is None:
             # completely empty view is requested
             # TODO: subsequent append doesn't work without the following - ?
-            self.append_item("")
+            self.append_new_item("")
         elif len(fns):
             # load some files
             self.current_fn = fns[0]
             for fn in fns:
                 if fn.endswith(".m3d") or fn.endswith(".md"):
-                    self.load_m3d_file(fn, run, show_code)
+                    self.load_m3d_file(fn, run, show_code, finish=False)
                 elif fn.endswith(".m"):
-                    self.load_m(fn)
+                    self.load_m(fn, finish=False)
                 else:
                     print(f"Don't understand file {fn}")
         else:
             # fns is [], so create a blank Pair to start
-            self.append_item(Pair(self.top, None, input_visible=True))
-        self.objects = self.new_items
+            self.append_new_item(Pair(self.top, None, input_visible=True))
+        if finish:
+            self.finish_new_items()
 
 
-    def load_m3d_file(self, md_fn, run, show_code=False):
+    def load_m3d_file(self, md_fn, run, show_code=False, finish=True):
         print("loading", md_fn)
         md_str = open(md_fn).read()
-        self.load_m3d_string(md_str, run, show_code, fn=md_fn)
+        self.load_m3d_string(md_str, run, show_code, fn=md_fn, finish=finish)
 
 
-    def load_m3d_string(self, md_str, run, show_code=False, fn=None):
+    def load_m3d_string(self, md_str, run, show_code=False, fn=None, finish=True):
         """ Load a Mathics3+Markdown (.m3d) document given as a string """
 
         # split the document at fence (lines beginning with ```) boundaries
@@ -340,7 +356,7 @@ class View(pn.Column):
                     )
 
                 pair.opener = opener
-                self.append_item(pair)
+                self.append_new_item(pair)
 
             else:
 
@@ -372,16 +388,23 @@ class View(pn.Column):
                         h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
                     """]
                 )
-                self.append_item(md)
+                self.append_new_item(md)
+
+        # if requested, actually load the new items into the View
+        if finish:
+            self.finish_new_items()
 
 
-    def load_m(self, m_fn):
+    def load_m(self, m_fn, finish=True):
         """ Load a .m file that contains only a Mathics3 formula """
         m_str = open(m_fn).read()    
         # TODO: not sure following is right
         test_info = dict(fn=m_fn) if test else None
         pair = Pair(self.top, m_str.strip(), run=True, test_info=test_info)
-        self.append_item(pair)
+        self.append_new_item(pair)
+        if finish:
+            self.finish_new_items()
+
 
     def update_all_changed(self, force=False):
         for item in self:
@@ -459,7 +482,7 @@ class ButtonBar(pn.Row):
         reload_button = action_button(
             icon="reload",
             tip="Reload current file",
-            on_click=app.top.reload,
+            on_click=lambda: app.top.reload(),
             test_name="reload_button",
         )
 
@@ -510,7 +533,7 @@ class ButtonBar(pn.Row):
         # like it action
         def load_and_activate(fns, run):
             app.top.view.load_files(fns, run)
-            app.top.activate("view")
+            app.top.activate_mode("view")
         heart_button = action_button(
             icon="heart",
             tip="Like it?",
@@ -638,7 +661,7 @@ class Top(ui.Stack):
             # like tabs, maybe a dropdown beside the buttons??
             def on_open(fn):
                 self.view.load_files([fn], run=autorun)
-                self.activate("view")
+                self.activate_mode("view")
             return Open(data_root, on_open)
         self.append("open", make_open)
 
@@ -652,7 +675,7 @@ class Top(ui.Stack):
                         t.write(f.read())
                 with open(fn, "w") as f:
                     f.write(text)
-                self.activate("view")
+                self.activate_mode("view")
             return Save(self.view.current_fn, data_root, on_save)
         self.append("save", make_save)
 
@@ -660,7 +683,7 @@ class Top(ui.Stack):
         # start in requested mode
         # if "view" this will isntantiate the view by
         # calling make_view via self.active_mode_items
-        self.activate(initial_mode)
+        self.activate_mode(initial_mode)
 
         # start tests after we're loaded
         if test_ui_run:
@@ -669,10 +692,10 @@ class Top(ui.Stack):
 
     def toggle_mode(self, new_mode, old_mode):
         new_mode = new_mode if self.active_mode != new_mode else old_mode
-        self.activate(new_mode)
+        self.activate_mode(new_mode)
 
 
-    def activate(self, new_mode):
+    def activate_mode(self, new_mode):
 
         old_mode = self.active_mode
         if new_mode == old_mode:
@@ -702,11 +725,20 @@ class Top(ui.Stack):
         self.app.buttons.activate_button(new_mode)
 
 
-    def append_evaluated_pair(self, text, expr):
+    def append_evaluated_pair(self, text, expr, finish=True):
         pair = Pair(self, text=text.strip(), run=True, input_visible=True)
-        self.view.append(pair)
+        self.view.append_new_item(pair)
+        if finish:
+            self.view.finish_new_items()
         pair.update(expr)
 
+
+    def reload(self):
+        # TODO: do in edit mode? prime cache?
+        self.activate_mode("view")
+        if self.view.current_fn:
+            self.view.load_files([self.view.current_fn], run=True, show_code=False)
+        
 
 class App(hider.Hider):
 
