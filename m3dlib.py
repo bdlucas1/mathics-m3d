@@ -362,7 +362,7 @@ class View(pn.Column):
                         em {
                             font-style: italic;
                         }
-                        h1 {font-size: 20pt; margin-top: 2.0em; &:first-child {margin-top: 0em;}}
+                        h1 {font-size: 20pt; margin-top: 2.5em; &:first-child {margin-top: 0em;}}
                         h2 {font-size: 18pt; margin-top: 1.6em; &:first-child {margin-top: 0em;}}
                         h3 {font-size: 16pt; margin-top: 1.2em; &:first-child {margin-top: 0em;}}
                         h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
@@ -653,4 +653,9 @@ class App(hider.HideOnScrollColumn):
         top = Top(**kwargs);
         buttons = ButtonBar(top)
 
-        super().__init__(buttons, top, height_px=56,  hide_after_px=80)
+        super().__init__(
+            buttons,
+            top,
+            hide_after_px=50,
+            fixed=False
+        )

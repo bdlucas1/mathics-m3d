@@ -54,62 +54,54 @@ class HideOnScrollColumn(pn.Column):
         )
 
         js = pn.pane.HTML(f"""
-<script>
-(function () {{
-  // Recursively search through light DOM + any shadow roots
-  function querySelectorDeep(selector, root=document) {{
-    const direct = root.querySelector?.(selector);
-    if (direct) return direct;
+            <script>
+                (function () {{
+                    // Recursively search through light DOM + any shadow roots
+                    function querySelectorDeep(selector, root=document) {{
+                        const direct = root.querySelector?.(selector);
+                        if (direct) return direct;
+                        const nodes = root.querySelectorAll?.('*') || [];
+                        for (const node of nodes) {{
+                            if (node.shadowRoot) {{
+                                const found = querySelectorDeep(selector, node.shadowRoot);
+                                if (found) return found;
+                            }}
+                        }}
+                        return null;
+                    }}
 
-    const nodes = root.querySelectorAll?.('*') || [];
-    for (const node of nodes) {{
-      if (node.shadowRoot) {{
-        const found = querySelectorDeep(selector, node.shadowRoot);
-        if (found) return found;
-      }}
-    }}
-    return null;
-  }}
+                    let lastY = window.scrollY;
+                    const hideAfter = {int(hide_after_px)};
+                    const toolbarSelector = '.{cls}';
+                    const hiddenClass = '{hidden_cls}';
 
-  let lastY = window.scrollY;
-  const hideAfter = {int(hide_after_px)};
-  const toolbarSelector = '.{cls}';
-  const hiddenClass = '{hidden_cls}';
+                    function init() {{
+                        const toolbar = querySelectorDeep(toolbarSelector, document);
+                        if (!toolbar) return false;
+                        window.addEventListener('scroll', () => {{
+                            const y = window.scrollY;
+                            if (y > lastY && y > hideAfter) {{
+                                console.log("xxx adding hidden " + hiddenClass)
+                                toolbar.classList.add(hiddenClass);
+                            }} else {{
+                                console.log("xxx removing hidden " + hiddenClass)
+                                toolbar.classList.remove(hiddenClass);
+                            }}
+                            lastY = y;
+                        }}, {{passive: true}});
+                        return true;
+                    }}
 
-  function init() {{
-    const toolbar = querySelectorDeep(toolbarSelector, document);
-    console.log("xxx search " + toolbarSelector)
-    console.log("xxx found", toolbar)
-    if (!toolbar) return false;
+                    // Panel may render asynchronously; retry a few times
+                    let tries = 0;
+                    const maxTries = 50; // ~5s at 100ms
+                    const timer = setInterval(() => {{
+                        tries += 1;
+                        if (init() || tries >= maxTries) clearInterval(timer);
+                    }}, 100);
 
-    window.addEventListener('scroll', () => {{
-      console.log("xxx scolled")
-      const y = window.scrollY;
-      console.log("xxx to " + y)
-        
-      if (y > lastY && y > hideAfter) {{
-        console.log("xxx adding hidden " + hiddenClass)
-        toolbar.classList.add(hiddenClass);
-      }} else {{
-        console.log("xxx removing hidden " + hiddenClass)
-        toolbar.classList.remove(hiddenClass);
-      }}
-      lastY = y;
-    }}, {{passive: true}});
-
-    return true;
-  }}
-
-  // Panel may render asynchronously; retry a few times
-  let tries = 0;
-  const maxTries = 50; // ~5s at 100ms
-  const timer = setInterval(() => {{
-    tries += 1;
-    if (init() || tries >= maxTries) clearInterval(timer);
-  }}, 100);
-
-}})();
-</script>
+                }})();
+            </script>
         """)
 
         super().__init__(

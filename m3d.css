@@ -31,8 +31,15 @@ body {
 }
 
 .m-app {
-    gap: 1.5em;
     height: fit-content;
+    margin-top: 2em;
+}
+
+/* not sure what this is or where it's coming from, but it's appearing
+   as the first element in a View under some conditions tbd, and it causes
+   an extra blank space of the View gap at the top, and this fixes that. */
+.scroll-button {
+    display: none !important;
 }
 
 .bk-TablerIcon {
@@ -45,6 +52,8 @@ body {
 
 .m-button-row, .m-button-column {
     gap: 0.5em;
+    padding-top: 12px;
+    padding-bottom: 8px;
 }
 
 .m-pair {
