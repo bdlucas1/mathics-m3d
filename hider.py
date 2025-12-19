@@ -4,7 +4,7 @@
 
 import panel as pn
 
-class HideOnScrollColumn(pn.Column):
+class Hider(pn.Column):
     """
     A Column whose first child is a toolbar that hides when scrolling down
     and reappears when scrolling up.

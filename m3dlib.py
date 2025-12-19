@@ -515,9 +515,10 @@ class Shortcuts(shortcuts.KeyboardShortcuts):
 
 
 
+# TODO: everything called .app or app. or app- should be renamed top
 class Top(ui.Stack):
     """
-    The top-level app is a Stack, which is a Column that manages mode switching
+    The top-level is a Stack, which is a Column that manages mode switching
     by instantiating and controling the visibility of its constituents
     """
 
@@ -538,7 +539,7 @@ class Top(ui.Stack):
         # set up mode-independent stuff
         super().__init__(
             Shortcuts(self),
-            #ButtonBar(self),
+            #ButtonBar(self), moved to App
             css_classes=["m-app"]
         )
 
@@ -646,16 +647,26 @@ class Top(ui.Stack):
         pair.update(expr)
 
 
-class App(hider.HideOnScrollColumn):
+class App(hider.Hider):
 
     def __init__(self, **kwargs):
 
-        top = Top(**kwargs);
-        buttons = ButtonBar(top)
+        self.top = Top(**kwargs);
+        buttons = ButtonBar(self.top)
 
         super().__init__(
             buttons,
-            top,
+            self.top,
             hide_after_px=50,
             fixed=False
         )
+
+    # TODO when App was moved up a level so that what was App is now Top
+    # which is contained in the new App, had to add this delegation method,
+    # which is an external API (used by shell). Also had to use **kwards
+    # to init Top. So seems exposing a class in the API is a bit fragile -
+    # is there a better pattern? Maybe just expose free functions to completely hide
+    # class structure? Can't inherit from Top as it's the Hider that needs to be served.
+    def append_evaluated_pair(self, text, expr):
+        self.top.append_evaluated_pair(text, expr)
+
