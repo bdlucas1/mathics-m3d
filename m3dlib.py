@@ -417,22 +417,30 @@ class ButtonBar(pn.Row):
         # used to change icon when activated or inactivated
         self.mode_buttons = {}
 
-        # buttons that switch mode and have different icons to indicate current mode
-        def mode_button(mode, icon, tip):
+        # buttons that switch mode and have different styling to indicate current mode
+        def mode_button(mode, icon, tip, test_name):
             button = ui.icon_button(
                 icon=icon,
                 tip=tip,
                 on_click=lambda: app.top.toggle_mode(mode, "view")
             )
+            test_ui.item(button, test_name)
             mode_button = pn.Row(button, css_classes=["m-mode-button"])
             self.mode_buttons[mode] = mode_button
             return mode_button
             
-        # create new document
-        new_button = ui.icon_button(
+        # button that just performs an action without switching mode
+        def action_button(icon, tip, on_click, test_name):
+            button = ui.icon_button(icon, tip, on_click)
+            test_ui.item(button, test_name)
+            return button
+
+        # create new document action
+        new_button = action_button(
             icon="square-plus",
             tip="New document",
-            on_click=lambda: app.top.view.load_files([], False)
+            on_click=lambda: app.top.view.load_files([], False),
+            test_name="new_button",
         )
 
         # go into "edit" mode to edit entire document
@@ -440,37 +448,40 @@ class ButtonBar(pn.Row):
             mode="edit",
             icon="edit",
             tip="Toggle editing\nentire file",
+            test_name="edit_button",
         )
 
-        # reload document
-        # TODO: move top top
+        # reload document action
         def reload():
             # TODO: mode? cache?
             app.top.activate("view")
             if app.top.view.current_fn:
                 app.top.view.load_files([app.top.view.current_fn], run=True, show_code=False)
-        reload_button = ui.icon_button(
+        reload_button = action_button(
             icon="reload",
             tip="Reload current file",
-            on_click=reload
+            on_click=reload,
+            test_name="reload_button",
         )
 
-        # execute, TBD exactly what - all? changed?
+        # execute action, TBD exactly what - all? changed?
         def play():
             print("TBD")
-        play_button = ui.icon_button(
+        play_button = action_button(
             icon="player-play",
             tip="TBD",
-            on_click=play
+            on_click=play,
+            test_name="play_button",
         )
 
         # TODO: this will actually be a mode button, I think
         def log():
             print("TBD")
-        log_button = ui.icon_button(
+        log_button = action_button(
             icon="clipboard-text",
             tip="TBD",
-            on_click=log
+            on_click=log,
+            test_name="log_button",
         )
 
         # go into "help" mode
@@ -478,6 +489,7 @@ class ButtonBar(pn.Row):
             mode="help",
             icon="help",
             tip="Help is on the way!",
+            test_name="help_button",
         )
 
         # go into "open" mode to open a file
@@ -485,6 +497,7 @@ class ButtonBar(pn.Row):
             mode="open",
             icon="download",
             tip="Open a file",
+            test_name="file_open_button",
         )
 
         # go into "save" mode t save a file
@@ -492,28 +505,30 @@ class ButtonBar(pn.Row):
             mode="save",
             icon="upload",
             tip="Save file",
+            test_name="file_save_button",
         )
 
-        # like it
+        # like it action
         def load_and_activate(fns, run):
             app.top.view.load_files(fns, run)
             app.top.activate("view")
-        heart_button = ui.icon_button(
+        heart_button = action_button(
             icon="heart",
             tip="Like it?",
-            on_click=lambda: load_and_activate([util.resource("data/cardio.m3d")], True)
+            on_click=lambda: load_and_activate([util.resource("data/cardio.m3d")], True),
+            test_name="heart_button",
         )
 
         super().__init__(
-            test_ui.item(new_button, "new_button"),
-            test_ui.item(file_open_button, "open_button"),
-            test_ui.item(file_save_button, "save_button"),
-            test_ui.item(edit_button, "edit_button"),
-            test_ui.item(reload_button, "reload_button"),
-            test_ui.item(play_button, "play_button"),
-            test_ui.item(log_button, "clipboard-text"),
-            test_ui.item(help_button, "help_button"),
-            test_ui.item(heart_button, "heart_button"),
+            new_button,
+            file_open_button,
+            file_save_button,
+            edit_button,
+            reload_button,
+            play_button,
+            log_button,
+            help_button,
+            heart_button,
             #pn.widgets.ButtonIcon(icon="mood-smile"),
             #pn.widgets.ButtonIcon(icon="mood-confuzed"),
             #pn.widgets.ButtonIcon(icon="alert-triangle"),

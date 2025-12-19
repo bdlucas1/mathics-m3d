@@ -132,6 +132,7 @@ def run_tests_report():
         print(f"=== FAIL: {oops}")
         return
     print("=== SUCCESS")
+    os._exit(0)
 
 
 def run_tests():
