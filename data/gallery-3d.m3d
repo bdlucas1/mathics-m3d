@@ -1,10 +1,74 @@
 # Three-dimensional plots
 
+Let's start with simple sine waves again. This time, because we're working
+with a function of two variables $$x$$ and $$y$$, we can add sliders to vary
+both $$x$$ and $$y$$ frequency, as well as a slider to rotate the whole thing
+about the $$z$$ axis.
+
 ```
+RotationMatrix[theta_] = {{Cos[theta],-Sin[theta]},{Sin[theta],Cos[theta]}};
+f[{fx_, fy_}, {x_, y_}] = Sin[fx x] Cos[fy y];
+
 Manipulate[
-    Plot3D[a Sin[f x] Cos[f y], {x, 0, 2 Pi}, {y, 0, 2 Pi},
-    PlotRange -> {Automatic, Automatic, {-2,2}}],
-    {{f,1}, 0, 2},
+    Plot3D[
+        a f[{fx, fy}, RotationMatrix[theta].{x, y}],
+        {x, -Pi, Pi}, {y, -Pi, Pi},
+        PlotRange -> {-2, 2},
+        AxesLabel -> {"x axis", "y axis", "z axis"}
+    ],
+    {{theta,0}, -4, 4},
+    {{fx,1}, 0, 5},
+    {{fy,1}, 0, 5},
     {{a,1}, -2, 2}
 ]
 ```
+In addition to using the sliders to change the function, you can
+manipulate the plot itself using your mouse.
+
+* Drag the figure with your mouse to rotate it.
+
+* Use the controls that pop up at the top of the chart to switch between
+  turntable rotation, orbital rotation, panning,
+  and zooming when you drag the figure with your mouse.
+
+* You can also zoom in and out using the scroll wheel, or hold down
+  the option key while dragging.
+
+## Visualizing complex solutions to an exponential equation
+
+We all know that $$e^x\gt 0$$ for all values of $$x$$, so therefore
+$$e^{e^x}\gt 1$$ for all $$x$$ and so there are no solutions to
+the equation $$e^{e^x} = 1$$, right? Well, that might be true for real
+number $$x$$, but let's see what happens if we try using complex numbers
+to solve $$e^{e^{x+i y}} = 1$$
+
+```
+Manipulate[
+    Plot3D[
+        {Abs[Exp[Exp[x + I y]]-1], 0},
+        {x, -3, xmax}, {y, -9, 9},
+        PlotRange -> {-0.5, 1.5},
+        AxesLabel -> {"x", "y"},
+        BoxRatios->{1,1,0.75}, ViewPoint->{-0.5, -10, 3}
+    ],
+    {{xmax, 1}, 1, 3, 0.1}
+]
+```
+
+Here we plot $$z = |e^{e^{x+i y}} - 1|$$ in yellow. We expect that
+this will become $$0$$ when $$e^{e^{x+i y}} = 1$$, so we also plot
+$$z=0$$ in blue. At first glance it looks as expected - as $$x$$ goes
+to the left towards $$-\infty$$ the value goes to 0, and as $$x$$ goes
+to the right towards $$+\infty$$ the value goes to $$\infty$$.
+
+But notice also as $$x$$ increases we see more and more of a periodic
+structure in the $$y$$ direction due to the periodic nature of $$e^{i y}$$,
+and there's a hint that the low points are starting to level off.
+
+Since we only plotted the function out to $$x_\textrm{max}=1$$, what
+happens if we look further out by increasing $$x_\textrm{max}$$ by
+moving the slider? Try it, and you should see a series of "icicles"
+hanging down towards the blue $$z=0$$ plane; those are solutions in
+the complex plane to the equation $$e^{e^{x + i y}} = 1$$.
+
+TODO: link to YouTube video that inspired this.
