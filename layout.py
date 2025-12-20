@@ -91,7 +91,6 @@ special = {
 def _boxes_to_latex_or_layout(fe, expr, layout_options):
 
     #util.print_stack_reversed()
-    #print("xxx _boxes_to_latex_or_layout", type(expr))
 
     def try_latex():
         try:

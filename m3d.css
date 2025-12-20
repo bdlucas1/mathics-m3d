@@ -30,6 +30,26 @@ body {
     padding-bottom: 50vh;
 }
 
+/* modal dialog overlay */
+#pnx_dialog .dialog-overlay {
+    background-color: #eeeeeecc;
+    backdrop-filter: blur(2px);
+}
+
+/* modal dialog itself */
+#pnx_dialog_content {
+    padding: 1em;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.bk-btn-group {
+    gap: 1em;
+}
+
 .m-top {
     height: fit-content;
     margin-top: 2em;

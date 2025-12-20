@@ -24,6 +24,7 @@ import ui
 import test_ui
 import shortcuts
 import hider
+import dirty
 
 test = None
 
@@ -36,6 +37,10 @@ pn.extension('mathjax')
 
 import mathics.builtin.drawing.plot
 mathics.builtin.drawing.plot.use_vectorized_plot = True
+
+# needs to be global so can be used as decorator in class definition
+# otherwise could make member of App or Top and use dirty_guard.guard
+dirty_guard = dirty.Guard()
 
 #
 # An input-output pair, as a column
@@ -73,6 +78,7 @@ class Pair(pn.Column):
         def input_changed(event):
             self.is_stale = self.old_expr != self.input.value_input
             self.exec_button.visible = self.is_stale
+            dirty_guard.dirty = True
         self.input.param.watch(input_changed, "value_input")
 
         # edit button toggles input code block visibility
@@ -269,6 +275,7 @@ class View(pn.Column):
         self.objects = self.new_items
         self.new_items = []
 
+    @dirty_guard.guarded()
     def load_files(self, fns, run, show_code=False, finish=True):
         if fns is None:
             # completely empty view is requested
@@ -289,7 +296,6 @@ class View(pn.Column):
             self.append_new_item(Pair(self.top, None, input_visible=True))
         if finish:
             self.finish_new_items()
-
 
     def load_m3d_file(self, md_fn, run, show_code=False, finish=True):
         print("loading", md_fn)
@@ -440,6 +446,10 @@ class Edit(pn.widgets.TextAreaInput):
 
     # persists even between UI mode changes
     persistent = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.param.watch(lambda _: dirty_guard.set_dirty(True), "value_input")
 
     @property
     def text(self):
@@ -652,6 +662,8 @@ class Top(ui.Stack):
         # set up mode-independent stuff
         super().__init__(
             Shortcuts(self),
+            dirty_guard.modal,
+            dirty_guard.beforeunload,
             #ButtonBar(self), moved to App
             css_classes=["m-top"]
         )
