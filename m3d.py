@@ -1,4 +1,5 @@
 import sys
+import threading
 
 import os
 if not "MATHICS3_TIMING" in os.environ:
