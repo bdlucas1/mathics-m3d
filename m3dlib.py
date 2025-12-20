@@ -220,7 +220,6 @@ class View(pn.Column):
         """
         Reconstruct the markdown for the entire page by
         concatenating the text for the Pair and Markdown elements
-        that constitute the View
         """
         def collect():
             for item in self:
