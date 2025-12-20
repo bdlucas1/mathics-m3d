@@ -206,8 +206,17 @@ class View(pn.Column):
     of evaluating that code (output)
     """
 
+    # stay around even if we switch to another mode so we
+    # come back to same state
     persistent = True
-    pair_cache = {}
+
+    # part cache for short term storage while editing or when reloading
+    # so that transition back from editing or from reloading are faster,
+    # on the assumption that when leaving edit mode or when reloading
+    # there may be a lot of stuff that hasn't changed
+    # this also helps reduce screen flash and scrolling when reloading,
+    # i think because the cached parts already have known sizes
+    part_cache = {}
 
     def __init__(self, top, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -225,9 +234,10 @@ class View(pn.Column):
             for item in self:
                 if isinstance(item, Pair):
                     text = item.input.value_input or item.input.value
-                    self.pair_cache[text] = item
+                    self.part_cache[text] = item
                     yield f"{item.opener}\n{text}\n```"
                 elif isinstance(item, pn.pane.Markdown):
+                    self.part_cache[item.object] = item
                     yield item.object
                 else:
                     assert False, "expect Pair or Markdown"
@@ -238,7 +248,7 @@ class View(pn.Column):
     def text(self, text):
         self.clear()
         self.load_m3d_string(text, run=False)
-        self.pair_cache.clear()
+        self.part_cache.clear()
 
     #
     # When reloading the view we accumulate a list of new items in
@@ -309,6 +319,15 @@ class View(pn.Column):
 
         global_options = {}
 
+        def from_cache(text):
+            try:
+                part = self.part_cache[text]
+                print("USING CACHED", type(part))
+                del self.part_cache[text]
+                return part
+            except KeyError:
+                return None
+
         for part in md_parts:
 
             if part.startswith("```"):
@@ -325,18 +344,16 @@ class View(pn.Column):
 
                 # this part is a code block, so  construct the pair, consulting
                 # the cache that may have been left when we entered edit mode
+                # or started a reload
                 text = part.strip()
-                try:
-                    pair = self.pair_cache[text]
-                    print("USING CACHED PAIR")
-                    del self.pair_cache[text]
+                pair = from_cache(text)
 
-                except KeyError:
+                if not pair:
                     
                     # override global autorun
                     autorun = truthful(options.get("autorun", run))
 
-                    # remember options to past to test if there is a "test" option
+                    # remember options to pass to test if there is a "test" option
                     test_info = None
                     if test and "test" in options:
                         test_info = options
@@ -357,36 +374,42 @@ class View(pn.Column):
                 pair.opener = opener
                 self.append_new_item(pair)
 
-            else:
+            else: # markdown
 
-                # global options can also be found in comments
-                for comment in re.findall("<!--[\\s\\S]*?-->", part):
-                    global_options |= parse_options(comment)
+                # see if we cached it when we entered edit mode or started a reload
+                md = from_cache(part)
 
-                # render the text using Markdown
-                md = pn.pane.Markdown(
-                    part,
-                    disable_math = False,
-                    css_classes=["m-markdown"],
-                    # TODO: extract from .css file
-                    stylesheets=["""
-                        * {
-                            font-family: sans-serif;
-                            font-size: 12pt;
-                            line-height: 1.4;
-                        }
-                        p + p {
-                            margin-top: 1em;
-                        }
-                        em {
-                            font-style: italic;
-                        }
-                        h1 {font-size: 20pt; margin-top: 2.5em; &:first-child {margin-top: 0em;}}
-                        h2 {font-size: 18pt; margin-top: 1.6em; &:first-child {margin-top: 0em;}}
-                        h3 {font-size: 16pt; margin-top: 1.2em; &:first-child {margin-top: 0em;}}
-                        h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
-                    """]
-                )
+                if not md:
+
+                    # global options can also be found in comments
+                    for comment in re.findall("<!--[\\s\\S]*?-->", part):
+                        global_options |= parse_options(comment)
+
+                    # render the text using Markdown
+                    md = pn.pane.Markdown(
+                        part,
+                        disable_math = False,
+                        css_classes=["m-markdown"],
+                        # TODO: extract from .css file
+                        stylesheets=["""
+                            * {
+                                font-family: sans-serif;
+                                font-size: 12pt;
+                                line-height: 1.4;
+                            }
+                            p + p {
+                                margin-top: 1em;
+                            }
+                            em {
+                                font-style: italic;
+                            }
+                            h1 {font-size: 20pt; margin-top: 2.5em; &:first-child {margin-top: 0em;}}
+                            h2 {font-size: 18pt; margin-top: 1.6em; &:first-child {margin-top: 0em;}}
+                            h3 {font-size: 16pt; margin-top: 1.2em; &:first-child {margin-top: 0em;}}
+                            h4 {font-size: 14pt; margin-top: 0.8em; &:first-child {margin-top: 0em;}}
+                        """]
+                    )
+
                 self.append_new_item(md)
 
         # if requested, actually load the new items into the View
@@ -708,7 +731,6 @@ class Top(ui.Stack):
     def activate_mode(self, new_mode):
 
         old_mode = "watch" if self.watching else self.active_mode
-        print("xx am", old_mode, new_mode)
         if new_mode == old_mode:
             return
 
@@ -723,6 +745,11 @@ class Top(ui.Stack):
         else:
             self.watcher(watch=False)
         
+        # check again because we may have just changed new_mode to "view"
+        # this reduces screen flash going into watch mode
+        if new_mode == old_mode:
+            return
+
         # we've moving away from old_mode (previous test guaranteed that)
         # not persistent means it has state that must be renewed next time it's opened
         if self.active_item and not self.active_item.persistent:
@@ -774,8 +801,13 @@ class Top(ui.Stack):
         # TODO: do in edit mode? prime cache?
         if not self.watching:
             self.activate_mode("view")
+        # this has the side effect of traversing View and caching Pair and Markdown
+        # elements in the process, so that reloading is faster
+        self.view.text
         if self.view.current_fn:
             self.view.load_files([self.view.current_fn], run=True, show_code=False)
+        # cache is only for short-term storage so clear when done
+        self.part_cache.clear()
         
 
 class App(hider.Hider):
