@@ -238,10 +238,11 @@ def icon_button(icon,tip, on_click):
         css_classes = ["m-button"]
     )
     def intercept(event):
-        on_click()
         # this seems to make the tooltip disappear if the button moves
         # otherwise the hover state of the tip doesn't change (html misfeature)
+        # do before on_click so tt will disappear before screen moves (I think)
         button.description = tt()
+        on_click()
     button.on_click(intercept)
     return button
 
