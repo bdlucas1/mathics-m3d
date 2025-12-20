@@ -807,7 +807,7 @@ class Top(ui.Stack):
         if self.view.current_fn:
             self.view.load_files([self.view.current_fn], run=True, show_code=False)
         # cache is only for short-term storage so clear when done
-        self.part_cache.clear()
+        self.view.part_cache.clear()
         
 
 class App(hider.Hider):
