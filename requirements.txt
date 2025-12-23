@@ -4,3 +4,4 @@ opencv-python
 panel
 pywebview
 scikit-image
+cairosvg
