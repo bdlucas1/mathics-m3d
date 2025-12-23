@@ -7,7 +7,7 @@ fancy := Foo[
     x+y, x+y^2^3^4^x, Sqrt[Nest[Sin[a+b]+Cos[3z]]+4 yy], "hi",
     Plot3D[Sin[x]*Cos[y], {x,-3,3}, {y,-3,3}, Axes->False, Mesh->None]
 
-];
+]
 ```
 
 ``` m3d test:fancy-default mode:layout

@@ -156,6 +156,7 @@ class Pair(pn.Column):
                 # TODO: is this the right behavior?
                 self.output[0] = "None"
             else:
+
                 # contruct layout from expr
                 layout = lt.expression_to_layout(self.top, expr)
 

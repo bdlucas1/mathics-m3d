@@ -17,3 +17,12 @@ Plot3D[Sin[x] Cos[y] , {x,-10,10},{y,-10,10}, PlotRange->{{0,1},{0,1},Automatic}
 ``` m3d test:range-range
 DensityPlot[Cos[x] Sin[y], {x,-15,15},{y,-10,10}, PlotRange->{{0,1},{0,1}}]
 ```
+
+``` m3d test:range-expr
+Plot3D[Sin[x] Cos[y], {x, 0, 4 Pi}, {y, 0, 2}, PlotRange->{{0, 6 Pi}, {0, 3 / 2}}]
+```
+
+``` m3d test:range-parameteric-bigger
+ParametricPlot[{{Sin[u], Cos[u]},{0.6 Sin[u], 0.6 Cos[u]}, {0.2 Sin[u], 0.2 Cos[u]}}, {u, 0, 2 Pi}, PlotRange->2, AspectRatio->1]
+```
+

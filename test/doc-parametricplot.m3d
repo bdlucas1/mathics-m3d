@@ -12,7 +12,6 @@ ParametricPlot[{Cos[u] / u, Sin[u] / u}, {u, 0, 50}, PlotRange->0.5]
 ParametricPlot[{Sin[u], Cos[3 u]}, {u, 0, 2 Pi}]
 ```
 
-TODO: ParametricPlot is generating 6 empty lines in this case
 ``` m3d test:doc-044
 ParametricPlot[{{Sin[u], Cos[u]},{0.6 Sin[u], 0.6 Cos[u]}, {0.2 Sin[u], 0.2 Cos[u]}}, {u, 0, 2 Pi}, PlotRange->1, AspectRatio->1]
 ```

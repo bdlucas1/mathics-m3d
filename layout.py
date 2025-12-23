@@ -153,6 +153,10 @@ def expression_to_layout(fe, expr, layout_options={}, form=sym.SymbolTraditional
         boxed = core.Expression(sym.SymbolToBoxes, expr, form)
         boxed = boxed.evaluate(fe.session.evaluation)
 
+    # TODO: svg tests
+    #with util.Timer("SVG"):
+    #    open("/tmp/foo.svg", "w").write(boxed.boxes_to_svg())
+
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout
     layout = _boxes_to_latex_or_layout(fe, boxed, layout_options)
