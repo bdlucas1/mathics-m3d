@@ -425,7 +425,7 @@ class GraphicsConsumer:
         elif expr.head in (sym.SymbolInset, sym.SymbolInsetBox):
             # TODO: pick apart and put vertices in first position?
             # and adjust add_insets accordingly
-            text = expr.elements[0].value
+            text = str(expr.elements[0])
             pos = expr.elements[1].to_python()
             items = [pos, text]
             yield from self.item(sym.SymbolInset, None, wanted_depth=3, colors=colors, items=items)                  
