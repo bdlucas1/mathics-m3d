@@ -22,6 +22,7 @@ def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):
     
     # TODO: average poly color instead of vertex 0?
     colors = colors[polys[:,0],:] * 255
+    colors[np.isnan(colors)] = 255
 
     # expand polys from indices to coordinates
     # seems not to like fp coordinates though
