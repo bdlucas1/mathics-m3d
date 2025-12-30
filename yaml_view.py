@@ -9,6 +9,7 @@ import panel
 import yaml
 
 import mathics.builtin.drawing.plot as plot
+from mathics.core.convert.lambdify import CompileError
 
 import core
 import layout as lt
@@ -42,9 +43,9 @@ class FE:
             for name, info in tests.items():
                 str_expr = info.get("expr", None)
                 if str_expr:
-                    caption = f"{name}: {str_expr}"
-                    print(f"=== {caption}")
-                    caption = panel.pane.Markdown(f"### {caption}", styles={"grid-column": "1 / -1"})
+                    caption_str = f"{name}: {str_expr}"
+                    print(f"=== {caption_str}")
+                    caption = panel.pane.Markdown(f"### {caption_str}", styles={"grid-column": "1 / -1"})
                     grid.extend([caption, ""])
                     last_ev_expr = None
                     for grid_col, vec in enumerate([False, True]):
@@ -56,11 +57,17 @@ class FE:
                             if str(ev_expr) != str(last_ev_expr) and "Graphics" in str(ev_expr.head):
                                 layout = lt.expression_to_layout(self, ev_expr)
                                 grid.append(layout)
+                                if vec:
+                                    print(f"VECTORIZED {caption_str}")
                             else:
                                 grid.append("N/A")
                             last_ev_expr = ev_expr
+                        except CompileError as oops:
+                            msg = f"COMPILE: {oops}"
+                            print(msg)
+                            grid.append(msg)
                         except Exception as oops:
-                            print(f"EXCEPTION: {oops}")
+                            print(f"EXCEPTION: {type(oops)}: {oops}")
                             grid.append(str(oops))
                             
 
