@@ -48,17 +48,18 @@ dirty_guard = dirty.Guard()
 
 class Pair(pn.Column):
 
-    def __init__(self, top, text=None, input_visible=False, run=False, test_info=None):
+    def __init__(self, top, text=None, input_visible=False, run=False, options={}):
         
         self.top = top
         self.old_expr = ""
         self.is_stale = True
         self.opener = "```"
-        self.test_info = test_info
+        self.options = options
+        self.testing = "test" in options and "fn" in options
 
         # actual loading and therefore testing is deferred;
         # track pending so we know when we're done
-        if test_info:
+        if self.testing:
             test.pending()
 
         # input
@@ -146,6 +147,12 @@ class Pair(pn.Column):
             self.old_expr = expr_str
             session = self.top.session
             
+            # choose vectorized vs classic
+            if "method" in self.options:
+                method = self.options.get("method")
+                use_vectorized_plot = False if method == "classic" else True
+                mathics.builtin.drawing.plot.use_vectorized_plot = use_vectorized_plot
+
             # evaluate it if not provided (e.g. from shell)
             if not expr:
                 session.evaluation.out.clear()
@@ -163,8 +170,8 @@ class Pair(pn.Column):
                 # either show it to user, or pass it to test
                 # can't do both because test "layout" mode requires
                 # that sole ownership of the layout to save it to image
-                if self.test_info:
-                    test.test(self.test_info, layout, expr)
+                if self.testing:
+                    test.test(self.options, layout, expr)
                 else:
                     self.output[0] = layout
 
@@ -360,11 +367,9 @@ class View(pn.Column):
                     # override global autorun
                     autorun = truthful(options.get("autorun", run))
 
-                    # remember options to pass to test if there is a "test" option
-                    test_info = None
+                    # Pair uses "test" as cue to do testing, so delete if not enabled
                     if test and "test" in options:
-                        test_info = options
-                        test_info["fn"] = fn
+                        options["fn"] = fn
 
                     # option to show the code for this part
                     input_visible = show_code or not autorun
@@ -375,7 +380,7 @@ class View(pn.Column):
                         text,
                         input_visible=input_visible,
                         run=autorun,
-                        test_info=test_info
+                        options=options
                     )
 
                 pair.opener = opener
