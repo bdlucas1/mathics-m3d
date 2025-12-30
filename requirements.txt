@@ -5,3 +5,5 @@ panel
 pywebview
 scikit-image
 cairosvg
+plotly
+kaleido
