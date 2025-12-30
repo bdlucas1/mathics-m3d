@@ -131,7 +131,8 @@ def test(test_info, layout, expr):
     try:
         # about 10 ms, so no reason not to go straight to png, simplifying
         svg_act = layout._m3d_boxed.boxes_to_svg()
-        os.remove(fn_svg_png_act)
+        if os.path.exists(fn_svg_png_act):
+            os.remove(fn_svg_png_act)
         cairosvg.svg2png(
             bytestring=svg_act.encode('utf-8'),
             write_to=fn_svg_png_act,
