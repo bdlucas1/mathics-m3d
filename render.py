@@ -352,6 +352,7 @@ class FigureBuilder:
                 ticks = "outside",
                 title = title(self.opts.axes_label[i]),
                 visible = self.opts.axes[i] or self.opts.frame,
+                zeroline = False, # could be used for origin-center axes?
             )
             if self.has_image and p == "y":
                 # for Images plotly doesn't like to scale the image to fill the figure size,
@@ -432,6 +433,11 @@ class FigureBuilder:
         #lo, hi = plot_range[0]
         #ticks = ticker.nice_linear_ticks(vmin=lo, vmax=hi, nticks=7)
         #figure.update_xaxes(**ticker.plotly_tick_array(ticks))        
+
+        # background color
+        if self.opts.background:
+            background = to_color_str(self.opts.background)
+            figure.update_layout(paper_bgcolor=background)
 
         # if we're in test mode write the image
         if hasattr(self.fe, "test_image"):

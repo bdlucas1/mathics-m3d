@@ -86,6 +86,12 @@ class GraphicsOptions:
             axes_label = axes_label + ([None] * (dim - len(axes_label)))
         self.axes_label = axes_label
 
+        # Background
+        self.background = None
+        background = get_option("System`Background")
+        if background and background.head == sym.SymbolRGBColor:
+            self.background = [e.value for e in background.elements]
+
         # Frame
         self.frame = get_option("System`Frame")
 
@@ -144,7 +150,6 @@ class GraphicsOptions:
         axes = get_option("System`Axes")
         axes_origin = get_option("System`AxesOrigin")
         axes_style = get_option("System`AxesStyle")
-        background = get_option("System`Background")
         baseline_position = get_option("System`BaselinePosition")
         base_style = get_option("System`BaseStyle")
         content_selectable = get_option("System`ContentSelectable")
