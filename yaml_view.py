@@ -1,12 +1,13 @@
 import os
 import sys
 import threading
-
-if not "MATHICS3_TIMING" in os.environ:
-    os.environ["MATHICS3_TIMING"] = "-1"
+import time
+import pathlib
 
 import panel
 import yaml
+import pandas
+import plotly
 
 import mathics.builtin.drawing.plot as plot
 from mathics.core.convert.lambdify import CompileError
@@ -17,13 +18,21 @@ import util
 
 panel.extension('plotly')
 
+def waitfor(d, k):
+    while k not in d:
+        print("xxx waiting for", k)
+        time.sleep(1)
+    return d[k]
+
+
 class FE:
 
     def __init__(self):
 
         self.session = core.MathicsSession()
+        self.shown = False
 
-        grid = panel.GridBox(
+        self.grid = panel.GridBox(
             ncols=3,
             sizing_mode="stretch_width",
             styles = {
@@ -33,10 +42,10 @@ class FE:
                 "gap": "1em",
                 #"align-items": "start",
             })
-        shown = False
+        #self.show()
 
         # for each file on command line
-        for fn in sys.argv[1:]:
+        for fn in args.files:
 
             # extract tests to show
             split = fn.split(":", 1)
@@ -49,6 +58,9 @@ class FE:
             with open(fn) as r:
                 tests = yaml.safe_load(r)
 
+            self.ev_exprs = dict() # str_expr -> ev_expr
+            self.layouts = dict() # str_expr -> layout
+
             # process each test
             for name, info in tests.items():
 
@@ -58,60 +70,108 @@ class FE:
 
                 # process the expr
                 str_expr = info.get("expr", None)
-                if str_expr:
+                if not str_expr:
+                    continue
 
-                    # add a caption
-                    caption_str = f"{name}: {str_expr}"
-                    print(f"=== {caption_str}")
-                    caption = panel.pane.Markdown(caption_str, styles={"grid-column": "1 / -1"})
-                    grid.extend([caption, "", ""])
-                    
-                    # if vec=True returns same as vec=False show N/A
-                    last_ev_expr = None
+                # add a caption
+                caption_str = f"{name}: {str_expr}"
+                print(f"=== {caption_str}")
+                caption = panel.pane.Markdown(caption_str, styles={"grid-column": "1 / -1"})
+                self.grid.extend([caption, "", ""])
 
-                    for  vec in [False, True]:
-
-                        # evaluate, lay out, append either layout or error message
-                        layout = None
-                        try:
-                            plot.use_vectorized_plot = vec
-                            ev_expr = self.session.evaluate(str_expr)
-                            for message in self.session.evaluation.out:
-                                print("MESSAGE:", message.text)
-                            if str(ev_expr) != str(last_ev_expr) and "Graphics" in str(ev_expr.head):
-                                layout = lt.expression_to_layout(self, ev_expr)
-                                grid.append(layout)
-                                if vec:
-                                    print(f"VECTORIZED {caption_str}")
-                            else:
-                                grid.append("N/A")
-                            last_ev_expr = ev_expr
-                        except CompileError as oops:
-                            msg = f"COMPILE: {oops}"
-                            print(msg)
-                            grid.append(msg)
-                        except Exception as oops:
-                            print(f"EXCEPTION: {type(oops)}: {oops}")
-                            grid.append(str(oops))
-                            
-                        # show svg if not vec
-                        if not vec:
-                            if layout:
-                                try:
-                                    svg_str = layout._m3d_boxed.boxes_to_svg()
-                                    svg_pane = panel.pane.SVG(svg_str, height=int(layout._m3d_height))
-                                    grid.append(svg_pane)
-                                except Exception as oops:
-                                    print(f"EXCEPTION: {oops}")
-                                    grid.append("EXCEPTION")
-                            else:
-                                grid.append("N/A")
-
+                self.grid.append(lambda: self.compute_plot(False, name, info, caption_str))
+                self.grid.append(lambda: self.compute_svg(name, info))
+                self.grid.append(lambda: self.compute_plot(True, name, info, caption_str))
 
             # getting some error if we show the grid then append items
-            if not shown:
-                util.show(grid, sys.argv[0])
-                shown = True
+            self.show()
+
+
+    def show(self):
+        if not self.shown:
+            util.show(self.grid, sys.argv[0])
+            self.shown = True
+
+    # evaluate, lay out, return either layout or error message
+    # stores non-vectorized layout for use by compute_svg
+    def compute_plot(self, vec, name, info, caption_str):
+
+        #if vec and not info.get("vec", True):
+        #    return "SKIP"
+        #if not vec and not info.get("cls", True):
+        #    return "SKIP"
+
+        str_expr = info["expr"]
+
+        try:
+            plot.use_vectorized_plot = vec
+            ev_expr = self.session.evaluate(str_expr)
+            for message in self.session.evaluation.out:
+                print("MESSAGE:", message.text)
+            if vec:
+                nonvec_ev_expr = waitfor(self.ev_exprs, str_expr)
+                if nonvec_ev_expr == ev_expr:
+                    return "N/A"
+                if not args.test:
+                    print(f"VECTORIZED {caption_str}")
+            else:
+                self.ev_exprs[str_expr] = ev_expr
+            if "Graphics" in str(ev_expr.head):
+                layout = lt.expression_to_layout(self, ev_expr)
+            else:
+                layout = None
+            if not vec:
+                self.layouts[str_expr] = layout
+            if layout:
+                self.test(name, layout.object, "vec" if vec else "cls")
+            return layout
+        except CompileError as oops:
+            msg = f"COMPILE: {oops}"
+            print(msg)
+            return msg
+        except Exception as oops:
+            msg = f"EXCEPTION in compute_plot: {type(oops)}: {oops}"
+            print(msg)
+            return msg
+
+    # compute and retursn svg for str_expr
+    # reuses layout computed by compute_plot
+    def compute_svg(self, name, info):
+        str_expr = info["expr"]
+        layout = waitfor(self.layouts, str_expr)
+        if layout:
+            try:
+                svg_str = layout._m3d_boxed.boxes_to_svg()
+                svg_pane = panel.pane.SVG(svg_str, height=int(layout._m3d_height))
+                self.test(name, svg_pane, "svg")
+                return svg_pane
+            except Exception as oops:
+                msg = f"EXCEPTION in compute_svg: {oops}"
+                #print(msg)
+                return msg
+        else:
+            return "N/A"
+
+
+    def test(self, name, item, kind):
+        if args.test == "all" or kind in args.test:
+            fn = pathlib.Path(__file__).resolve().parent / "yaml_test" / (f"{name}-{kind}.png")
+            print("writing", fn)
+            item.write_image(fn, scale=2)
+        
+
+
+import argparse
+parser = argparse.ArgumentParser(description="yaml_view")
+parser.add_argument("--test", nargs=1, type=str)
+parser.add_argument("files", nargs="*", type=str)
+args = parser.parse_args()
+
+if not "MATHICS3_TIMING" in os.environ:
+    if args.test:
+        os.environ["MATHICS3_TIMING"] = "0"
+    else:
+        os.environ["MATHICS3_TIMING"] = "-1"
 
 FE()        
 

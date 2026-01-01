@@ -329,11 +329,17 @@ class FigureBuilder:
         # expand sufficiently that lines and points
         # near edge of plot don't get cut in half,
         # and just generally curves have a bit of breathing room
-        def expand(range, by=0.02):
+        def expand(range):
             if self.dim==2 and not self.has_image:
-                min, max = range
-                delta = max - min
-                range = [min - by*delta, max + by*delta]
+                by = 0.02
+            elif self.dim==3:
+                # enough to allow box not to get clipped
+                by = 0.0001
+            else:
+                return
+            min, max = range
+            delta = max - min
+            range = [min - by*delta, max + by*delta]
             return range
 
         # compute axes options
@@ -386,6 +392,7 @@ class FigureBuilder:
                 lines = [(i, i^k) for i in range(8) for k in [1,2,4] if not i&k]
                 # TODO: safe because this is last, but really should have push/pop?
                 self.set_color_rgb((0,0,0), None)
+                self.set_thickness(1.5)
                 self.add_lines(vertices, lines, None)
 
             # ViewPoint
