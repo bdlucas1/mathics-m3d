@@ -132,6 +132,7 @@ class FE:
         except Exception as oops:
             msg = f"EXCEPTION in compute_plot: {type(oops)}: {oops}"
             print(msg)
+            raise
             return msg
 
     # compute and retursn svg for str_expr
@@ -163,7 +164,7 @@ class FE:
 
 import argparse
 parser = argparse.ArgumentParser(description="yaml_view")
-parser.add_argument("--test", nargs=1, type=str)
+parser.add_argument("--test", nargs=1, type=str, default="")
 parser.add_argument("files", nargs="*", type=str)
 args = parser.parse_args()
 
