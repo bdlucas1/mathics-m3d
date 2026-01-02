@@ -15,7 +15,7 @@ import PIL
 import numpy as np
 import cairosvg
 
-import util
+from m3d import util
 
 class State: pass
 state = State()
@@ -68,12 +68,12 @@ def test(test_info, layout, expr):
 
     # file names
     path = pathlib.Path(fn)
-    fn_png_ref = path.parent / "@ref" / (path.name + ".png")
+    fn_png_ref = path.parent.parent / "@ref" / (path.name + ".png")
     fn_png_act = f"/tmp/{fn.replace('/','-')}.png"
     # not in use - going straight to .svg.png
-    #fn_svg_ref = path.parent / "@ref" / (path.name + ".svg")
+    #fn_svg_ref = path.parent.parent / "@ref" / (path.name + ".svg")
     #fn_svg_act = f"/tmp/{fn.replace('/','-')}.svg"
-    fn_svg_png_ref = path.parent / "@ref" / (path.name + ".svg.png")
+    fn_svg_png_ref = path.parent.parent / "@ref" / (path.name + ".svg.png")
     fn_svg_png_act = f"/tmp/{fn.replace('/','-')}.svg.png"
     fn_dump = f"/tmp/{fn.replace('/','-')}.txt"
 

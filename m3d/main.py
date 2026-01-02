@@ -58,8 +58,8 @@ else:
 
     # trigger tests if requested
     if args.test:
-        import test
-        m3d.app.test = test
+        import test.test
+        m3d.app.test = test.test
 
     # exit when browser window closes
     # seems to take about 30 sec, probably a timeout

@@ -336,7 +336,7 @@ class FigureBuilder:
                 # enough to allow box not to get clipped
                 by = 0.0001
             else:
-                return
+                return range
             min, max = range
             delta = max - min
             range = [min - by*delta, max + by*delta]
