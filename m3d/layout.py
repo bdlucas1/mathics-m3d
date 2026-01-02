@@ -10,16 +10,15 @@ ui.grid, ui.row, ui.plot, ui.manipulate, etc.
 
 import mathics.core.formatter as fmt
 
-import core
-import graphics
-import ui
-import sym
-import util
+from m3d import core, sym, util
+import m3d.graphics
+import m3d.ui
+
 from frozendict import frozendict
 
 
 def wrap_math(s):
-    return ui.latex(s) if isinstance(s, str) else s
+    return m3d.ui.latex(s) if isinstance(s, str) else s
 
 # Concatenate latex strings as much as possible, allowing latex to handle the layout.
 # Where not possible use a object representing an html layout.
@@ -36,9 +35,7 @@ def row_box(fe, expr, layout_options):
     parts = []
     s = ""
 
-    # surprise! unlike a RowBox Expression, a RowBox object has elements that are not in a list!
-    #for e in expr.elements[0]:
-    for e in expr.elements:
+    for e in expr.elements[0]:
         l = _boxes_to_latex_or_layout(fe, e, layout_options)
         if isinstance(l,str):
             s += l
@@ -53,7 +50,7 @@ def row_box(fe, expr, layout_options):
     if len(parts) == 1:
         return parts[0]
     else:
-        return ui.row(list(wrap_math(p) for p in parts))
+        return m3d.ui.row(list(wrap_math(p) for p in parts))
 
 def grid_box(fe, expr, layout_options):
 
@@ -66,7 +63,7 @@ def grid_box(fe, expr, layout_options):
 
     # arrange in a ragged array
     grid_content = [[do(cell) for cell in row] for row in expr.elements[0]]
-    layout = ui.grid(grid_content)
+    layout = m3d.ui.grid(grid_content)
     return layout
 
 layout_funs = {
@@ -105,8 +102,8 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
 
     if getattr(expr, "head", None) in layout_funs:
         return layout_funs[expr.head](fe, expr, layout_options)
-    elif getattr(expr, "head", None) in graphics.layout_funs:
-        return graphics.layout_funs[expr.head](fe, expr, layout_options)
+    elif getattr(expr, "head", None) in m3d.graphics.layout_funs:
+        return m3d.graphics.layout_funs[expr.head](fe, expr, layout_options)
     elif isinstance(expr,core.String):
         if expr.value in special:
             value = special[expr.value]
@@ -152,6 +149,7 @@ def expression_to_layout(fe, expr, layout_options={}, form=sym.SymbolTraditional
     else:
         boxed = core.Expression(sym.SymbolToBoxes, expr, form)
         boxed = boxed.evaluate(fe.session.evaluation)
+        #util.print_expression_tree(boxed)
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout

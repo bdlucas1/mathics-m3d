@@ -6,12 +6,10 @@ import numpy as np
 from mathics.core.builtin import Builtin
 from mathics.core.load_builtin import add_builtins
 
-import core
-import layout as lt
-import ui
-import render
-import sym
-import util
+from m3d import core, sym, util
+import m3d.layout
+import m3d.ui
+import m3d.render
 
 #
 # Manipulate builtin
@@ -97,13 +95,13 @@ def layout_ManipulateBox(fe, manipulate_expr, layout_options):
             expr = target_expr.replace_vars({"Global`"+n: core.Real(v) for n, v in values.items()})
             expr = expr.evaluate(fe.session.evaluation)
         with util.Timer("layout"):
-            layout = lt.expression_to_layout(fe, expr)
+            layout = m3d.layout.expression_to_layout(fe, expr)
         return layout
 
     # compute the layout for the plot
     init_values = [s.init for s in sliders]
     init_target_layout = eval_and_layout(init_values)
-    layout = ui.manipulate(init_target_layout, sliders, eval_and_layout)
+    layout = m3d.ui.manipulate(init_target_layout, sliders, eval_and_layout)
         
     return layout
 

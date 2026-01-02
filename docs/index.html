@@ -808,7 +808,7 @@ textarea.bk-input {
             heart_button = ui.icon_button(
                 "heart",
                 "Like it?",
-                lambda: load_and_activate(["data/cardio.m3d"], True)
+                lambda: load_and_activate([data_file("cardio.m3d")], True)
             )
 
             buttons = pn.Row(

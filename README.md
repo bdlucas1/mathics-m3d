@@ -33,11 +33,9 @@ To run locally, you will need to have a recent development version of
 Mathics3 installed, and then:
 
     pip install -r requirements.txt
-    python m3d.py data/gallery.m3d
+    python -m m3d m3d/data
 
-A number of additional demo files with the extension `.m3d` (for
-Mathics3 + Markdown) are available in `data/`.  You can run them from
-the command line or use the file open button inside the notebook UI.
+This will show a directory containing a number of demo files `gallery-*.m3d`.
 
 The requirements file is probably not up-to-date; let me know. Also,
 if the installation of pywebview fails, the program should still run,

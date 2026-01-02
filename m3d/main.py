@@ -10,8 +10,8 @@ import panel as pn
 import mathics.builtin.drawing.plot
 mathics.builtin.drawing.plot.use_vectorized_plot = True
 
-import m3dlib
-import util
+from m3d import core, sym, util # noqa
+import m3d.app
 
 
 #
@@ -22,21 +22,23 @@ import util
 if "DEMO_BUILD_PYODIDE" in os.environ:
 
     print("building for pyodide")
-    app = m3dlib.App(load=[])
+    app = m3d.app.App(load=[])
     app.servable()
 
 
 elif "pyodide" in sys.modules:
 
     print("running under pyodide")
-    app = m3dlib.App(load=["data/help.m3d"])
+    app = m3d.app.App(load=["data/help.m3d"])
     app.servable()
 
 else:
     print("running as local server")
 
     import argparse
-    parser = argparse.ArgumentParser(description="m3d")
+    parser = argparse.ArgumentParser(
+        prog="m3d",
+        description="Mathics3+Markdown notebook viewer and editor")
     parser.add_argument(
         "--initial-mode", "-i",
         choices=["view","edit","help","open","save"],
@@ -48,7 +50,7 @@ else:
     parser.add_argument("--test-ui", action="store_true")
     parser.add_argument("--classic", action="store_true")
     parser.add_argument("--browser", "-b", default=None)
-    parser.add_argument("files", nargs="*", type=str)
+    parser.add_argument("file", nargs="*", type=str)
     args = parser.parse_args()
 
     # use vectorized plotting by default
@@ -57,7 +59,7 @@ else:
     # trigger tests if requested
     if args.test:
         import test
-        m3dlib.test = test
+        m3d.app.test = test
 
     # exit when browser window closes
     # seems to take about 30 sec, probably a timeout
@@ -71,12 +73,12 @@ else:
     pn.state.on_session_destroyed(session_destroyed)
 
     # start the app and point a browser at it
-    app = m3dlib.App(
-        load=args.files,
+    app = m3d.app.App(
+        load=args.file,
         initial_mode=args.initial_mode,
         show_code=args.show_code,
         autorun=not args.no_autorun,
         test_ui_run=args.test_ui,
     )
-    title =  " ".join(args.files)
+    title =  args.file
     util.show(app, title, browser=args.browser)

@@ -12,9 +12,9 @@ import plotly
 import mathics.builtin.drawing.plot as plot
 from mathics.core.convert.lambdify import CompileError
 
-import core
-import layout as lt
-import util
+from m3d import core, sym, util # noqa
+import m3d.layout
+
 
 panel.extension('plotly')
 
@@ -117,7 +117,7 @@ class FE:
             else:
                 self.ev_exprs[str_expr] = ev_expr
             if "Graphics" in str(ev_expr.head):
-                layout = lt.expression_to_layout(self, ev_expr)
+                layout = m3d.layout.expression_to_layout(self, ev_expr)
             else:
                 layout = None
             if not vec:
@@ -156,7 +156,7 @@ class FE:
 
     def test(self, name, item, kind):
         if args.test == "all" or kind in args.test:
-            fn = pathlib.Path(__file__).resolve().parent / "yaml_test" / (f"{name}-{kind}.png")
+            fn = pathlib.Path(__file__).resolve().parent / "@ref" / (f"{name}-{kind}.png")
             print("writing", fn)
             item.write_image(fn, scale=2)
         

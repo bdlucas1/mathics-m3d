@@ -12,20 +12,19 @@ import numpy as np
 from mathics.core.builtin import Builtin
 from mathics.core.load_builtin import add_builtins
 
-import core
-import layout as lt
-import ui
-import render
-import sym
-import util
-from consumer import GraphicsConsumer
+from m3d import core, sym, util
+import m3d.layout
+import m3d.ui
+import m3d.render
+
+from m3d.consumer import GraphicsConsumer
 
 
 def layout_GraphicsBox(dim, fe, expr, layout_options):
 
     graphics = GraphicsConsumer(fe, expr, layout_options)
 
-    builder = render.FigureBuilder(dim, fe, graphics.options)
+    builder = m3d.render.FigureBuilder(dim, fe, graphics.options)
 
     switch = {
         sym.SymbolPolygon: builder.add_polys,
@@ -43,14 +42,14 @@ def layout_GraphicsBox(dim, fe, expr, layout_options):
         switch[item[0]](*item[1:])
 
     figure, height = builder.figure()
-    layout = ui.graph(figure, height)
+    layout = m3d.ui.graph(figure, height)
     return layout
 
 #
 #
 #
 
-from manipulate import layout_ManipulateBox
+from m3d.manipulate import layout_ManipulateBox
 
 layout_funs = {
     sym.SymbolManipulateBox: layout_ManipulateBox,

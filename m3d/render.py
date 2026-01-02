@@ -4,10 +4,10 @@ import plotly.graph_objects as go
 import os
 import re
 import copy
-import ticker
 
-import mesh2d
-import util
+from m3d import core, sym, util
+import m3d.ticker
+import m3d.mesh2d
 
 
 # TODO: move to consumer
@@ -220,7 +220,7 @@ class FigureBuilder:
 
                 # use mesh2d_opencv
                 vertices, polys, colors = need_vertices(vertices, polys, colors)
-                mesh = mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
+                mesh = m3d.mesh2d.mesh2d_opencv(vertices, polys, colors, 200, 200) # 70 ms
                 self.data.append(mesh)
                 self.has_image = True
 
@@ -430,16 +430,16 @@ class FigureBuilder:
         # compute ticks for log plots
         if self.opts.log_plot:
             lo, hi = plot_range[1]
-            #ticks = ticker.log_ticks_for_logged_data(log_vmin=lo, log_vmax=hi, base=10, minor=True)
-            ticks = ticker.log10_ticks_for_logged_data_superscript(
+            #ticks = m3d.ticker.log_ticks_for_logged_data(log_vmin=lo, log_vmax=hi, base=10, minor=True)
+            ticks = m3d.ticker.log10_ticks_for_logged_data_superscript(
                 log_vmin=lo, log_vmax=hi, minor=True, nticks=6
             )
-            figure.update_yaxes(**ticker.plotly_tick_array(ticks))
+            figure.update_yaxes(**m3d.ticker.plotly_tick_array(ticks))
 
         # TODO: consider using for linear as well? plotly seems to do ok though
         #lo, hi = plot_range[0]
-        #ticks = ticker.nice_linear_ticks(vmin=lo, vmax=hi, nticks=7)
-        #figure.update_xaxes(**ticker.plotly_tick_array(ticks))        
+        #ticks = m3d.ticker.nice_linear_ticks(vmin=lo, vmax=hi, nticks=7)
+        #figure.update_xaxes(**m3d.ticker.plotly_tick_array(ticks))        
 
         # background color
         if self.opts.background:

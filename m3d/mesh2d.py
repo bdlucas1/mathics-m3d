@@ -1,10 +1,12 @@
-import util
 import cv2
 import numpy as np
 import plotly.graph_objects as go
 import cairosvg
 import base64
 import io
+
+from m3d import core, sym, util
+
 
 @util.Timer("mesh2d_opencv")
 def mesh2d_opencv(vertices, polys, colors, nx=200, ny=200):

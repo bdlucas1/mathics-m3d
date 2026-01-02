@@ -12,19 +12,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 import param
 
-import core
-import sym
-import layout as lt
+from m3d import util, core, sym # noqa
+import m3d.dirty
+import m3d.ui
+import m3d.shortcuts
+import m3d.hider
+import m3d.layout
+
 import os
-import util
-import hook
 import sys
 import time
-import ui
-import test_ui
-import shortcuts
-import hider
-import dirty
 
 test = None
 
@@ -40,7 +37,7 @@ mathics.builtin.drawing.plot.use_vectorized_plot = True
 
 # needs to be global so can be used as decorator in class definition
 # otherwise could make member of App or Top and use dirty_guard.guard
-dirty_guard = dirty.Guard()
+dirty_guard = m3d.dirty.Guard()
 
 #
 # An input-output pair, as a column
@@ -85,14 +82,14 @@ class Pair(pn.Column):
         # edit button toggles input code block visibility
         def toggle_input():
             self.input.visible = not self.input.visible
-        self.edit_button = ui.icon_button(
+        self.edit_button = m3d.ui.icon_button(
             "edit",
             "Toggle code block\nfor editing",
             toggle_input
         )
 
         # execute code if stale
-        self.exec_button = ui.icon_button(
+        self.exec_button = m3d.ui.icon_button(
             "alert-triangle",
             "Output is stale; click or\ntype cmd+enter\nto execute code", 
             self.update_if_changed
@@ -165,7 +162,7 @@ class Pair(pn.Column):
             else:
 
                 # contruct layout from expr
-                layout = lt.expression_to_layout(self.top, expr)
+                layout = m3d.layout.expression_to_layout(self.top, expr)
 
                 # either show it to user, or pass it to test
                 # can't do both because test "layout" mode requires
@@ -466,11 +463,11 @@ class Edit(pn.widgets.TextAreaInput):
         self.value = text
 
 
-class Open(ui.OpenFile):
+class Open(m3d.ui.OpenFile):
     persistent = True
 
 
-class Save(ui.SaveFile):
+class Save(m3d.ui.SaveFile):
     persistent = False
 
 
@@ -484,20 +481,20 @@ class ButtonBar(pn.Row):
 
         # buttons that switch mode and have different styling to indicate current mode
         def mode_button(mode, icon, tip, test_name):
-            button = ui.icon_button(
+            button = m3d.ui.icon_button(
                 icon=icon,
                 tip=tip,
                 on_click=lambda: app.top.toggle_mode(mode, "view")
             )
-            test_ui.item(button, test_name)
+            m3d.test_ui.item(button, test_name)
             mode_button = pn.Row(button, css_classes=["m-mode-button"])
             self.mode_buttons[mode] = mode_button
             return mode_button
             
         # button that just performs an action without switching mode
         def action_button(icon, tip, on_click, test_name):
-            button = ui.icon_button(icon, tip, on_click)
-            test_ui.item(button, test_name)
+            button = m3d.ui.icon_button(icon, tip, on_click)
+            m3d.test_ui.item(button, test_name)
             return button
 
         # create new document action
@@ -583,7 +580,7 @@ class ButtonBar(pn.Row):
         heart_button = action_button(
             icon="heart",
             tip="Like it?",
-            on_click=lambda: load_and_activate([util.resource("data/cardio.m3d")], True),
+            on_click=lambda: load_and_activate([util.data_file("cardio.m3d")], True),
             test_name="heart_button",
         )
 
@@ -617,17 +614,17 @@ class ButtonBar(pn.Row):
             button.param.trigger('css_classes')
 
 
-class Shortcuts(shortcuts.KeyboardShortcuts):
+class Shortcuts(m3d.shortcuts.KeyboardShortcuts):
 
     def __init__(self, top):
 
         super().__init__(shortcuts=[
-            shortcuts.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
-            shortcuts.KeyboardShortcut(name="run", key="Enter", altKey=True),
-            shortcuts.KeyboardShortcut(name="run", key="Enter", metaKey=True),
-            shortcuts.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
-            shortcuts.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
-            shortcuts.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
+            m3d.shortcuts.KeyboardShortcut(name="run", key="Enter", ctrlKey=True),
+            m3d.shortcuts.KeyboardShortcut(name="run", key="Enter", altKey=True),
+            m3d.shortcuts.KeyboardShortcut(name="run", key="Enter", metaKey=True),
+            m3d.shortcuts.KeyboardShortcut(name="run_force", key="Enter", ctrlKey=True, shiftKey=True),
+            m3d.shortcuts.KeyboardShortcut(name="run_force", key="Enter", altKey=True, shiftKey=True),
+            m3d.shortcuts.KeyboardShortcut(name="run_force", key="Enter", metaKey=True, shiftKey=True),
         ])
 
         def shortcut_msg(event):
@@ -642,7 +639,7 @@ class Shortcuts(shortcuts.KeyboardShortcuts):
 
 
 # TODO: everything called .app or app. or app- should be renamed top
-class Top(ui.Stack):
+class Top(m3d.ui.Stack):
     """
     The top-level is a Stack, which is a Column that manages mode switching
     by instantiating and controling the visibility of its constituents
@@ -665,6 +662,15 @@ class Top(ui.Stack):
         self.watching = False # effectively, a submode of "view"
         self.text_owner = None
 
+        # choose initial mode depending on cmd line
+        if load and os.path.isdir(load[0]):
+            self.initial_open_save_dir = load[0]
+            initial_mode="open"
+        else:
+            self.initial_view_file = load
+            self.initial_open_save_dir = util.data_file()
+            initial_mode = "view"
+
         # set up mode-independent stuff
         super().__init__(
             Shortcuts(self),
@@ -677,8 +683,8 @@ class Top(ui.Stack):
         # "view" mode: show the m3d file
         def make_view():
             self.view = View(self, css_classes=["m-view"])
-            test_ui.item(self.view, "view")
-            self.view.load_files(load, run=autorun, show_code=show_code)
+            m3d.test_ui.item(self.view, "view")
+            self.view.load_files(self.initial_view_file, run=autorun, show_code=show_code)
             return self.view
         self.append("view", make_view)
 
@@ -690,19 +696,17 @@ class Top(ui.Stack):
                 css_classes=["m-edit"],
                 styles=dict(height="100vh"),
             )
-            test_ui.item(self.edit, "edit")
+            m3d.test_ui.item(self.edit, "edit")
             return self.edit
         self.append("edit", make_edit)
 
         # "help" mode: show m3d help
         def make_help():
             help = View(self, css_classes=["m-view"])
-            help.load_m3d_file(util.resource("data/help.m3d"), run=True)
-            test_ui.item(help, "help")
+            help.load_m3d_file(util.data_file("help.m3d"), run=True)
+            m3d.test_ui.item(help, "help")
             return help
         self.append("help", make_help)
-
-        data_root = util.resource("data")
 
         # "open" mode: show the open file dialog
         def make_open():
@@ -710,9 +714,12 @@ class Top(ui.Stack):
             # do we want to give them each their own item, with some way to switch,
             # like tabs, maybe a dropdown beside the buttons??
             def on_open(fn):
-                self.view.load_files([fn], run=autorun)
+                if not hasattr(self, "view"):
+                    self.initial_view_file = [fn]
+                else:
+                    self.view.load_files([fn], run=autorun)
                 self.activate_mode("view")
-            return Open(data_root, on_open)
+            return Open(self.initial_open_save_dir, on_open)
         self.append("open", make_open)
 
         # "save" mode: show the save file dialog
@@ -726,7 +733,7 @@ class Top(ui.Stack):
                 with open(fn, "w") as f:
                     f.write(text)
                 self.activate_mode("view")
-            return Save(self.view.current_fn, data_root, on_save)
+            return Save(self.view.current_fn, initial_open_save_dir, on_save)
         self.append("save", make_save)
 
 
@@ -737,7 +744,7 @@ class Top(ui.Stack):
 
         # start tests after we're loaded
         if test_ui_run:
-            pn.state.onload(test_ui.run_tests, threaded=True)
+            pn.state.onload(m3d.test_ui.run_tests, threaded=True)
 
 
     def toggle_mode(self, new_mode, old_mode):
@@ -828,7 +835,7 @@ class Top(ui.Stack):
         self.view.part_cache.clear()
         
 
-class App(hider.Hider):
+class App(m3d.hider.Hider):
 
     def __init__(self, **kwargs):
 

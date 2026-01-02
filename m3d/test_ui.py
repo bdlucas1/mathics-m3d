@@ -4,7 +4,7 @@ import os
 
 import panel as pn
 
-import util
+from m3d import util
 
 items = {}
 

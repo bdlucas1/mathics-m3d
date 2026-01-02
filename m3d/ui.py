@@ -9,10 +9,10 @@ import panel.io
 import plotly.graph_objects as go
 import bokeh.models
 
-import layout as lt
-import ui
-import util
-import test_ui
+import m3d.layout
+import m3d.ui
+import m3d.test_ui
+from m3d import util
 
 pn.extension(raw_css=[open(util.resource("m3d.css")).read()])
 

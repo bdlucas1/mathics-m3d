@@ -4,10 +4,7 @@ from typing import Optional
 
 import numpy as np
 
-import core
-import sym
-
-import util
+from m3d import core, sym, util
 
 #
 # traverse a Graphics or Graphics3D expression and collect points, lines, and triangles

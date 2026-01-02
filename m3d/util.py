@@ -12,8 +12,23 @@ import pathlib
 from mathics.core.util import *
 from mathics.timing import *
 
+import m3d
+
 def resource(fn):
-    return  str(pathlib.Path(__file__).resolve().parent / fn)
+    return str(pathlib.Path(__file__).resolve().parent / fn)
+
+def data_file(fn=None):
+
+    # if data/ is beside m3d: __file__ points to __init__.py
+    #data_dir = pathlib.Path(m3d.__file__).resolve().parent.parent / "data"
+
+    # if data/ is inside m3d
+    data_dir = pathlib.Path(__file__).resolve().parent / "data"
+    if fn:
+        return str(data_dir / fn)
+    else:
+        return str(data_dir)
+
 
 try:
     import webview
