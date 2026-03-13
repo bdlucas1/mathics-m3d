@@ -47,8 +47,13 @@ class Manipulate(Builtin):
 # involving DynamicModule, Dymanic, Dynamic*Box, etc.
 # Do we want to emulate that?
 class ManipulateBox(core.BoxExpression):
+    # TODO: seems we have to set _elements ourselves
+    # not sure why, or where is the correct place to do it
     def __init__(self, expr, sliders):
         super().__init__(self, expr, sliders)
+        self._elements = (expr, sliders)
+    def init(self, *args):
+        self._elements = args
 
 # regarding expression=False: see mathics/core/builtin.py:221 "can be confusing"
 add_builtins([("System`Manipulate", Manipulate(expression=False))])
