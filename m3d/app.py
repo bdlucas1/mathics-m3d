@@ -656,6 +656,8 @@ class Top(m3d.ui.Stack):
             session=None,
     ):
 
+        core.import_and_load_builtins()
+
         self.session = session or core.MathicsSession()
         self.app = app
         self.active_mode = None

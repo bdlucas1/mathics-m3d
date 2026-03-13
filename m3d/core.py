@@ -10,3 +10,4 @@ from mathics.builtin.colors.color_directives import *
 from mathics.builtin.colors.color_directives import _ColorObject
 from mathics_scanner.errors import *
 from mathics.core.interrupt import *
+from mathics.core.load_builtin import import_and_load_builtins
