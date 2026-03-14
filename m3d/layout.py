@@ -96,8 +96,11 @@ def _boxes_to_latex_or_layout(fe, expr, layout_options):
             # If so either 1) teach this call to accept a parameter to use e.g. \textsf
             # instead of \text, or 2) figure out how to configure mathjax to use
             # sans-serif for \text etc.
-            return fmt.boxes_to_format(expr, "latex")
-        except:
+            # TODO: as of 2026-03-14 this works for Sqrt[x] but not for Sqrt[x]+Sqrt[y]
+            # in working case we get <mathics.builtin.box.layout.SqrtBox object at 0x11483fd90>
+            # in failing case we get System`SqrtBox["x"] (i.e. plain Expression object)
+            return fmt.box_to_format(expr, "latex")
+        except Exception as e:
             return None
 
     if getattr(expr, "head", None) in layout_funs:
