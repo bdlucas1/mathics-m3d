@@ -655,9 +655,6 @@ class Top(m3d.ui.Stack):
             test_ui_run=False,
             session=None,
     ):
-
-        core.import_and_load_builtins()
-
         self.session = session or core.MathicsSession()
         self.app = app
         self.active_mode = None
@@ -816,12 +813,10 @@ class Top(m3d.ui.Stack):
         self.watching = watch
 
 
-    def append_evaluated_pair(self, text, expr, finish=True):
-        pair = Pair(self, text=text.strip(), run=True, input_visible=True)
-        self.view.append_new_item(pair)
-        if finish:
-            self.view.finish_new_items()
+    def append_evaluated_pair(self, text, expr):
+        pair = Pair(self, text.strip(), run=False, input_visible=True)
         pair.update(expr)
+        self.view.objects += [pair]
 
 
     def reload(self):

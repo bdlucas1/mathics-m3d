@@ -8,6 +8,7 @@ import importlib
 import subprocess
 import panel as pn
 import pathlib
+import threading
 
 from mathics.core.util import *
 from mathics.timing import *
@@ -135,14 +136,15 @@ def show(app, title, browser=None):
         port = s.getsockname()[1]  # Return the assigned port number
 
     # start the server
-    server = pn.serve(
-        app,
-        port=port,
-        address="localhost",
-        threaded=True,
-        show=False,
-        title=title,
-    )
+    def server():
+        pn.serve(
+            app,
+            port=port,
+            address="localhost",
+            show=False,
+            title=title,
+        )
+    threading.Thread(target=server).start()
 
     # start a browser
     Browser(browser).show(f"http://localhost:{port}", title=title).start()

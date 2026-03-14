@@ -50,7 +50,7 @@ grabbing the sliders without moving the page.
 
 ### Demo minimal shell
 
-    $ python shell.py
+    $ python shell/shell.py
     > Manipulate[Plot3D[Sin[a x] Cos[y], {x,0,10}, {y,0,10}], {{a,1}, 0.1, 2.0, 0.1}]
 
 This should pop up a browser window showing the plot. If it fails it might be because

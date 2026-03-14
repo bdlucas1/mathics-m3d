@@ -2,17 +2,16 @@ import os
 import threading
 import time
 import socket
+import sys
 
 import mathics.builtin.drawing.plot
 mathics.builtin.drawing.plot.use_vectorized_plot = True
 
 from mathics.session import MathicsSession
+from mathics.core.load_builtin import import_and_load_builtins
 
-try:
-    import util
-    import m3dlib
-except:
-    m3dlib = None
+import m3d.app
+import m3d.util
 
     
 # pick one:
@@ -33,7 +32,8 @@ class Shell:
 
             # get input expr_str
             try:
-                expr_str = input("\ni> ")
+                print("\ni> ", end="")
+                expr_str = sys.stdin.readline()
             except EOFError:
                 print("bye")
                 os._exit(0)
@@ -52,13 +52,13 @@ class Shell:
                 # suppose we got graphics, and m3d is available
                 # then use m3d to display it
                 has_graphics = True
-                if has_graphics and m3dlib:
+                if has_graphics and m3d:
 
                     # create m3d App if needed, else use the existing one
-                    m3d_app = self.m3d_app or m3dlib.App(load=None, session=self.session)
+                    m3d_app = self.m3d_app or m3d.app.App(load=None, session=self.session)
 
                     # append an input/output pair to the m3d App
-                    # this wraps up a couple calls in m3dlib, which limits options
+                    # this wraps up a couple calls in m3d, which limits options
                     # but narrows the interface. Could be widened if needed.
                     # we pass it the evaluated expr to display, and it will pick up
                     # messages from the session
@@ -72,7 +72,7 @@ class Shell:
                         self.m3d_app = m3d_app
                         if browser == "webview":
                             threading.Thread(target=self.repl).start()
-                        util.show(m3d_app, title="shell graphical output", browser=browser)
+                        m3d.util.show(m3d_app, title="shell graphical output", browser=browser)
 
             except Exception as oops:
                 print(oops)
