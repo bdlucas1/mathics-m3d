@@ -7,9 +7,6 @@ if not "MATHICS3_TIMING" in os.environ:
 
 import panel as pn
 
-import mathics.builtin.drawing.plot
-mathics.builtin.drawing.plot.use_vectorized_plot = True
-
 from m3d import core, sym, util # noqa
 import m3d.app
 
@@ -53,9 +50,6 @@ else:
     parser.add_argument("file", nargs="*", type=str)
     args = parser.parse_args()
 
-    # use vectorized plotting by default
-    mathics.builtin.drawing.plot.use_vectorized_plot = not args.classic
-
     # trigger tests if requested
     if args.test:
         import test.test
@@ -79,6 +73,7 @@ else:
         show_code=args.show_code,
         autorun=not args.no_autorun,
         test_ui_run=args.test_ui,
+        classic=args.classic,
     )
     title =  args.file
     util.show(app, title, browser=args.browser)

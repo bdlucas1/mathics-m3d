@@ -29,7 +29,11 @@ class FE:
 
     def __init__(self):
 
-        self.session = core.MathicsSession()
+        self.sessions = {
+            True: core.MathicsSession(), # vectorized
+            False: core.MathicsSession() # non-vectorized
+        }
+        self.sessions[True].evaluate('LoadModule["pymathics.vectorizedplot"];')
         self.shown = False
 
         self.grid = panel.GridBox(
@@ -104,7 +108,7 @@ class FE:
         str_expr = info["expr"]
 
         try:
-            plot.use_vectorized_plot = vec
+            self.session = self.sessions[vec]
             ev_expr = self.session.evaluate(str_expr)
             for message in self.session.evaluation.out:
                 print("MESSAGE:", message.text)
