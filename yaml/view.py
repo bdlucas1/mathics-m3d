@@ -33,7 +33,7 @@ class FE:
             True: core.MathicsSession(), # vectorized
             False: core.MathicsSession() # non-vectorized
         }
-        self.sessions[True].evaluate('LoadModule["pymathics.vectorizedplot"];')
+        #self.sessions[True].evaluate('LoadModule["pymathics.vectorizedplot"];')
         self.shown = False
 
         self.grid = panel.GridBox(
@@ -124,6 +124,7 @@ class FE:
                 layout = m3d.layout.expression_to_layout(self, ev_expr)
             else:
                 layout = None
+                print("NO GRAPHICS")
             if not vec:
                 self.layouts[str_expr] = layout
             if layout:
